@@ -42,7 +42,7 @@ export default function TwoFactorChallenge() {
                 <Form {...store.form()} className="space-y-4" resetOnError resetOnSuccess={!showRecoveryInput}>
                     {({ errors, processing, clearErrors }) => (<>
                             {showRecoveryInput ? (<>
-                                    <Input name="recovery_code" type="text" placeholder="Enter recovery code" autoFocus={showRecoveryInput} required/>
+                                    <Input name="recovery_code" type="text" placeholder="masukkan kode pemulihan" autoFocus={showRecoveryInput} required/>
                                     <InputError message={errors.recovery_code}/>
                                 </>) : (<div className="flex flex-col items-center justify-center space-y-3 text-center">
                                     <div className="flex w-full items-center justify-center">

@@ -1,0 +1,147 @@
+<?php
+
+use App\Models\Note;
+use Inertia\Testing\AssertableInertia as Assert;
+
+function noteAdminSession(): array
+{
+    return [
+        'admin_authenticated' => true,
+        'admin_username' => 'my-workspace',
+    ];
+}
+
+it('mengalihkan tamu dari halaman catatan', function () {
+    $this->get('/admin/notes')->assertRedirect(route('home'));
+});
+
+it('menampilkan halaman catatan untuk admin', function () {
+    Note::create([
+        'title' => 'Catatan pertama',
+        'content' => 'Isi catatan pertama.',
+        'tags' => ['laravel'],
+    ]);
+
+    $this->withSession(noteAdminSession())
+        ->get('/admin/notes')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('admin/notes/index')
+            ->has('notes.data', 1)
+            ->where('notes.data.0.title', 'Catatan pertama')
+        );
+});
+
+it('menyimpan catatan baru beserta tag', function () {
+    $this->withSession(noteAdminSession())
+        ->post('/admin/notes', [
+            'title' => 'Belajar PostgreSQL',
+            'content' => 'JSONB cocok untuk data fleksibel.',
+            'tags' => ['postgres', 'database', 'postgres'],
+            'is_pinned' => true,
+        ])
+        ->assertRedirect(route('admin.notes.index'));
+
+    $note = Note::firstOrFail();
+
+    expect($note->title)->toBe('Belajar PostgreSQL')
+        ->and($note->tags)->toBe(['postgres', 'database'])
+        ->and($note->is_pinned)->toBeTrue();
+});
+
+it('memvalidasi judul dan isi catatan', function () {
+    $this->withSession(noteAdminSession())
+        ->post('/admin/notes', [
+            'title' => '',
+            'content' => '',
+        ])
+        ->assertSessionHasErrors(['title', 'content']);
+
+    expect(Note::count())->toBe(0);
+});
+
+it('memperbarui catatan', function () {
+    $note = Note::create([
+        'title' => 'Judul lama',
+        'content' => 'Isi lama.',
+        'tags' => ['lama'],
+    ]);
+
+    $this->withSession(noteAdminSession())
+        ->put("/admin/notes/{$note->id}", [
+            'title' => 'Judul baru',
+            'content' => 'Isi baru.',
+            'tags' => ['baru'],
+            'is_pinned' => false,
+        ])
+        ->assertRedirect(route('admin.notes.index'));
+
+    expect($note->fresh())
+        ->title->toBe('Judul baru')
+        ->content->toBe('Isi baru.')
+        ->tags->toBe(['baru']);
+});
+
+it('menghapus catatan', function () {
+    $note = Note::create([
+        'title' => 'Akan dihapus',
+        'content' => 'Isi.',
+        'tags' => [],
+    ]);
+
+    $this->withSession(noteAdminSession())
+        ->delete("/admin/notes/{$note->id}")
+        ->assertRedirect(route('admin.notes.index'));
+
+    expect(Note::count())->toBe(0);
+});
+
+it('menyematkan dan melepas sematan catatan', function () {
+    $note = Note::create([
+        'title' => 'Catatan',
+        'content' => 'Isi.',
+        'tags' => [],
+        'is_pinned' => false,
+    ]);
+
+    $this->withSession(noteAdminSession())
+        ->patch("/admin/notes/{$note->id}/pin")
+        ->assertRedirect(route('admin.notes.index'));
+
+    expect($note->fresh()->is_pinned)->toBeTrue();
+
+    $this->withSession(noteAdminSession())
+        ->patch("/admin/notes/{$note->id}/pin");
+
+    expect($note->fresh()->is_pinned)->toBeFalse();
+});
+
+it('mencari catatan berdasarkan judul dan menyaring tag', function () {
+    Note::create([
+        'title' => 'Laravel Queue',
+        'content' => 'Menjalankan job di background.',
+        'tags' => ['laravel', 'php'],
+    ]);
+
+    Note::create([
+        'title' => 'React Basics',
+        'content' => 'Komponen dan state.',
+        'tags' => ['react', 'javascript'],
+    ]);
+
+    $this->withSession(noteAdminSession())
+        ->get('/admin/notes?q=laravel')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('notes.data', 1)
+            ->where('notes.data.0.title', 'Laravel Queue')
+        );
+
+    $this->withSession(noteAdminSession())
+        ->get('/admin/notes?tag=react')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('notes.data', 1)
+            ->where('notes.data.0.title', 'React Basics')
+        );
+});

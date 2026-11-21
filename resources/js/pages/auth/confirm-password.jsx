@@ -15,7 +15,7 @@ export default function ConfirmPassword() {
                 {({ processing, errors }) => (<div className="space-y-6">
                         <div className="grid gap-2">
                             <Label htmlFor="password">Password</Label>
-                            <Input id="password" type="password" name="password" placeholder="Password" autoComplete="current-password" autoFocus/>
+                            <Input id="password" type="password" name="password" placeholder="masukkan password" autoComplete="current-password" autoFocus/>
 
                             <InputError message={errors.password}/>
                         </div>

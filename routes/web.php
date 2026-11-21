@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\NoteController;
+use App\Http\Controllers\WorkItemController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -14,9 +16,21 @@ Route::post('/masuk', [AdminAuthController::class, 'login'])
 Route::post('/keluar', [AdminAuthController::class, 'logout'])
     ->name('admin.logout');
 
-Route::get('/admin', [AdminController::class, 'index'])
-    ->middleware('admin.auth')
-    ->name('admin.index');
+Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function () {
+    Route::get('/', [AdminController::class, 'index'])->name('index');
+
+    Route::get('/notes', [NoteController::class, 'index'])->name('notes.index');
+    Route::post('/notes', [NoteController::class, 'store'])->name('notes.store');
+    Route::put('/notes/{note}', [NoteController::class, 'update'])->name('notes.update');
+    Route::patch('/notes/{note}/pin', [NoteController::class, 'togglePin'])->name('notes.pin');
+    Route::delete('/notes/{note}', [NoteController::class, 'destroy'])->name('notes.destroy');
+
+    Route::get('/work-items', [WorkItemController::class, 'index'])->name('work-items.index');
+    Route::post('/work-items', [WorkItemController::class, 'store'])->name('work-items.store');
+    Route::put('/work-items/{workItem}', [WorkItemController::class, 'update'])->name('work-items.update');
+    Route::patch('/work-items/{workItem}/status', [WorkItemController::class, 'updateStatus'])->name('work-items.status');
+    Route::delete('/work-items/{workItem}', [WorkItemController::class, 'destroy'])->name('work-items.destroy');
+});
 
 Route::get('dashboard', function () {
     return Inertia::render('dashboard');

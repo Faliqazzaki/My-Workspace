@@ -17,19 +17,19 @@ export default function Register() {
                         <div className="grid gap-6">
                             <div className="grid gap-2">
                                 <Label htmlFor="name">Name</Label>
-                                <Input id="name" type="text" required autoFocus tabIndex={1} autoComplete="name" name="name" placeholder="Full name"/>
+                                <Input id="name" type="text" required autoFocus tabIndex={1} autoComplete="name" name="name" placeholder="masukkan nama"/>
                                 <InputError message={errors.name} className="mt-2"/>
                             </div>
 
                             <div className="grid gap-2">
                                 <Label htmlFor="email">Email address</Label>
-                                <Input id="email" type="email" required tabIndex={2} autoComplete="email" name="email" placeholder="email@example.com"/>
+                                <Input id="email" type="email" required tabIndex={2} autoComplete="email" name="email" placeholder="masukkan email"/>
                                 <InputError message={errors.email}/>
                             </div>
 
                             <div className="grid gap-2">
                                 <Label htmlFor="password">Password</Label>
-                                <Input id="password" type="password" required tabIndex={3} autoComplete="new-password" name="password" placeholder="Password"/>
+                                <Input id="password" type="password" required tabIndex={3} autoComplete="new-password" name="password" placeholder="masukkan password"/>
                                 <InputError message={errors.password}/>
                             </div>
 
@@ -37,7 +37,7 @@ export default function Register() {
                                 <Label htmlFor="password_confirmation">
                                     Confirm password
                                 </Label>
-                                <Input id="password_confirmation" type="password" required tabIndex={4} autoComplete="new-password" name="password_confirmation" placeholder="Confirm password"/>
+                                <Input id="password_confirmation" type="password" required tabIndex={4} autoComplete="new-password" name="password_confirmation" placeholder="masukkan konfirmasi password"/>
                                 <InputError message={errors.password_confirmation}/>
                             </div>
 

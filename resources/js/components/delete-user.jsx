@@ -47,7 +47,7 @@ export default function DeleteUser() {
                                             Password
                                         </Label>
 
-                                        <Input id="password" type="password" name="password" ref={passwordInput} placeholder="Password" autoComplete="current-password"/>
+                                        <Input id="password" type="password" name="password" ref={passwordInput} placeholder="masukkan password" autoComplete="current-password"/>
 
                                         <InputError message={errors.password}/>
                                     </div>

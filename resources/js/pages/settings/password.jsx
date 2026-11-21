@@ -52,7 +52,7 @@ export default function Password() {
                                         Current password
                                     </Label>
 
-                                    <Input id="current_password" ref={currentPasswordInput} name="current_password" type="password" className="mt-1 block w-full" autoComplete="current-password" placeholder="Current password"/>
+                                    <Input id="current_password" ref={currentPasswordInput} name="current_password" type="password" className="mt-1 block w-full" autoComplete="current-password" placeholder="masukkan password saat ini"/>
 
                                     <InputError message={errors.current_password}/>
                                 </div>
@@ -62,7 +62,7 @@ export default function Password() {
                                         New password
                                     </Label>
 
-                                    <Input id="password" ref={passwordInput} name="password" type="password" className="mt-1 block w-full" autoComplete="new-password" placeholder="New password"/>
+                                    <Input id="password" ref={passwordInput} name="password" type="password" className="mt-1 block w-full" autoComplete="new-password" placeholder="masukkan password baru"/>
 
                                     <InputError message={errors.password}/>
                                 </div>
@@ -72,7 +72,7 @@ export default function Password() {
                                         Confirm password
                                     </Label>
 
-                                    <Input id="password_confirmation" name="password_confirmation" type="password" className="mt-1 block w-full" autoComplete="new-password" placeholder="Confirm password"/>
+                                    <Input id="password_confirmation" name="password_confirmation" type="password" className="mt-1 block w-full" autoComplete="new-password" placeholder="masukkan konfirmasi password"/>
 
                                     <InputError message={errors.password_confirmation}/>
                                 </div>

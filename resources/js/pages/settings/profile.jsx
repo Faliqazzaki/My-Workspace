@@ -38,7 +38,7 @@ export default function Profile({ mustVerifyEmail, status, }) {
                                 <div className="grid gap-2">
                                     <Label htmlFor="name">Name</Label>
 
-                                    <Input id="name" className="mt-1 block w-full" defaultValue={auth.user.name} name="name" required autoComplete="name" placeholder="Full name"/>
+                                    <Input id="name" className="mt-1 block w-full" defaultValue={auth.user.name} name="name" required autoComplete="name" placeholder="masukkan nama"/>
 
                                     <InputError className="mt-2" message={errors.name}/>
                                 </div>
@@ -46,7 +46,7 @@ export default function Profile({ mustVerifyEmail, status, }) {
                                 <div className="grid gap-2">
                                     <Label htmlFor="email">Email address</Label>
 
-                                    <Input id="email" type="email" className="mt-1 block w-full" defaultValue={auth.user.email} name="email" required autoComplete="username" placeholder="Email address"/>
+                                    <Input id="email" type="email" className="mt-1 block w-full" defaultValue={auth.user.email} name="email" required autoComplete="username" placeholder="masukkan email"/>
 
                                     <InputError className="mt-2" message={errors.email}/>
                                 </div>

@@ -41,6 +41,12 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'admin' => fn () => $request->session()->get('admin_authenticated')
+                ? ['username' => $request->session()->get('admin_username', 'my-workspace')]
+                : null,
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+            ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

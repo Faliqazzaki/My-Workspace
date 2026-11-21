@@ -152,7 +152,7 @@ export default function AdminLogin() {
                                                 )
                                             }
                                             className="h-11 pl-10"
-                                            placeholder="my-workspace"
+                                            placeholder="masukkan username"
                                             autoComplete="username"
                                             autoFocus
                                             required
@@ -184,7 +184,7 @@ export default function AdminLogin() {
                                                 )
                                             }
                                             className="h-11 pr-11 pl-10"
-                                            placeholder="••••••••"
+                                            placeholder="masukkan password"
                                             autoComplete="current-password"
                                             required
                                             aria-invalid={Boolean(
@@ -219,7 +219,7 @@ export default function AdminLogin() {
                                     type="submit"
                                     size="lg"
                                     disabled={processing}
-                                    className="mt-1 h-11 w-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white shadow-lg shadow-indigo-500/25 hover:from-indigo-600 hover:to-fuchsia-600"
+                                    className="mt-1 h-11 w-full bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 hover:bg-indigo-700"
                                 >
                                     {processing ? (
                                         <>

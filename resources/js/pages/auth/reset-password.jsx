@@ -21,7 +21,7 @@ export default function ResetPassword({ token, email }) {
 
                         <div className="grid gap-2">
                             <Label htmlFor="password">Password</Label>
-                            <Input id="password" type="password" name="password" autoComplete="new-password" className="mt-1 block w-full" autoFocus placeholder="Password"/>
+                            <Input id="password" type="password" name="password" autoComplete="new-password" className="mt-1 block w-full" autoFocus placeholder="masukkan password"/>
                             <InputError message={errors.password}/>
                         </div>
 
@@ -29,7 +29,7 @@ export default function ResetPassword({ token, email }) {
                             <Label htmlFor="password_confirmation">
                                 Confirm password
                             </Label>
-                            <Input id="password_confirmation" type="password" name="password_confirmation" autoComplete="new-password" className="mt-1 block w-full" placeholder="Confirm password"/>
+                            <Input id="password_confirmation" type="password" name="password_confirmation" autoComplete="new-password" className="mt-1 block w-full" placeholder="masukkan konfirmasi password"/>
                             <InputError message={errors.password_confirmation} className="mt-2"/>
                         </div>
 

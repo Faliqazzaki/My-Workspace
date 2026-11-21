@@ -20,7 +20,7 @@ export default function Login({ status, canResetPassword, canRegister, }) {
                         <div className="grid gap-6">
                             <div className="grid gap-2">
                                 <Label htmlFor="email">Email address</Label>
-                                <Input id="email" type="email" name="email" required autoFocus tabIndex={1} autoComplete="email" placeholder="email@example.com"/>
+                                <Input id="email" type="email" name="email" required autoFocus tabIndex={1} autoComplete="email" placeholder="masukkan email"/>
                                 <InputError message={errors.email}/>
                             </div>
 
@@ -31,7 +31,7 @@ export default function Login({ status, canResetPassword, canRegister, }) {
                                             Forgot password?
                                         </TextLink>)}
                                 </div>
-                                <Input id="password" type="password" name="password" required tabIndex={2} autoComplete="current-password" placeholder="Password"/>
+                                <Input id="password" type="password" name="password" required tabIndex={2} autoComplete="current-password" placeholder="masukkan password"/>
                                 <InputError message={errors.password}/>
                             </div>
 
