@@ -1,15 +1,19 @@
 import { router, useForm } from '@inertiajs/react';
 import {
     CalendarDays,
+    ChevronLeft,
+    ChevronRight,
     NotebookPen,
     Pencil,
     Pin,
     PinOff,
     Plus,
+    RotateCcw,
     Save,
     Search,
     Tag,
     Trash2,
+    X,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -164,80 +168,124 @@ export default function NotesIndex({ notes, tags = [], filters = {} }) {
 
     return (
         <AdminLayout title="Catatan">
+            {/* Header */}
             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h1 className="text-xl font-semibold tracking-tight">
-                        Catatan
+                    <h1 className="flex items-center gap-2.5 text-2xl font-bold tracking-tight">
+                        <span>Catatan</span>
+                        <span className="rounded-full bg-indigo-500/10 px-2.5 py-0.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                            {notes.total ?? 0}
+                        </span>
                     </h1>
                     <p className="mt-1 text-sm text-muted-foreground">
-                        Simpan pengetahuan, ide, dan kebutuhanmu di satu tempat.{' '}
-                        {notes.total ?? 0} catatan tersimpan.
+                        Simpan pengetahuan, ide, dan kebutuhanmu di satu tempat yang mudah diakses.
                     </p>
                 </div>
 
                 <Button
                     type="button"
                     onClick={openCreate}
-                    className="bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 hover:bg-indigo-700"
+                    className="h-10 gap-2 bg-indigo-600 px-4 text-white shadow-md shadow-indigo-600/25 transition-all hover:bg-indigo-700 active:scale-[0.98]"
                 >
                     <Plus className="size-4" />
-                    Catatan baru
+                    <span>Catatan baru</span>
                 </Button>
             </div>
 
-            <div className="mb-4 flex flex-col gap-3">
-                <form onSubmit={applySearch} className="flex gap-2">
+            {/* Filter & Search Bar */}
+            <div className="mb-6 rounded-2xl border bg-card/90 p-4 shadow-xs backdrop-blur-xs">
+                <form onSubmit={applySearch} className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
                     <div className="relative flex-1">
-                        <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                        <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             value={search}
                             onChange={(event) => setSearch(event.target.value)}
-                            placeholder="Cari judul atau isi catatan..."
-                            className="h-10 pl-10"
+                            placeholder="masukkan kata kunci pencarian..."
+                            className="h-10 bg-background pl-10 pr-9 transition-colors"
                             aria-label="Cari catatan"
                         />
+                        {search && (
+                            <button
+                                type="button"
+                                onClick={() => setSearch('')}
+                                className="absolute top-1/2 right-3 -translate-y-1/2 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                aria-label="Hapus teks pencarian"
+                                title="Hapus teks"
+                            >
+                                <X className="size-3.5" />
+                            </button>
+                        )}
                     </div>
-                    <Button type="submit" variant="secondary">
-                        Cari
-                    </Button>
-                    {hasFilters && (
+
+                    <div className="flex items-center gap-2">
+                        {/* Tombol Search khusus dengan warna & desain yang dibedakan */}
                         <Button
-                            type="button"
-                            variant="ghost"
-                            onClick={clearFilters}
+                            type="submit"
+                            className="h-10 flex-1 sm:flex-initial gap-2 bg-blue-600 text-white shadow-sm shadow-blue-600/25 hover:bg-blue-700 active:scale-[0.98] transition-all font-medium px-4 shrink-0"
                         >
-                            Reset
+                            <Search className="size-4 shrink-0" />
+                            <span>Cari</span>
                         </Button>
-                    )}
+
+                        {hasFilters && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={clearFilters}
+                                className="h-10 gap-1.5 border-dashed text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
+                                title="Reset filter dan pencarian"
+                            >
+                                <RotateCcw className="size-3.5 shrink-0" />
+                                <span>Reset</span>
+                            </Button>
+                        )}
+                    </div>
                 </form>
 
                 {tags.length > 0 && (
-                    <div className="flex flex-wrap items-center gap-2">
-                        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                            <Tag className="size-3.5" />
-                            Tag:
+                    <div className="mt-3.5 flex flex-wrap items-center gap-1.5 border-t pt-3">
+                        <span className="mr-1 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                            <Tag className="size-3.5 text-indigo-500" />
+                            Filter Tag:
                         </span>
-                        {tags.map((tag) => (
-                            <button
-                                key={tag}
-                                type="button"
-                                onClick={() => applyTag(tag)}
-                                className={cn(
-                                    'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-                                    filters.tag === tag
-                                        ? 'border-indigo-500 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
-                                        : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-                                )}
-                            >
-                                {tag}
-                            </button>
-                        ))}
+                        <button
+                            type="button"
+                            onClick={() => applyTag(undefined)}
+                            className={cn(
+                                'rounded-full px-2.5 py-1 text-xs font-medium transition-all',
+                                !filters.tag
+                                    ? 'bg-indigo-600 text-white shadow-xs'
+                                    : 'bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground',
+                            )}
+                        >
+                            Semua
+                        </button>
+                        {tags.map((tag) => {
+                            const active = filters.tag === tag;
+                            return (
+                                <button
+                                    key={tag}
+                                    type="button"
+                                    onClick={() =>
+                                        applyTag(active ? undefined : tag)
+                                    }
+                                    className={cn(
+                                        'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-all',
+                                        active
+                                            ? 'bg-indigo-600 text-white shadow-xs'
+                                            : 'border border-border/70 bg-background text-muted-foreground hover:border-indigo-500/40 hover:bg-indigo-50/50 hover:text-indigo-600 dark:hover:bg-indigo-950/30 dark:hover:text-indigo-300',
+                                    )}
+                                >
+                                    #{tag}
+                                </button>
+                            );
+                        })}
                     </div>
                 )}
             </div>
 
             {notes.data.length === 0 ? (
-                <div className="flex min-h-[48vh] flex-col items-center justify-center rounded-2xl border border-dashed bg-card p-10 text-center">
+                <div className="flex min-h-[44vh] flex-col items-center justify-center rounded-2xl border border-dashed bg-card/50 p-10 text-center">
                     <span className="flex size-14 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-500">
                         <NotebookPen className="size-7" />
                     </span>
@@ -248,26 +296,27 @@ export default function NotesIndex({ notes, tags = [], filters = {} }) {
                     </h2>
                     <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
                         {hasFilters
-                            ? 'Coba kata kunci atau tag lain, atau reset filter.'
+                            ? 'Coba kata kunci atau tag lain, atau klik reset untuk melihat semua catatan.'
                             : 'Mulai dari satu catatan kecil. Pengetahuan yang dicatat hari ini akan berguna nanti.'}
                     </p>
                     {hasFilters ? (
                         <Button
                             type="button"
                             variant="outline"
-                            className="mt-5"
+                            className="mt-5 gap-1.5 border-dashed"
                             onClick={clearFilters}
                         >
-                            Reset filter
+                            <RotateCcw className="size-3.5" />
+                            <span>Reset filter</span>
                         </Button>
                     ) : (
                         <Button
                             type="button"
-                            className="mt-5 bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 hover:bg-indigo-700"
+                            className="mt-5 gap-2 bg-indigo-600 text-white shadow-md shadow-indigo-600/20 hover:bg-indigo-700"
                             onClick={openCreate}
                         >
                             <Plus className="size-4" />
-                            Buat catatan pertama
+                            <span>Buat catatan pertama</span>
                         </Button>
                     )}
                 </div>
@@ -276,85 +325,112 @@ export default function NotesIndex({ notes, tags = [], filters = {} }) {
                     {notes.data.map((note) => (
                         <article
                             key={note.id}
-                            className="group flex flex-col rounded-xl border bg-card p-5 shadow-sm transition-colors hover:border-indigo-500/40"
+                            className={cn(
+                                'group relative flex flex-col rounded-2xl border bg-card p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md',
+                                note.is_pinned
+                                    ? 'border-indigo-500/40 bg-gradient-to-b from-indigo-500/[0.03] to-card ring-1 ring-indigo-500/20'
+                                    : 'hover:border-indigo-500/40',
+                            )}
                         >
-                            <div className="flex items-start justify-between gap-3">
-                                <h2 className="line-clamp-2 font-medium">
-                                    {note.title}
-                                </h2>
-                                {note.is_pinned && (
-                                    <Pin className="size-4 shrink-0 fill-indigo-500 text-indigo-500" />
+                            <div className="mb-2.5 flex items-center justify-between gap-2">
+                                {note.is_pinned ? (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-indigo-500/10 px-2 py-0.5 text-[11px] font-medium text-indigo-600 dark:text-indigo-400">
+                                        <Pin className="size-3 fill-current" />
+                                        Disematkan
+                                    </span>
+                                ) : (
+                                    <span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
+                                        <NotebookPen className="size-3" />
+                                        Catatan
+                                    </span>
                                 )}
+
+                                <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                                    <CalendarDays className="size-3" />
+                                    {formatDate(note.updated_at)}
+                                </span>
                             </div>
+
+                            <h2 className="line-clamp-2 text-base font-semibold tracking-tight text-foreground transition-colors group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                                {note.title}
+                            </h2>
 
                             <p className="mt-2 line-clamp-4 text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground">
                                 {excerpt(note.content)}
                             </p>
 
                             {note.tags?.length > 0 && (
-                                <div className="mt-3 flex flex-wrap gap-1.5">
+                                <div className="mt-3.5 flex flex-wrap gap-1.5">
                                     {note.tags.map((tag) => (
                                         <span
                                             key={tag}
-                                            className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+                                            className="rounded-md bg-muted/80 px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
                                         >
-                                            {tag}
+                                            #{tag}
                                         </span>
                                     ))}
                                 </div>
                             )}
 
-                            <div className="mt-auto flex items-center justify-between gap-2 pt-4">
-                                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                    <CalendarDays className="size-3.5" />
-                                    {formatDate(note.updated_at)}
-                                </span>
-
-                                <div className="flex items-center gap-1">
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        aria-label={
-                                            note.is_pinned
-                                                ? 'Lepas sematan'
-                                                : 'Sematkan catatan'
-                                        }
-                                        title={
-                                            note.is_pinned
-                                                ? 'Lepas sematan'
-                                                : 'Sematkan'
-                                        }
-                                        onClick={() => togglePin(note)}
-                                    >
-                                        {note.is_pinned ? (
-                                            <PinOff className="size-4" />
-                                        ) : (
-                                            <Pin className="size-4" />
-                                        )}
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        aria-label="Edit catatan"
-                                        title="Edit"
-                                        onClick={() => openEdit(note)}
-                                    >
-                                        <Pencil className="size-4" />
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        aria-label="Hapus catatan"
-                                        title="Hapus"
-                                        className="text-muted-foreground hover:text-destructive"
-                                        onClick={() => setDeleting(note)}
-                                    >
-                                        <Trash2 className="size-4" />
-                                    </Button>
-                                </div>
+                            <div className="mt-auto flex items-center justify-end gap-1 border-t border-border/50 pt-3">
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className={cn(
+                                        'h-8 gap-1.5 px-2.5 text-xs font-medium transition-colors',
+                                        note.is_pinned
+                                            ? 'text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/50'
+                                            : 'text-muted-foreground hover:text-foreground',
+                                    )}
+                                    aria-label={
+                                        note.is_pinned
+                                            ? 'Lepas sematan'
+                                            : 'Sematkan catatan'
+                                    }
+                                    title={
+                                        note.is_pinned
+                                            ? 'Lepas sematan'
+                                            : 'Sematkan catatan'
+                                    }
+                                    onClick={() => togglePin(note)}
+                                >
+                                    {note.is_pinned ? (
+                                        <>
+                                            <PinOff className="size-3.5" />
+                                            <span>Lepas</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Pin className="size-3.5" />
+                                            <span>Sematkan</span>
+                                        </>
+                                    )}
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 gap-1.5 px-2.5 text-xs text-muted-foreground hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950/50 transition-colors"
+                                    aria-label="Edit catatan"
+                                    title="Edit"
+                                    onClick={() => openEdit(note)}
+                                >
+                                    <Pencil className="size-3.5" />
+                                    <span>Edit</span>
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 gap-1.5 px-2.5 text-xs text-muted-foreground hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/50 transition-colors"
+                                    aria-label="Hapus catatan"
+                                    title="Hapus"
+                                    onClick={() => setDeleting(note)}
+                                >
+                                    <Trash2 className="size-3.5" />
+                                    <span>Hapus</span>
+                                </Button>
                             </div>
                         </article>
                     ))}
@@ -362,16 +438,17 @@ export default function NotesIndex({ notes, tags = [], filters = {} }) {
             )}
 
             {notes.last_page > 1 && (
-                <div className="mt-6 flex items-center justify-between gap-3">
+                <div className="mt-8 flex items-center justify-between gap-3 rounded-xl border bg-card/50 px-4 py-3">
                     <p className="text-xs text-muted-foreground">
-                        Menampilkan {notes.from}–{notes.to} dari {notes.total}{' '}
-                        catatan
+                        Menampilkan <span className="font-medium text-foreground">{notes.from}–{notes.to}</span> dari{' '}
+                        <span className="font-medium text-foreground">{notes.total}</span> catatan
                     </p>
                     <div className="flex gap-2">
                         <Button
                             type="button"
                             variant="outline"
                             size="sm"
+                            className="gap-1.5"
                             disabled={!notes.prev_page_url}
                             onClick={() =>
                                 notes.prev_page_url &&
@@ -385,12 +462,14 @@ export default function NotesIndex({ notes, tags = [], filters = {} }) {
                                 )
                             }
                         >
-                            Sebelumnya
+                            <ChevronLeft className="size-4" />
+                            <span>Sebelumnya</span>
                         </Button>
                         <Button
                             type="button"
                             variant="outline"
                             size="sm"
+                            className="gap-1.5"
                             disabled={!notes.next_page_url}
                             onClick={() =>
                                 notes.next_page_url &&
@@ -404,7 +483,8 @@ export default function NotesIndex({ notes, tags = [], filters = {} }) {
                                 )
                             }
                         >
-                            Berikutnya
+                            <span>Berikutnya</span>
+                            <ChevronRight className="size-4" />
                         </Button>
                     </div>
                 </div>

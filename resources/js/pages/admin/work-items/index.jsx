@@ -1,13 +1,19 @@
 import { router, useForm } from '@inertiajs/react';
 import {
+    AlertCircle,
     CalendarDays,
+    Check,
+    ChevronLeft,
+    ChevronRight,
     ClipboardList,
     Pencil,
     Plus,
+    RotateCcw,
     Save,
     Search,
     Tag,
     Trash2,
+    X,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -25,77 +31,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import AdminLayout from '@/layouts/admin-layout';
+import { formatDate, isOverdue, toDateInput } from '@/lib/date';
 import { cn } from '@/lib/utils';
-
-const statusMeta = {
-    backlog: {
-        label: 'Backlog',
-        badge: 'bg-slate-500/10 text-slate-600 ring-slate-500/20 dark:text-slate-300',
-    },
-    todo: {
-        label: 'To do',
-        badge: 'bg-sky-500/10 text-sky-600 ring-sky-500/20 dark:text-sky-300',
-    },
-    in_progress: {
-        label: 'Dikerjakan',
-        badge: 'bg-indigo-500/10 text-indigo-600 ring-indigo-500/20 dark:text-indigo-300',
-    },
-    done: {
-        label: 'Selesai',
-        badge: 'bg-emerald-500/10 text-emerald-600 ring-emerald-500/20 dark:text-emerald-300',
-    },
-};
-
-const priorityMeta = {
-    low: {
-        label: 'Rendah',
-        badge: 'bg-slate-500/10 text-slate-600 ring-slate-500/20 dark:text-slate-300',
-    },
-    medium: {
-        label: 'Sedang',
-        badge: 'bg-blue-500/10 text-blue-600 ring-blue-500/20 dark:text-blue-300',
-    },
-    high: {
-        label: 'Tinggi',
-        badge: 'bg-amber-500/10 text-amber-600 ring-amber-500/20 dark:text-amber-300',
-    },
-    urgent: {
-        label: 'Urgent',
-        badge: 'bg-red-500/10 text-red-600 ring-red-500/20 dark:text-red-300',
-    },
-};
-
-const dateFormatter = new Intl.DateTimeFormat('id-ID', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-});
-
-const toDateInput = (value) => (value ? value.slice(0, 10) : '');
-
-const formatDate = (value) => {
-    if (!value) {
-        return '';
-    }
-
-    const [year, month, day] = value.slice(0, 10).split('-').map(Number);
-
-    return dateFormatter.format(new Date(year, month - 1, day));
-};
-
-const todayIso = () => {
-    const now = new Date();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-
-    return `${now.getFullYear()}-${month}-${day}`;
-};
-
-const isOverdue = (value, status) => {
-    return (
-        Boolean(value) && status !== 'done' && value.slice(0, 10) < todayIso()
-    );
-};
+import { priorityMeta, statusMeta } from '@/lib/work-item-meta';
 
 const parseTags = (value) => {
     return value
@@ -268,73 +206,104 @@ export default function WorkItemsIndex({
 
     return (
         <AdminLayout title="Pekerjaan">
+            {/* Header */}
             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h1 className="text-xl font-semibold tracking-tight">
-                        Pekerjaan
+                    <h1 className="flex items-center gap-2.5 text-2xl font-bold tracking-tight">
+                        <span>Pekerjaan</span>
+                        <span className="rounded-full bg-indigo-500/10 px-2.5 py-0.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                            {workItems.total ?? 0}
+                        </span>
                     </h1>
                     <p className="mt-1 text-sm text-muted-foreground">
-                        Catat kebutuhan dan pekerjaan, lalu kelola progresnya.{' '}
-                        {workItems.total ?? 0} pekerjaan ditemukan.
+                        Catat kebutuhan dan pekerjaan, lalu kelola alur progresnya.
                     </p>
                 </div>
 
                 <Button
                     type="button"
                     onClick={openCreate}
-                    className="bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 hover:bg-indigo-700"
+                    className="h-10 gap-2 bg-indigo-600 px-4 text-white shadow-md shadow-indigo-600/25 transition-all hover:bg-indigo-700 active:scale-[0.98]"
                 >
                     <Plus className="size-4" />
-                    Pekerjaan baru
+                    <span>Pekerjaan baru</span>
                 </Button>
             </div>
 
-            <div className="mb-4 flex flex-col gap-3">
-                <div className="flex flex-col gap-2 sm:flex-row">
+            {/* Filter & Search Bar */}
+            <div className="mb-6 rounded-2xl border bg-card/90 p-4 shadow-xs backdrop-blur-xs space-y-3.5">
+                <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
                     <form onSubmit={applySearch} className="flex flex-1 gap-2">
                         <div className="relative flex-1">
-                            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                            <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
                             <Input
                                 value={search}
                                 onChange={(event) =>
                                     setSearch(event.target.value)
                                 }
-                                placeholder="Cari judul atau deskripsi..."
-                                className="h-10 pl-10"
+                                placeholder="masukkan kata kunci pencarian..."
+                                className="h-10 bg-background pl-10 pr-9 transition-colors"
                                 aria-label="Cari pekerjaan"
                             />
+                            {search && (
+                                <button
+                                    type="button"
+                                    onClick={() => setSearch('')}
+                                    className="absolute top-1/2 right-3 -translate-y-1/2 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                    aria-label="Hapus teks pencarian"
+                                    title="Hapus teks"
+                                >
+                                    <X className="size-3.5" />
+                                </button>
+                            )}
                         </div>
-                        <Button type="submit" variant="secondary">
-                            Cari
+
+                        {/* Tombol Search khusus dengan warna & desain yang dibedakan */}
+                        <Button
+                            type="submit"
+                            className="h-10 gap-2 bg-blue-600 text-white shadow-sm shadow-blue-600/25 hover:bg-blue-700 active:scale-[0.98] transition-all font-medium px-4 shrink-0"
+                        >
+                            <Search className="size-4 shrink-0" />
+                            <span>Cari</span>
                         </Button>
                     </form>
 
-                    <select
-                        value={filters.priority ?? ''}
-                        onChange={(event) => applyPriority(event.target.value)}
-                        aria-label="Filter prioritas"
-                        className="h-10 rounded-md border border-input bg-background px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                    >
-                        <option value="">Semua prioritas</option>
-                        {priorities.map((priority) => (
-                            <option key={priority} value={priority}>
-                                {priorityMeta[priority].label}
-                            </option>
-                        ))}
-                    </select>
+                    <div className="flex items-center gap-2">
+                        <div className="relative flex-1 sm:w-44">
+                            <select
+                                value={filters.priority ?? ''}
+                                onChange={(event) =>
+                                    applyPriority(event.target.value)
+                                }
+                                aria-label="Filter prioritas"
+                                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 transition-colors"
+                            >
+                                <option value="">Semua prioritas</option>
+                                {priorities.map((priority) => (
+                                    <option key={priority} value={priority}>
+                                        {priorityMeta[priority].label}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
 
-                    {hasFilters && (
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            onClick={clearFilters}
-                        >
-                            Reset
-                        </Button>
-                    )}
+                        {hasFilters && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={clearFilters}
+                                className="h-10 gap-1.5 border-dashed text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
+                                title="Reset filter dan pencarian"
+                            >
+                                <RotateCcw className="size-3.5 shrink-0" />
+                                <span>Reset</span>
+                            </Button>
+                        )}
+                    </div>
                 </div>
 
-                <div className="flex gap-1 overflow-x-auto rounded-xl border bg-card p-1">
+                {/* Status Tabs */}
+                <div className="flex gap-1 overflow-x-auto rounded-xl border bg-background/80 p-1.5">
                     {statusTabs.map((tab) => {
                         const active = (filters.status ?? '') === tab.value;
 
@@ -344,17 +313,19 @@ export default function WorkItemsIndex({
                                 type="button"
                                 onClick={() => applyStatus(tab.value)}
                                 className={cn(
-                                    'flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors',
+                                    'flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all',
                                     active
-                                        ? 'bg-indigo-600 text-white'
+                                        ? 'bg-indigo-600 text-white shadow-xs'
                                         : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                                 )}
                             >
-                                {tab.label}
+                                <span>{tab.label}</span>
                                 <span
                                     className={cn(
-                                        'rounded-full px-1.5 text-[11px]',
-                                        active ? 'bg-white/20' : 'bg-muted',
+                                        'rounded-full px-1.5 py-0.5 text-[10px] font-semibold',
+                                        active
+                                            ? 'bg-white/20 text-white'
+                                            : 'bg-muted text-muted-foreground',
                                     )}
                                 >
                                     {tab.count}
@@ -366,7 +337,7 @@ export default function WorkItemsIndex({
             </div>
 
             {workItems.data.length === 0 ? (
-                <div className="flex min-h-[48vh] flex-col items-center justify-center rounded-2xl border border-dashed bg-card p-10 text-center">
+                <div className="flex min-h-[44vh] flex-col items-center justify-center rounded-2xl border border-dashed bg-card/50 p-10 text-center">
                     <span className="flex size-14 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-500">
                         <ClipboardList className="size-7" />
                     </span>
@@ -377,26 +348,27 @@ export default function WorkItemsIndex({
                     </h2>
                     <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
                         {hasFilters
-                            ? 'Coba kata kunci, status, atau prioritas lain.'
+                            ? 'Coba kata kunci, status, atau prioritas lain, atau klik reset.'
                             : 'Mulai catat kebutuhan atau pekerjaan pertamamu di sini.'}
                     </p>
                     {hasFilters ? (
                         <Button
                             type="button"
                             variant="outline"
-                            className="mt-5"
+                            className="mt-5 gap-1.5 border-dashed"
                             onClick={clearFilters}
                         >
-                            Reset filter
+                            <RotateCcw className="size-3.5" />
+                            <span>Reset filter</span>
                         </Button>
                     ) : (
                         <Button
                             type="button"
-                            className="mt-5 bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 hover:bg-indigo-700"
+                            className="mt-5 gap-2 bg-indigo-600 text-white shadow-md shadow-indigo-600/20 hover:bg-indigo-700"
                             onClick={openCreate}
                         >
                             <Plus className="size-4" />
-                            Buat pekerjaan pertama
+                            <span>Buat pekerjaan pertama</span>
                         </Button>
                     )}
                 </div>
@@ -405,7 +377,12 @@ export default function WorkItemsIndex({
                     {workItems.data.map((workItem) => (
                         <article
                             key={workItem.id}
-                            className="rounded-xl border bg-card p-4 shadow-sm transition-colors hover:border-indigo-500/40 sm:p-5"
+                            className={cn(
+                                'rounded-2xl border bg-card p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md',
+                                workItem.status === 'done'
+                                    ? 'border-border/60 bg-muted/20 opacity-90'
+                                    : 'hover:border-indigo-500/40',
+                            )}
                         >
                             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                                 <div className="min-w-0 flex-1">
@@ -485,7 +462,7 @@ export default function WorkItemsIndex({
                                     )}
                                 </div>
 
-                                <div className="flex shrink-0 items-center gap-2">
+                                <div className="flex shrink-0 items-center gap-2 border-t pt-2 lg:border-t-0 lg:pt-0">
                                     <select
                                         value={workItem.status}
                                         onChange={(event) =>
@@ -495,7 +472,7 @@ export default function WorkItemsIndex({
                                             )
                                         }
                                         aria-label={`Ubah status ${workItem.title}`}
-                                        className="h-9 rounded-md border border-input bg-background px-2 text-xs font-medium shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                        className="h-8.5 rounded-lg border border-input bg-background px-2.5 text-xs font-medium shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 transition-colors"
                                     >
                                         {statuses.map((status) => (
                                             <option key={status} value={status}>
@@ -507,23 +484,27 @@ export default function WorkItemsIndex({
                                     <Button
                                         type="button"
                                         variant="ghost"
-                                        size="icon"
+                                        size="sm"
+                                        className="h-8.5 gap-1.5 px-2.5 text-xs text-muted-foreground hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950/50 transition-colors"
                                         aria-label="Edit pekerjaan"
                                         title="Edit"
                                         onClick={() => openEdit(workItem)}
                                     >
-                                        <Pencil className="size-4" />
+                                        <Pencil className="size-3.5" />
+                                        <span>Edit</span>
                                     </Button>
+
                                     <Button
                                         type="button"
                                         variant="ghost"
-                                        size="icon"
+                                        size="sm"
+                                        className="h-8.5 gap-1.5 px-2.5 text-xs text-muted-foreground hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/50 transition-colors"
                                         aria-label="Hapus pekerjaan"
                                         title="Hapus"
-                                        className="text-muted-foreground hover:text-destructive"
                                         onClick={() => setDeleting(workItem)}
                                     >
-                                        <Trash2 className="size-4" />
+                                        <Trash2 className="size-3.5" />
+                                        <span>Hapus</span>
                                     </Button>
                                 </div>
                             </div>
@@ -533,16 +514,17 @@ export default function WorkItemsIndex({
             )}
 
             {workItems.last_page > 1 && (
-                <div className="mt-6 flex items-center justify-between gap-3">
+                <div className="mt-8 flex items-center justify-between gap-3 rounded-xl border bg-card/50 px-4 py-3">
                     <p className="text-xs text-muted-foreground">
-                        Menampilkan {workItems.from}–{workItems.to} dari{' '}
-                        {workItems.total} pekerjaan
+                        Menampilkan <span className="font-medium text-foreground">{workItems.from}–{workItems.to}</span> dari{' '}
+                        <span className="font-medium text-foreground">{workItems.total}</span> pekerjaan
                     </p>
                     <div className="flex gap-2">
                         <Button
                             type="button"
                             variant="outline"
                             size="sm"
+                            className="gap-1.5"
                             disabled={!workItems.prev_page_url}
                             onClick={() =>
                                 workItems.prev_page_url &&
@@ -556,12 +538,14 @@ export default function WorkItemsIndex({
                                 )
                             }
                         >
-                            Sebelumnya
+                            <ChevronLeft className="size-4" />
+                            <span>Sebelumnya</span>
                         </Button>
                         <Button
                             type="button"
                             variant="outline"
                             size="sm"
+                            className="gap-1.5"
                             disabled={!workItems.next_page_url}
                             onClick={() =>
                                 workItems.next_page_url &&
@@ -575,7 +559,8 @@ export default function WorkItemsIndex({
                                 )
                             }
                         >
-                            Berikutnya
+                            <span>Berikutnya</span>
+                            <ChevronRight className="size-4" />
                         </Button>
                     </div>
                 </div>
@@ -604,7 +589,7 @@ export default function WorkItemsIndex({
                                 onChange={(event) =>
                                     setData('title', event.target.value)
                                 }
-                                placeholder="Misalnya: Rancang skema multi-agent"
+                                placeholder="masukkan judul"
                                 autoFocus
                                 required
                                 aria-invalid={Boolean(errors.title)}
@@ -622,7 +607,7 @@ export default function WorkItemsIndex({
                                 onChange={(event) =>
                                     setData('description', event.target.value)
                                 }
-                                placeholder="Detail kebutuhan, konteks, atau catatan tambahan..."
+                                placeholder="masukkan deskripsi"
                                 rows={4}
                                 aria-invalid={Boolean(errors.description)}
                                 className="flex min-h-24 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
@@ -695,7 +680,7 @@ export default function WorkItemsIndex({
                                 onChange={(event) =>
                                     handleTagsChange(event.target.value)
                                 }
-                                placeholder="ai, backend, riset"
+                                placeholder="masukkan tag"
                             />
                             <p className="text-xs text-muted-foreground">
                                 Pisahkan beberapa tag dengan koma. Maksimal 10
