@@ -79,7 +79,7 @@ export default function Admin({
                     </Button>
                     <Button
                         asChild
-                        className="bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 hover:bg-indigo-700"
+                        className="bg-neutral-900 text-white shadow-sm transition-all hover:bg-neutral-800 active:scale-[0.98] dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100"
                     >
                         <Link href="/admin/work-items">
                             <Plus className="size-4" />

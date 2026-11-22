@@ -1,8 +1,6 @@
 import { router, useForm } from '@inertiajs/react';
 import {
-    AlertCircle,
     CalendarDays,
-    Check,
     ChevronLeft,
     ChevronRight,
     ClipboardList,
@@ -15,7 +13,7 @@ import {
     Trash2,
     X,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -49,11 +47,44 @@ export default function WorkItemsIndex({
     statuses = [],
     priorities = [],
 }) {
-    const [search, setSearch] = useState(filters.q ?? '');
+    const queryParam = filters.q ?? '';
+    const [search, setSearch] = useState(queryParam);
+    const [syncedQuery, setSyncedQuery] = useState(queryParam);
     const [editorOpen, setEditorOpen] = useState(false);
     const [editing, setEditing] = useState(null);
     const [tagInput, setTagInput] = useState('');
     const [deleting, setDeleting] = useState(null);
+    const isFirstRender = useRef(true);
+
+    if (queryParam !== syncedQuery) {
+        setSyncedQuery(queryParam);
+        setSearch(queryParam);
+    }
+
+    useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+
+        if (search === queryParam) {
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            router.get(
+                '/admin/work-items',
+                {
+                    q: search || undefined,
+                    status: filters.status || undefined,
+                    priority: filters.priority || undefined,
+                },
+                { preserveScroll: true, preserveState: true, replace: true },
+            );
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [search, queryParam, filters.status, filters.priority]);
 
     const {
         data,
@@ -158,6 +189,10 @@ export default function WorkItemsIndex({
     const applySearch = (event) => {
         event.preventDefault();
 
+        if (search === (filters.q ?? '')) {
+            return;
+        }
+
         router.get(
             '/admin/work-items',
             {
@@ -169,11 +204,26 @@ export default function WorkItemsIndex({
         );
     };
 
+    const handleClearSearch = () => {
+        setSearch('');
+        if (!filters.q) {
+            return;
+        }
+        router.get(
+            '/admin/work-items',
+            {
+                status: filters.status || undefined,
+                priority: filters.priority || undefined,
+            },
+            { preserveScroll: true, preserveState: true, replace: true },
+        );
+    };
+
     const applyStatus = (status) => {
         router.get(
             '/admin/work-items',
             {
-                q: filters.q || undefined,
+                q: search || undefined,
                 status: status || undefined,
                 priority: filters.priority || undefined,
             },
@@ -185,7 +235,7 @@ export default function WorkItemsIndex({
         router.get(
             '/admin/work-items',
             {
-                q: filters.q || undefined,
+                q: search || undefined,
                 status: filters.status || undefined,
                 priority: priority || undefined,
             },
@@ -216,14 +266,15 @@ export default function WorkItemsIndex({
                         </span>
                     </h1>
                     <p className="mt-1 text-sm text-muted-foreground">
-                        Catat kebutuhan dan pekerjaan, lalu kelola alur progresnya.
+                        Catat kebutuhan dan pekerjaan, lalu kelola alur
+                        progresnya.
                     </p>
                 </div>
 
                 <Button
                     type="button"
                     onClick={openCreate}
-                    className="h-10 gap-2 bg-indigo-600 px-4 text-white shadow-md shadow-indigo-600/25 transition-all hover:bg-indigo-700 active:scale-[0.98]"
+                    className="h-10 gap-2 bg-neutral-900 px-4 text-white shadow-sm transition-all hover:bg-neutral-800 active:scale-[0.98] dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100"
                 >
                     <Plus className="size-4" />
                     <span>Pekerjaan baru</span>
@@ -231,10 +282,10 @@ export default function WorkItemsIndex({
             </div>
 
             {/* Filter & Search Bar */}
-            <div className="mb-6 rounded-2xl border bg-card/90 p-4 shadow-xs backdrop-blur-xs space-y-3.5">
+            <div className="mb-6 space-y-3.5 rounded-2xl border bg-card/90 p-4 shadow-xs backdrop-blur-xs">
                 <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
-                    <form onSubmit={applySearch} className="flex flex-1 gap-2">
-                        <div className="relative flex-1">
+                    <form onSubmit={applySearch} className="flex-1">
+                        <div className="relative">
                             <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
                             <Input
                                 value={search}
@@ -242,13 +293,13 @@ export default function WorkItemsIndex({
                                     setSearch(event.target.value)
                                 }
                                 placeholder="masukkan kata kunci pencarian..."
-                                className="h-10 bg-background pl-10 pr-9 transition-colors"
+                                className="h-10 bg-background pr-9 pl-10 transition-colors"
                                 aria-label="Cari pekerjaan"
                             />
                             {search && (
                                 <button
                                     type="button"
-                                    onClick={() => setSearch('')}
+                                    onClick={handleClearSearch}
                                     className="absolute top-1/2 right-3 -translate-y-1/2 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                                     aria-label="Hapus teks pencarian"
                                     title="Hapus teks"
@@ -257,15 +308,6 @@ export default function WorkItemsIndex({
                                 </button>
                             )}
                         </div>
-
-                        {/* Tombol Search khusus dengan warna & desain yang dibedakan */}
-                        <Button
-                            type="submit"
-                            className="h-10 gap-2 bg-blue-600 text-white shadow-sm shadow-blue-600/25 hover:bg-blue-700 active:scale-[0.98] transition-all font-medium px-4 shrink-0"
-                        >
-                            <Search className="size-4 shrink-0" />
-                            <span>Cari</span>
-                        </Button>
                     </form>
 
                     <div className="flex items-center gap-2">
@@ -276,7 +318,7 @@ export default function WorkItemsIndex({
                                     applyPriority(event.target.value)
                                 }
                                 aria-label="Filter prioritas"
-                                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 transition-colors"
+                                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm shadow-xs transition-colors outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                             >
                                 <option value="">Semua prioritas</option>
                                 {priorities.map((priority) => (
@@ -292,7 +334,7 @@ export default function WorkItemsIndex({
                                 type="button"
                                 variant="outline"
                                 onClick={clearFilters}
-                                className="h-10 gap-1.5 border-dashed text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
+                                className="h-10 shrink-0 gap-1.5 border-dashed text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                                 title="Reset filter dan pencarian"
                             >
                                 <RotateCcw className="size-3.5 shrink-0" />
@@ -364,7 +406,7 @@ export default function WorkItemsIndex({
                     ) : (
                         <Button
                             type="button"
-                            className="mt-5 gap-2 bg-indigo-600 text-white shadow-md shadow-indigo-600/20 hover:bg-indigo-700"
+                            className="mt-5 gap-2 bg-neutral-900 text-white shadow-sm transition-all hover:bg-neutral-800 active:scale-[0.98] dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100"
                             onClick={openCreate}
                         >
                             <Plus className="size-4" />
@@ -472,7 +514,7 @@ export default function WorkItemsIndex({
                                             )
                                         }
                                         aria-label={`Ubah status ${workItem.title}`}
-                                        className="h-8.5 rounded-lg border border-input bg-background px-2.5 text-xs font-medium shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 transition-colors"
+                                        className="h-8.5 rounded-lg border border-input bg-background px-2.5 text-xs font-medium shadow-xs transition-colors outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                                     >
                                         {statuses.map((status) => (
                                             <option key={status} value={status}>
@@ -485,7 +527,7 @@ export default function WorkItemsIndex({
                                         type="button"
                                         variant="ghost"
                                         size="sm"
-                                        className="h-8.5 gap-1.5 px-2.5 text-xs text-muted-foreground hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950/50 transition-colors"
+                                        className="h-8.5 gap-1.5 px-2.5 text-xs text-muted-foreground transition-colors hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950/50"
                                         aria-label="Edit pekerjaan"
                                         title="Edit"
                                         onClick={() => openEdit(workItem)}
@@ -498,7 +540,7 @@ export default function WorkItemsIndex({
                                         type="button"
                                         variant="ghost"
                                         size="sm"
-                                        className="h-8.5 gap-1.5 px-2.5 text-xs text-muted-foreground hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/50 transition-colors"
+                                        className="h-8.5 gap-1.5 px-2.5 text-xs text-muted-foreground transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/50"
                                         aria-label="Hapus pekerjaan"
                                         title="Hapus"
                                         onClick={() => setDeleting(workItem)}
@@ -516,8 +558,15 @@ export default function WorkItemsIndex({
             {workItems.last_page > 1 && (
                 <div className="mt-8 flex items-center justify-between gap-3 rounded-xl border bg-card/50 px-4 py-3">
                     <p className="text-xs text-muted-foreground">
-                        Menampilkan <span className="font-medium text-foreground">{workItems.from}–{workItems.to}</span> dari{' '}
-                        <span className="font-medium text-foreground">{workItems.total}</span> pekerjaan
+                        Menampilkan{' '}
+                        <span className="font-medium text-foreground">
+                            {workItems.from}–{workItems.to}
+                        </span>{' '}
+                        dari{' '}
+                        <span className="font-medium text-foreground">
+                            {workItems.total}
+                        </span>{' '}
+                        pekerjaan
                     </p>
                     <div className="flex gap-2">
                         <Button
@@ -700,7 +749,7 @@ export default function WorkItemsIndex({
                             <Button
                                 type="submit"
                                 disabled={processing}
-                                className="bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 hover:bg-indigo-700"
+                                className="bg-neutral-900 text-white shadow-sm transition-all hover:bg-neutral-800 active:scale-[0.98] dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100"
                             >
                                 {processing ? (
                                     <>

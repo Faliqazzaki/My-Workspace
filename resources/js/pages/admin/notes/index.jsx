@@ -15,7 +15,7 @@ import {
     Trash2,
     X,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -57,11 +57,43 @@ const parseTags = (value) => {
 };
 
 export default function NotesIndex({ notes, tags = [], filters = {} }) {
-    const [search, setSearch] = useState(filters.q ?? '');
+    const queryParam = filters.q ?? '';
+    const [search, setSearch] = useState(queryParam);
+    const [syncedQuery, setSyncedQuery] = useState(queryParam);
     const [editorOpen, setEditorOpen] = useState(false);
     const [editing, setEditing] = useState(null);
     const [tagInput, setTagInput] = useState('');
     const [deleting, setDeleting] = useState(null);
+    const isFirstRender = useRef(true);
+
+    if (queryParam !== syncedQuery) {
+        setSyncedQuery(queryParam);
+        setSearch(queryParam);
+    }
+
+    useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+
+        if (search === queryParam) {
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            router.get(
+                '/admin/notes',
+                {
+                    q: search || undefined,
+                    tag: filters.tag || undefined,
+                },
+                { preserveScroll: true, preserveState: true, replace: true },
+            );
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [search, queryParam, filters.tag]);
 
     const { data, setData, post, put, processing, errors, reset, clearErrors } =
         useForm({
@@ -134,6 +166,10 @@ export default function NotesIndex({ notes, tags = [], filters = {} }) {
     const applySearch = (event) => {
         event.preventDefault();
 
+        if (search === (filters.q ?? '')) {
+            return;
+        }
+
         router.get(
             '/admin/notes',
             {
@@ -144,11 +180,25 @@ export default function NotesIndex({ notes, tags = [], filters = {} }) {
         );
     };
 
+    const handleClearSearch = () => {
+        setSearch('');
+        if (!filters.q) {
+            return;
+        }
+        router.get(
+            '/admin/notes',
+            {
+                tag: filters.tag || undefined,
+            },
+            { preserveScroll: true, preserveState: true, replace: true },
+        );
+    };
+
     const applyTag = (tag) => {
         router.get(
             '/admin/notes',
             {
-                q: filters.q || undefined,
+                q: search || undefined,
                 tag: filters.tag === tag ? undefined : tag,
             },
             { preserveScroll: true, preserveState: true, replace: true },
@@ -178,14 +228,15 @@ export default function NotesIndex({ notes, tags = [], filters = {} }) {
                         </span>
                     </h1>
                     <p className="mt-1 text-sm text-muted-foreground">
-                        Simpan pengetahuan, ide, dan kebutuhanmu di satu tempat yang mudah diakses.
+                        Simpan pengetahuan, ide, dan kebutuhanmu di satu tempat
+                        yang mudah diakses.
                     </p>
                 </div>
 
                 <Button
                     type="button"
                     onClick={openCreate}
-                    className="h-10 gap-2 bg-indigo-600 px-4 text-white shadow-md shadow-indigo-600/25 transition-all hover:bg-indigo-700 active:scale-[0.98]"
+                    className="h-10 gap-2 bg-neutral-900 px-4 text-white shadow-sm transition-all hover:bg-neutral-800 active:scale-[0.98] dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100"
                 >
                     <Plus className="size-4" />
                     <span>Catatan baru</span>
@@ -194,20 +245,23 @@ export default function NotesIndex({ notes, tags = [], filters = {} }) {
 
             {/* Filter & Search Bar */}
             <div className="mb-6 rounded-2xl border bg-card/90 p-4 shadow-xs backdrop-blur-xs">
-                <form onSubmit={applySearch} className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
+                <form
+                    onSubmit={applySearch}
+                    className="flex items-center gap-2"
+                >
                     <div className="relative flex-1">
                         <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             value={search}
                             onChange={(event) => setSearch(event.target.value)}
                             placeholder="masukkan kata kunci pencarian..."
-                            className="h-10 bg-background pl-10 pr-9 transition-colors"
+                            className="h-10 bg-background pr-9 pl-10 transition-colors"
                             aria-label="Cari catatan"
                         />
                         {search && (
                             <button
                                 type="button"
-                                onClick={() => setSearch('')}
+                                onClick={handleClearSearch}
                                 className="absolute top-1/2 right-3 -translate-y-1/2 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                                 aria-label="Hapus teks pencarian"
                                 title="Hapus teks"
@@ -217,29 +271,18 @@ export default function NotesIndex({ notes, tags = [], filters = {} }) {
                         )}
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        {/* Tombol Search khusus dengan warna & desain yang dibedakan */}
+                    {hasFilters && (
                         <Button
-                            type="submit"
-                            className="h-10 flex-1 sm:flex-initial gap-2 bg-blue-600 text-white shadow-sm shadow-blue-600/25 hover:bg-blue-700 active:scale-[0.98] transition-all font-medium px-4 shrink-0"
+                            type="button"
+                            variant="outline"
+                            onClick={clearFilters}
+                            className="h-10 shrink-0 gap-1.5 border-dashed text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                            title="Reset filter dan pencarian"
                         >
-                            <Search className="size-4 shrink-0" />
-                            <span>Cari</span>
+                            <RotateCcw className="size-3.5 shrink-0" />
+                            <span>Reset</span>
                         </Button>
-
-                        {hasFilters && (
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={clearFilters}
-                                className="h-10 gap-1.5 border-dashed text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
-                                title="Reset filter dan pencarian"
-                            >
-                                <RotateCcw className="size-3.5 shrink-0" />
-                                <span>Reset</span>
-                            </Button>
-                        )}
-                    </div>
+                    )}
                 </form>
 
                 {tags.length > 0 && (
@@ -312,7 +355,7 @@ export default function NotesIndex({ notes, tags = [], filters = {} }) {
                     ) : (
                         <Button
                             type="button"
-                            className="mt-5 gap-2 bg-indigo-600 text-white shadow-md shadow-indigo-600/20 hover:bg-indigo-700"
+                            className="mt-5 gap-2 bg-neutral-900 text-white shadow-sm transition-all hover:bg-neutral-800 active:scale-[0.98] dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100"
                             onClick={openCreate}
                         >
                             <Plus className="size-4" />
@@ -411,7 +454,7 @@ export default function NotesIndex({ notes, tags = [], filters = {} }) {
                                     type="button"
                                     variant="ghost"
                                     size="sm"
-                                    className="h-8 gap-1.5 px-2.5 text-xs text-muted-foreground hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950/50 transition-colors"
+                                    className="h-8 gap-1.5 px-2.5 text-xs text-muted-foreground transition-colors hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950/50"
                                     aria-label="Edit catatan"
                                     title="Edit"
                                     onClick={() => openEdit(note)}
@@ -423,7 +466,7 @@ export default function NotesIndex({ notes, tags = [], filters = {} }) {
                                     type="button"
                                     variant="ghost"
                                     size="sm"
-                                    className="h-8 gap-1.5 px-2.5 text-xs text-muted-foreground hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/50 transition-colors"
+                                    className="h-8 gap-1.5 px-2.5 text-xs text-muted-foreground transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/50"
                                     aria-label="Hapus catatan"
                                     title="Hapus"
                                     onClick={() => setDeleting(note)}
@@ -440,8 +483,15 @@ export default function NotesIndex({ notes, tags = [], filters = {} }) {
             {notes.last_page > 1 && (
                 <div className="mt-8 flex items-center justify-between gap-3 rounded-xl border bg-card/50 px-4 py-3">
                     <p className="text-xs text-muted-foreground">
-                        Menampilkan <span className="font-medium text-foreground">{notes.from}–{notes.to}</span> dari{' '}
-                        <span className="font-medium text-foreground">{notes.total}</span> catatan
+                        Menampilkan{' '}
+                        <span className="font-medium text-foreground">
+                            {notes.from}–{notes.to}
+                        </span>{' '}
+                        dari{' '}
+                        <span className="font-medium text-foreground">
+                            {notes.total}
+                        </span>{' '}
+                        catatan
                     </p>
                     <div className="flex gap-2">
                         <Button
@@ -578,7 +628,7 @@ export default function NotesIndex({ notes, tags = [], filters = {} }) {
                             <Button
                                 type="submit"
                                 disabled={processing}
-                                className="bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 hover:bg-indigo-700"
+                                className="bg-neutral-900 text-white shadow-sm transition-all hover:bg-neutral-800 active:scale-[0.98] dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100"
                             >
                                 {processing ? (
                                     <>

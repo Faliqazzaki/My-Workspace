@@ -8,4 +8,3 @@ export function cn(...inputs) {
 export function toUrl(url) {
     return typeof url === 'string' ? url : url.url;
 }
-
