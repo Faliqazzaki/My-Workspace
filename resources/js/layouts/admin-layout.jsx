@@ -5,6 +5,7 @@ import {
     LogOut,
     Menu,
     NotebookPen,
+    ShieldCheck,
     X,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -18,6 +19,7 @@ const navigation = [
     { label: 'Beranda', href: '/admin', icon: Home },
     { label: 'Catatan', href: '/admin/notes', icon: NotebookPen },
     { label: 'Pekerjaan', href: '/admin/work-items', icon: ClipboardList },
+    { label: 'Keamanan', href: '/admin/password', icon: ShieldCheck },
 ];
 
 export default function AdminLayout({ title = 'Beranda', children }) {

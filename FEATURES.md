@@ -41,13 +41,13 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 ## 2. Autentikasi & Keamanan
 
 - [x] **AUTH-01** Halaman login admin di `/`
-- [x] **AUTH-02** Login kredensial sementara (`my-workspace` / `admin123`)
-- [x] **AUTH-03** Session auth dengan middleware `admin.auth`
+- [x] **AUTH-02** Login dengan akun admin dari tabel `users`
+- [x] **AUTH-03** Autentikasi Laravel + middleware `admin.auth`
 - [x] **AUTH-04** Logout di `/keluar` + invalidasi session
 - [x] **AUTH-05** Rate limit login (10 percobaan/menit)
 - [x] **AUTH-06** Redirect tamu ke halaman login
-- [ ] **AUTH-07** Ganti kredensial hardcoded dengan tabel `users` + password hash
-- [ ] **AUTH-08** Ubah password dari halaman pengaturan
+- [x] **AUTH-07** Ganti kredensial hardcoded dengan tabel `users` + password hash
+- [x] **AUTH-08** Ubah password dari halaman **Keamanan**
 - [ ] **AUTH-09** Remember me + masa berlaku session yang jelas
 - [ ] **AUTH-10** Audit log login (waktu, IP, user agent)
 - [ ] **AUTH-11** Hapus atau integrasikan route Fortify yang tidak terpakai
@@ -174,7 +174,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 
 ## 10. Kualitas & Observability
 
-- [x] **QA-01** 65 test Pest lolos (380 assertion)
+- [x] **QA-01** 70 test Pest lolos (400 assertion)
 - [x] **QA-02** Test fitur untuk auth, catatan, pekerjaan, dashboard
 - [x] **QA-03** Format PHP dengan Pint
 - [x] **QA-04** Lint JS dengan ESLint + format Prettier
@@ -194,7 +194,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 | Area | Selesai | Total |
 | --- | ---: | ---: |
 | Fondasi | 7 | 10 |
-| Autentikasi | 6 | 12 |
+| Autentikasi | 8 | 12 |
 | UI | 7 | 12 |
 | Dashboard | 6 | 11 |
 | Catatan | 7 | 16 |
@@ -204,18 +204,17 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 | Multi-Agent | 0 | 10 |
 | Kualitas | 5 | 12 |
 
-**Total: 48 dari 129 item selesai.**
+**Total: 50 dari 129 item selesai.**
 
 ## Urutan pengerjaan yang disarankan
 
-1. **AUTH-07 / AUTH-08** — hilangkan kredensial hardcoded sebelum fitur bertambah.
-2. **NOTE-08 / NOTE-09** — halaman detail + Markdown, fondasi untuk banyak fitur.
-3. **NOTE-11** — tautan catatan ↔ pekerjaan, nilai langsung terasa.
-4. **WORK-11 / WORK-12** — Kanban sebagai alternatif tampilan.
-5. **KNOW-01** — kebiasaan harian + widget dashboard.
-6. **NEWS-01 … NEWS-06** — berita teknologi + ringkasan AI.
-7. **AI-02 / AI-03** — asisten dan pencarian semantik.
-8. **AGT-01 … AGT-10** — multi-agent setelah kontrol dasar stabil.
+1. **NOTE-08 / NOTE-09** — halaman detail + Markdown, fondasi untuk banyak fitur.
+2. **NOTE-11** — tautan catatan ↔ pekerjaan, nilai langsung terasa.
+3. **WORK-11 / WORK-12** — Kanban sebagai alternatif tampilan.
+4. **KNOW-01** — kebiasaan harian + widget dashboard.
+5. **NEWS-01 … NEWS-06** — berita teknologi + ringkasan AI.
+6. **AI-02 / AI-03** — asisten dan pencarian semantik.
+7. **AGT-01 … AGT-10** — multi-agent setelah kontrol dasar stabil.
 
 ## Non-goals saat ini
 

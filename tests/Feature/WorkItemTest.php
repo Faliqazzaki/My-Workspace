@@ -3,14 +3,6 @@
 use App\Models\WorkItem;
 use Inertia\Testing\AssertableInertia as Assert;
 
-function workItemAdminSession(): array
-{
-    return [
-        'admin_authenticated' => true,
-        'admin_username' => 'my-workspace',
-    ];
-}
-
 it('mengalihkan tamu dari halaman pekerjaan', function () {
     $this->get('/admin/work-items')->assertRedirect(route('home'));
 });
@@ -24,7 +16,7 @@ it('menampilkan halaman pekerjaan untuk admin', function () {
         'tags' => ['ai'],
     ]);
 
-    $this->withSession(workItemAdminSession())
+    $this->actingAs(adminUser())
         ->get('/admin/work-items')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
@@ -36,7 +28,7 @@ it('menampilkan halaman pekerjaan untuk admin', function () {
 });
 
 it('menyimpan pekerjaan baru beserta tag', function () {
-    $this->withSession(workItemAdminSession())
+    $this->actingAs(adminUser())
         ->post('/admin/work-items', [
             'title' => 'Bangun halaman pekerjaan',
             'description' => 'List, filter, dan CRUD.',
@@ -58,7 +50,7 @@ it('menyimpan pekerjaan baru beserta tag', function () {
 });
 
 it('menandai pekerjaan selesai saat dibuat dengan status done', function () {
-    $this->withSession(workItemAdminSession())
+    $this->actingAs(adminUser())
         ->post('/admin/work-items', [
             'title' => 'Tugas selesai',
             'status' => 'done',
@@ -70,7 +62,7 @@ it('menandai pekerjaan selesai saat dibuat dengan status done', function () {
 });
 
 it('memvalidasi judul, status, dan prioritas', function () {
-    $this->withSession(workItemAdminSession())
+    $this->actingAs(adminUser())
         ->post('/admin/work-items', [
             'title' => '',
             'status' => 'invalid',
@@ -89,7 +81,7 @@ it('memperbarui pekerjaan', function () {
         'tags' => ['lama'],
     ]);
 
-    $this->withSession(workItemAdminSession())
+    $this->actingAs(adminUser())
         ->put("/admin/work-items/{$workItem->id}", [
             'title' => 'Judul baru',
             'description' => 'Deskripsi baru.',
@@ -116,7 +108,7 @@ it('mengubah status dengan cepat dan mengatur completed_at', function () {
         'priority' => 'medium',
     ]);
 
-    $this->withSession(workItemAdminSession())
+    $this->actingAs(adminUser())
         ->from('/admin/work-items')
         ->patch("/admin/work-items/{$workItem->id}/status", [
             'status' => 'done',
@@ -126,7 +118,7 @@ it('mengubah status dengan cepat dan mengatur completed_at', function () {
     expect($workItem->fresh()->status)->toBe('done')
         ->and($workItem->fresh()->completed_at)->not->toBeNull();
 
-    $this->withSession(workItemAdminSession())
+    $this->actingAs(adminUser())
         ->from('/admin/work-items')
         ->patch("/admin/work-items/{$workItem->id}/status", [
             'status' => 'todo',
@@ -143,7 +135,7 @@ it('menghapus pekerjaan', function () {
         'priority' => 'low',
     ]);
 
-    $this->withSession(workItemAdminSession())
+    $this->actingAs(adminUser())
         ->from('/admin/work-items')
         ->delete("/admin/work-items/{$workItem->id}")
         ->assertRedirect('/admin/work-items');
@@ -166,7 +158,7 @@ it('mencari dan menyaring pekerjaan', function () {
         'tags' => ['notes'],
     ]);
 
-    $this->withSession(workItemAdminSession())
+    $this->actingAs(adminUser())
         ->get('/admin/work-items?q=agent')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
@@ -174,7 +166,7 @@ it('mencari dan menyaring pekerjaan', function () {
             ->where('workItems.data.0.title', 'Rancang multi agent')
         );
 
-    $this->withSession(workItemAdminSession())
+    $this->actingAs(adminUser())
         ->get('/admin/work-items?status=backlog')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
@@ -182,7 +174,7 @@ it('mencari dan menyaring pekerjaan', function () {
             ->where('workItems.data.0.title', 'Buat catatan')
         );
 
-    $this->withSession(workItemAdminSession())
+    $this->actingAs(adminUser())
         ->get('/admin/work-items?priority=high')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page

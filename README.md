@@ -9,7 +9,8 @@ sehari-hari dalam satu tempat.
 
 Fitur yang sudah berjalan:
 
-- Login admin + shell admin responsif dengan dark mode
+- Login admin berbasis database + halaman **Keamanan** untuk ubah password
+- Shell admin responsif dengan dark mode
 - Dashboard berisi statistik, pekerjaan aktif, distribusi status, catatan terbaru
 - Catatan: CRUD, Markdown, tag, pin, pencarian, filter tag, pagination
 - Pekerjaan: CRUD, status, prioritas, tenggat, tag, filter, pencarian, overdue
@@ -24,18 +25,22 @@ npm install
 cp .env.example .env      # jika belum ada
 php artisan key:generate
 php artisan migrate
+php artisan db:seed --class=AdminUserSeeder
 composer dev
 ```
 
 Buka `http://localhost:8000`.
 
-Login sementara:
+## Akun admin
+
+Akun admin dibuat dari environment (`ADMIN_USERNAME`, `ADMIN_EMAIL`,
+`ADMIN_PASSWORD`). Default untuk pengembangan:
 
 - Username: `my-workspace`
 - Password: `admin123`
 
-> Kredensial ini masih hardcoded dan akan diganti dengan autentikasi berbasis
-> database. Lihat `AUTH-07` di [`FEATURES.md`](FEATURES.md).
+Setelah login, ganti password lewat menu **Keamanan** (`/admin/password`).
+Jangan gunakan password default di lingkungan yang bisa diakses publik.
 
 ## Database
 

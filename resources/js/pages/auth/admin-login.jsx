@@ -235,31 +235,9 @@ export default function AdminLogin() {
                                 </Button>
                             </form>
 
-                            <div className="mt-6 rounded-xl border border-dashed bg-muted/40 p-4">
-                                <p className="flex items-center gap-1.5 text-xs font-medium">
-                                    <KeyRound className="size-3.5 text-indigo-500" />
-                                    Kredensial sementara
-                                </p>
-                                <dl className="mt-2 grid gap-1 text-xs text-muted-foreground">
-                                    <div className="flex items-center justify-between gap-3">
-                                        <dt>Username</dt>
-                                        <dd className="font-mono text-foreground">
-                                            my-workspace
-                                        </dd>
-                                    </div>
-                                    <div className="flex items-center justify-between gap-3">
-                                        <dt>Password</dt>
-                                        <dd className="font-mono text-foreground">
-                                            admin123
-                                        </dd>
-                                    </div>
-                                </dl>
-                            </div>
-
                             <p className="mt-6 text-center text-xs leading-relaxed text-muted-foreground">
-                                Hanya tersedia satu akun admin. Kredensial ini
-                                akan dipindahkan ke database pada tahap
-                                berikutnya.
+                                Hanya tersedia satu akun admin. Akun ini
+                                dikelola langsung di database workspace.
                             </p>
                         </div>
                     </div>

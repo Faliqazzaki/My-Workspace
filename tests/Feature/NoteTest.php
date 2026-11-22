@@ -3,14 +3,6 @@
 use App\Models\Note;
 use Inertia\Testing\AssertableInertia as Assert;
 
-function noteAdminSession(): array
-{
-    return [
-        'admin_authenticated' => true,
-        'admin_username' => 'my-workspace',
-    ];
-}
-
 it('mengalihkan tamu dari halaman catatan', function () {
     $this->get('/admin/notes')->assertRedirect(route('home'));
 });
@@ -22,7 +14,7 @@ it('menampilkan halaman catatan untuk admin', function () {
         'tags' => ['laravel'],
     ]);
 
-    $this->withSession(noteAdminSession())
+    $this->actingAs(adminUser())
         ->get('/admin/notes')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
@@ -33,7 +25,7 @@ it('menampilkan halaman catatan untuk admin', function () {
 });
 
 it('menyimpan catatan baru beserta tag', function () {
-    $this->withSession(noteAdminSession())
+    $this->actingAs(adminUser())
         ->post('/admin/notes', [
             'title' => 'Belajar PostgreSQL',
             'content' => 'JSONB cocok untuk data fleksibel.',
@@ -50,7 +42,7 @@ it('menyimpan catatan baru beserta tag', function () {
 });
 
 it('memvalidasi judul dan isi catatan', function () {
-    $this->withSession(noteAdminSession())
+    $this->actingAs(adminUser())
         ->post('/admin/notes', [
             'title' => '',
             'content' => '',
@@ -67,7 +59,7 @@ it('memperbarui catatan', function () {
         'tags' => ['lama'],
     ]);
 
-    $this->withSession(noteAdminSession())
+    $this->actingAs(adminUser())
         ->put("/admin/notes/{$note->id}", [
             'title' => 'Judul baru',
             'content' => 'Isi baru.',
@@ -89,7 +81,7 @@ it('menghapus catatan', function () {
         'tags' => [],
     ]);
 
-    $this->withSession(noteAdminSession())
+    $this->actingAs(adminUser())
         ->delete("/admin/notes/{$note->id}")
         ->assertRedirect(route('admin.notes.index'));
 
@@ -104,13 +96,13 @@ it('menyematkan dan melepas sematan catatan', function () {
         'is_pinned' => false,
     ]);
 
-    $this->withSession(noteAdminSession())
+    $this->actingAs(adminUser())
         ->patch("/admin/notes/{$note->id}/pin")
         ->assertRedirect(route('admin.notes.index'));
 
     expect($note->fresh()->is_pinned)->toBeTrue();
 
-    $this->withSession(noteAdminSession())
+    $this->actingAs(adminUser())
         ->patch("/admin/notes/{$note->id}/pin");
 
     expect($note->fresh()->is_pinned)->toBeFalse();
@@ -129,7 +121,7 @@ it('mencari catatan berdasarkan judul dan menyaring tag', function () {
         'tags' => ['react', 'javascript'],
     ]);
 
-    $this->withSession(noteAdminSession())
+    $this->actingAs(adminUser())
         ->get('/admin/notes?q=laravel')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
@@ -137,7 +129,7 @@ it('mencari catatan berdasarkan judul dan menyaring tag', function () {
             ->where('notes.data.0.title', 'Laravel Queue')
         );
 
-    $this->withSession(noteAdminSession())
+    $this->actingAs(adminUser())
         ->get('/admin/notes?tag=react')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page

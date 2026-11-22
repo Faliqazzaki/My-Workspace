@@ -16,9 +16,10 @@ kebenaran**, lalu perbarui dokumen.
 - Stack: **Laravel 12 + Inertia v2 + React 19 + Tailwind v4 + PostgreSQL**.
 - UI: bahasa Indonesia, font **Plus Jakarta Sans**, aksen indigo/fuchsia/sky,
   tombol **solid tanpa gradient**, mendukung dark mode.
-- Auth saat ini: session admin dengan kredensial hardcoded (utang teknis).
+- Auth saat ini: database (`users.username`, password hash, flag `is_admin`),
+  halaman **Keamanan** untuk ubah password.
 - Fitur selesai: login, shell admin, Dashboard, Catatan, Pekerjaan.
-- Test: **65 test Pest lolos**, build Vite berhasil.
+- Test: **70 test Pest lolos** (400 assertions), build Vite berhasil.
 - Cara kerja: **satu increment kecil**, backend → frontend → test → quality gate
   → verifikasi PostgreSQL → update checklist.
 
@@ -95,7 +96,7 @@ Dan perbarui `FEATURES.md` + tulis handoff.
 
 | Area | Status |
 | --- | --- |
-| Login admin | Selesai (hardcoded) |
+| Login admin | Selesai (database + halaman Keamanan) |
 | Shell admin | Selesai |
 | Dashboard | Selesai (data nyata) |
 | Catatan | Selesai (CRUD, search, tag, pin) |
@@ -106,7 +107,7 @@ Dan perbarui `FEATURES.md` + tulis handoff.
 | Berita AI | Belum |
 | Multi-agent | Belum |
 
-Angka test terakhir: **65 passed, 380 assertions**.
+Angka test terakhir: **70 passed, 400 assertions**.
 
 ---
 
@@ -176,6 +177,7 @@ app/
     Controllers/
       AdminAuthController.php      # login/logout admin
       AdminController.php          # dashboard
+      AdminPasswordController.php  # ubah password admin
       NoteController.php           # CRUD catatan + pin
       WorkItemController.php       # CRUD pekerjaan + status
       Settings/                    # sisa starter kit (belum dipakai admin)
@@ -185,10 +187,16 @@ app/
   Models/
     Note.php
     WorkItem.php
-    User.php                       # belum dipakai admin
-database/migrations/
-  2026_11_21_120000_create_notes_table.php
-  2026_11_21_130000_create_work_items_table.php
+    User.php                       # auth admin (username, is_admin)
+config/
+  admin.php                        # env akun admin awal
+database/
+  factories/UserFactory.php        # state admin()
+  migrations/
+    2026_11_21_120000_create_notes_table.php
+    2026_11_21_130000_create_work_items_table.php
+    2026_11_22_000000_add_username_and_is_admin_to_users_table.php
+  seeders/AdminUserSeeder.php      # akun admin dari config
 resources/
   css/app.css                      # token tema + font
   js/
@@ -200,12 +208,14 @@ resources/
       utils.js                     # cn()
     pages/
       admin/index.jsx              # dashboard
+      admin/password.jsx           # keamanan / ubah password
       admin/notes/index.jsx        # catatan
       admin/work-items/index.jsx   # pekerjaan
       auth/admin-login.jsx         # login
     components/ui/                 # shadcn
 routes/web.php                     # semua route admin
 tests/Feature/                     # test Pest
+tests/Pest.php                     # helper adminUser()
 FEATURES.md                        # checklist fitur
 AGENT_CONTEXT.md                   # dokumen ini
 ```
@@ -244,34 +254,51 @@ Browser
 ### Yang berjalan sekarang
 
 - `GET /` → halaman login (`auth/admin-login`).
-- `POST /masuk` → validasi, bandingkan dengan konstanta:
-  - username `my-workspace`
-  - password `admin123`
-- Session keys: `admin_authenticated`, `admin_username`.
-- `POST /keluar` → logout, invalidate session, regenerate token.
-- Middleware `admin.auth` (`EnsureAdminAuthenticated`) melindungi seluruh
-  `/admin/*`; tamu diarahkan ke `route('home')`.
-- Login memakai `hash_equals` dan throttle `10,1`.
+- `POST /masuk` → `Auth::attempt` dengan:
+  - `username`
+  - `password`
+  - `is_admin => true`
+- Hanya user dengan `is_admin = true` yang bisa masuk ke `/admin`.
+- Session memakai guard Laravel standar (`web`).
+- `POST /keluar` → `Auth::logout()`, invalidate session, regenerate token.
+- Middleware `admin.auth` (`EnsureAdminAuthenticated`) mengecek
+  `Auth::check()` **dan** `user->is_admin`; tamu diarahkan ke `route('home')`.
+- Login memakai throttle `10,1`.
+- Halaman **Keamanan** di `/admin/password` untuk mengganti password
+  (validasi `current_password`, konfirmasi, minimal 8 karakter).
+- Akun admin dibuat oleh `AdminUserSeeder`:
 
-### Utang teknis (harus segera diganti)
+```bash
+php artisan db:seed --class=AdminUserSeeder
+```
 
-- Kredensial hardcoded di `AdminAuthController`.
-- Tidak ada password hashing.
-- Tidak ada manajemen user.
-- Route Fortify (`/login`, `/register`, settings) masih ada tetapi tidak
-  terhubung ke admin.
-
-### Target AUTH-07/08
-
-- Gunakan tabel `users` + `Hash::make` + `Auth::attempt`.
-- Tambah kolom `username` unik (atau gunakan email).
-- Seeder admin dari environment:
+- Konfigurasi akun awal ada di `config/admin.php` dan `.env`:
   `ADMIN_USERNAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`.
-- Ganti middleware menjadi `auth` + cek admin jika perlu.
-- Halaman ubah password memakai pola settings yang sudah ada atau route sendiri.
-- Hapus route Fortify yang tidak dipakai agar tidak membingungkan.
+- Login page **tidak lagi menampilkan kredensial**.
+- `users` memiliki kolom `username` (unik) dan `is_admin` (boolean).
 
-**Jangan** menambah fitur baru di atas auth hardcoded tanpa rencana migrasi.
+### Sudah selesai
+
+- `AUTH-07` — kredensial hardcoded diganti tabel `users` + hash.
+- `AUTH-08` — halaman ubah password.
+
+### Berikutnya
+
+- `AUTH-09` — remember me + masa berlaku session.
+- `AUTH-10` — audit log login.
+- `AUTH-11` — hapus/integrasikan route Fortify dan settings yang tidak dipakai.
+- `AUTH-12` — 2FA untuk admin.
+
+### Aturan
+
+- Jangan memakai session key lama `admin_authenticated` / `admin_username`;
+  keduanya sudah dihapus dari alur.
+- Gunakan `Auth::user()` dan pastikan `is_admin` untuk akses admin.
+- Jangan menampilkan kredensial di UI atau log.
+- Jika menambah user selain admin, tetap batasi akses `/admin` lewat `is_admin`.
+- Route Fortify (`/login`, `/register`, settings) masih ada tetapi tidak
+  terhubung ke UI admin. Registrasi Fortify tidak memberi akses `/admin`
+  karena middleware mengecek `is_admin`.
 
 ---
 
@@ -313,10 +340,26 @@ Prioritas valid: `low`, `medium`, `high`, `urgent` (`WorkItem::PRIORITIES`).
 **Invarian:** `completed_at` diisi saat status menjadi `done` dan dikosongkan
 saat keluar dari `done`. Ini dijaga controller, **bukan** constraint database.
 
-### 8.3 Tabel bawaan
+### 8.3 `users` (auth admin)
 
-`users`, `password_reset_tokens`, `sessions`, `cache`, `jobs`, `failed_jobs`,
-`two_factor_*` (Fortify). Tidak dipakai alur admin saat ini.
+| Kolom | Tipe | Aturan |
+| --- | --- | --- |
+| `id` | bigint PK | |
+| `name` | varchar | |
+| `username` | varchar, unik, nullable | dipakai login |
+| `email` | varchar, unik | |
+| `email_verified_at` | timestamp nullable | |
+| `password` | varchar | hash, cast `hashed` |
+| `is_admin` | boolean | default false |
+| `remember_token` | varchar nullable | |
+| `two_factor_*` | nullable | Fortify |
+| `created_at`, `updated_at` | timestamp | |
+
+Akun admin dibuat oleh `AdminUserSeeder`; password di-hash oleh cast `hashed`.
+Middleware admin mensyaratkan `is_admin = true`.
+
+Tabel bawaan lain: `password_reset_tokens`, `sessions`, `cache`, `jobs`,
+`failed_jobs`, `two_factor_*` (Fortify). Sebagian tidak dipakai alur admin saat ini.
 
 ### 8.4 Aturan migrasi
 
@@ -339,6 +382,8 @@ Prefix `/admin`, name prefix `admin.`, middleware `admin.auth`.
 | POST | `/masuk` | `admin.login` | login (throttle 10,1) |
 | POST | `/keluar` | `admin.logout` | logout |
 | GET | `/admin` | `admin.index` | dashboard |
+| GET | `/admin/password` | `admin.password.edit` | halaman keamanan |
+| PUT | `/admin/password` | `admin.password.update` | ubah password |
 | GET | `/admin/notes` | `admin.notes.index` | daftar catatan |
 | POST | `/admin/notes` | `admin.notes.store` | simpan catatan |
 | PUT | `/admin/notes/{note}` | `admin.notes.update` | ubah catatan |
@@ -452,19 +497,26 @@ Saat menambah route baru: ikuti pola di atas, tambahkan test tamu → redirect.
 ### Struktur
 
 - Semua test fitur di `tests/Feature`.
-- `tests/Pest.php` mengaktifkan `RefreshDatabase` untuk folder `Feature`.
-- Test memakai helper session admin:
+- `tests/Pest.php` mengaktifkan `RefreshDatabase` untuk folder `Feature`
+  dan menyediakan helper `adminUser()`.
+- Test admin memakai helper tersebut:
 
 ```php
-$this->withSession([
-    'admin_authenticated' => true,
-    'admin_username' => 'my-workspace',
+$this->actingAs(adminUser())->get('/admin/work-items');
+```
+
+`adminUser()` membuat user dengan `is_admin = true`. Untuk atribut khusus:
+
+```php
+$admin = adminUser([
+    'username' => 'my-workspace',
+    'password' => 'admin123',
 ]);
 ```
 
-> **Pitfall:** helper fungsi global per file (mis.
-> `dashboardAdminSession()`) bisa bentrok jika dua file memakai nama sama.
-> Beri nama unik per fitur, atau pindahkan helper bersama ke `tests/Pest.php`.
+> **Pitfall:** jangan menambah helper global baru dengan nama generik.
+> Gunakan `adminUser()` dari `tests/Pest.php`; jika butuh helper khusus,
+> beri nama unik agar tidak bentrok antar file.
 
 ### Cakupan minimal per fitur
 
@@ -530,10 +582,18 @@ Gunakan urutan ini agar hasilnya konsisten:
 ### 14.1 Login
 
 1. Buka `/`.
-2. Isi username & password.
-3. Jika valid → session dibuat → redirect `/admin`.
-4. Jika salah → error `Username atau password salah.`
-5. Jika sudah login dan membuka `/` → redirect `/admin`.
+2. Isi username & password akun admin.
+3. `Auth::attempt` memvalidasi username, password, dan `is_admin = true`.
+4. Jika valid → session dibuat → redirect `/admin`.
+5. Jika salah → error `Username atau password salah.`
+6. Jika sudah login sebagai admin dan membuka `/` → redirect `/admin`.
+
+### 14.1a Ubah password
+
+1. Sidebar **Keamanan** → `/admin/password`.
+2. Isi password saat ini, password baru, dan konfirmasi.
+3. Simpan → password di-hash ulang → flash sukses.
+4. Password lama tidak berlaku lagi untuk login berikutnya.
 
 ### 14.2 Catatan
 
@@ -995,7 +1055,7 @@ Langkah berikutnya: ...
 | Topik | Keputusan | Catatan |
 | --- | --- | --- |
 | Stack | Laravel + Inertia + React | Tidak rewrite ke Node |
-| Auth | Session admin hardcoded | Utang teknis, prioritas AUTH-07 |
+| Auth | Database + `is_admin` | AUTH-07/08 selesai; Fortify belum dibersihkan |
 | Dashboard | Data lokal nyata | Berita AI ditunda |
 | Notes | Markdown textarea | Preview belum ada |
 | Work Items | List + filter | Kanban belum |
@@ -1008,13 +1068,14 @@ Langkah berikutnya: ...
 
 Known issues:
 
-1. Kredensial admin hardcoded.
-2. Route Fortify dan settings tidak terhubung ke UI admin.
-3. `tests/Feature` memakai helper global per file (risiko bentrok nama).
-4. Tidak ada CI.
-5. Belum ada backup otomatis.
-6. Belum ada halaman detail pekerjaan; edit lewat dialog.
-7. `completed_at` dijaga controller, bukan constraint database.
+1. Route Fortify dan settings tidak terhubung ke UI admin; registrasi Fortify
+   masih aktif tetapi tidak memberi akses `/admin` karena cek `is_admin`.
+2. Helper test global bisa bentrok nama. Gunakan `adminUser()` dari
+   `tests/Pest.php`; helper baru harus unik.
+3. Tidak ada CI.
+4. Belum ada backup otomatis.
+5. Belum ada halaman detail pekerjaan; edit lewat dialog.
+6. `completed_at` dijaga controller, bukan constraint database.
 
 ---
 

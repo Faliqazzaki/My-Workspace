@@ -41,8 +41,8 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
-            'admin' => fn () => $request->session()->get('admin_authenticated')
-                ? ['username' => $request->session()->get('admin_username', 'my-workspace')]
+            'admin' => fn () => $request->user()?->is_admin
+                ? ['username' => $request->user()->username]
                 : null,
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),

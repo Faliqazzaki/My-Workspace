@@ -4,14 +4,6 @@ use App\Models\Note;
 use App\Models\WorkItem;
 use Inertia\Testing\AssertableInertia as Assert;
 
-function dashboardAdminSession(): array
-{
-    return [
-        'admin_authenticated' => true,
-        'admin_username' => 'my-workspace',
-    ];
-}
-
 it('mengalihkan tamu dari dashboard', function () {
     $this->get('/admin')->assertRedirect(route('home'));
 });
@@ -44,7 +36,7 @@ it('menampilkan ringkasan dashboard untuk admin', function () {
         'due_date' => today()->subWeek()->toDateString(),
     ]);
 
-    $this->withSession(dashboardAdminSession())
+    $this->actingAs(adminUser())
         ->get('/admin')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
@@ -67,7 +59,7 @@ it('menampilkan ringkasan dashboard untuk admin', function () {
 });
 
 it('menampilkan dashboard kosong tanpa data', function () {
-    $this->withSession(dashboardAdminSession())
+    $this->actingAs(adminUser())
         ->get('/admin')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
