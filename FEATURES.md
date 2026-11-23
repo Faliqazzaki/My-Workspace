@@ -206,11 +206,16 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 
 **Total: 61 dari 129 item selesai.**
 
-## Urutan pengerjaan yang disarankan
+## Antrean berikutnya (urut)
 
-1. **NEWS-01 … NEWS-06** — berita teknologi + ringkasan AI.
-2. **AI-02 / AI-03** — asisten dan pencarian semantik.
-3. **AGT-01 … AGT-10** — multi-agent setelah kontrol dasar stabil.
+1. WORK-19 saved views (sedang dikerjakan)
+2. NOTE-12 arsip catatan
+3. WORK-20 bulk action
+4. DASH-08 grafik aktivitas
+5. UI-08 command palette (Ctrl/Cmd + K)
+6. FND-08 CI
+
+Ditunda (butuh biaya token AI): NEWS-*, AI-*, AGT-*
 
 ## Non-goals saat ini
 
