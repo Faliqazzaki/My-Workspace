@@ -33,6 +33,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import KanbanBoard from '@/components/work-items/kanban-board';
+import WorkCalendar from '@/components/work-items/work-calendar';
 import AdminLayout from '@/layouts/admin-layout';
 import { formatDate, isOverdue, toDateInput } from '@/lib/date';
 import { cn } from '@/lib/utils';
@@ -98,6 +99,7 @@ function SubtaskProgress({ subtasks, className }) {
 export default function WorkItemsIndex({
     workItems,
     boardItems = [],
+    calendarItems = [],
     counts = {},
     filters = {},
     statuses = [],
@@ -106,7 +108,9 @@ export default function WorkItemsIndex({
     notes = [],
 }) {
     const queryParam = filters.q ?? '';
-    const view = filters.view === 'board' ? 'board' : 'list';
+    const view = ['board', 'calendar'].includes(filters.view)
+        ? filters.view
+        : 'list';
     const [board, setBoard] = useState(boardItems);
     const [syncedBoard, setSyncedBoard] = useState(boardSignature(boardItems));
     const [search, setSearch] = useState(queryParam);
@@ -148,7 +152,9 @@ export default function WorkItemsIndex({
                     status: filters.status || undefined,
                     priority: filters.priority || undefined,
                     project: filters.project || undefined,
-                    view: filters.view === 'board' ? 'board' : undefined,
+                    view: ['board', 'calendar'].includes(filters.view)
+                        ? filters.view
+                        : undefined,
                 },
                 { preserveScroll: true, preserveState: true, replace: true },
             );
@@ -351,7 +357,8 @@ export default function WorkItemsIndex({
                 q: search || undefined,
                 status: filters.status || undefined,
                 priority: filters.priority || undefined,
-                view: nextView === 'board' ? 'board' : undefined,
+                project: filters.project || undefined,
+                view: nextView === 'list' ? undefined : nextView,
             },
             { preserveScroll: true, preserveState: true },
         );
@@ -382,7 +389,7 @@ export default function WorkItemsIndex({
                 status: filters.status || undefined,
                 priority: filters.priority || undefined,
                 project: filters.project || undefined,
-                view: view === 'board' ? 'board' : undefined,
+                view: view === 'list' ? undefined : view,
             },
             { preserveScroll: true, preserveState: true, replace: true },
         );
@@ -399,7 +406,7 @@ export default function WorkItemsIndex({
                 status: filters.status || undefined,
                 priority: filters.priority || undefined,
                 project: filters.project || undefined,
-                view: view === 'board' ? 'board' : undefined,
+                view: view === 'list' ? undefined : view,
             },
             { preserveScroll: true, preserveState: true, replace: true },
         );
@@ -413,7 +420,7 @@ export default function WorkItemsIndex({
                 status: status || undefined,
                 priority: filters.priority || undefined,
                 project: filters.project || undefined,
-                view: view === 'board' ? 'board' : undefined,
+                view: view === 'list' ? undefined : view,
             },
             { preserveScroll: true, preserveState: true, replace: true },
         );
@@ -427,7 +434,7 @@ export default function WorkItemsIndex({
                 status: filters.status || undefined,
                 priority: priority || undefined,
                 project: filters.project || undefined,
-                view: view === 'board' ? 'board' : undefined,
+                view: view === 'list' ? undefined : view,
             },
             { preserveScroll: true, preserveState: true, replace: true },
         );
@@ -441,7 +448,7 @@ export default function WorkItemsIndex({
                 status: filters.status || undefined,
                 priority: filters.priority || undefined,
                 project: project || undefined,
-                view: view === 'board' ? 'board' : undefined,
+                view: view === 'list' ? undefined : view,
             },
             { preserveScroll: true, preserveState: true, replace: true },
         );
@@ -452,7 +459,7 @@ export default function WorkItemsIndex({
         router.get(
             '/admin/work-items',
             {
-                view: view === 'board' ? 'board' : undefined,
+                view: view === 'list' ? undefined : view,
             },
             { preserveScroll: true, preserveState: true, replace: true },
         );
@@ -520,6 +527,20 @@ export default function WorkItemsIndex({
                         >
                             <Columns3 className="size-3.5" />
                             Papan
+                        </button>
+                        <button
+                            type="button"
+                            aria-pressed={view === 'calendar'}
+                            onClick={() => changeView('calendar')}
+                            className={cn(
+                                'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                                view === 'calendar'
+                                    ? 'bg-background text-foreground shadow-xs'
+                                    : 'text-muted-foreground hover:text-foreground',
+                            )}
+                        >
+                            <CalendarDays className="size-3.5" />
+                            Kalender
                         </button>
                     </div>
 
@@ -656,7 +677,9 @@ export default function WorkItemsIndex({
                 )}
             </div>
 
-            {view === 'board' ? (
+            {view === 'calendar' ? (
+                <WorkCalendar items={calendarItems} onEdit={openEdit} />
+            ) : view === 'board' ? (
                 <div className="-mx-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:px-0">
                     <KanbanBoard
                         items={board}

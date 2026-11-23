@@ -604,3 +604,97 @@ it('menghapus subtask saat pekerjaan dihapus', function () {
     expect(WorkItem::count())->toBe(0)
         ->and(WorkItemSubtask::count())->toBe(0);
 });
+
+it('menampilkan kalender hanya untuk pekerjaan yang punya tenggat', function () {
+    WorkItem::create([
+        'title' => 'Tenggat awal',
+        'status' => 'todo',
+        'priority' => 'low',
+        'due_date' => '2026-12-01',
+    ]);
+
+    WorkItem::create([
+        'title' => 'Tenggat akhir',
+        'status' => 'in_progress',
+        'priority' => 'high',
+        'due_date' => '2026-12-15',
+    ]);
+
+    WorkItem::create([
+        'title' => 'Tanpa tenggat',
+        'status' => 'backlog',
+        'priority' => 'medium',
+    ]);
+
+    $this->actingAs(adminUser())
+        ->get('/admin/work-items?view=calendar')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('admin/work-items/index')
+            ->where('filters.view', 'calendar')
+            ->has('calendarItems', 2)
+            ->has('boardItems', 0)
+            ->where('calendarItems.0.title', 'Tenggat awal')
+            ->where('calendarItems.1.title', 'Tenggat akhir')
+        );
+});
+
+it('menyaring kalender dengan proyek dan mengabaikan filter status', function () {
+    $project = Project::create([
+        'name' => 'Proyek kalender',
+        'color' => '#0ea5e9',
+    ]);
+
+    WorkItem::create([
+        'project_id' => $project->id,
+        'title' => 'Masuk kalender',
+        'status' => 'todo',
+        'priority' => 'medium',
+        'due_date' => '2026-12-05',
+    ]);
+
+    WorkItem::create([
+        'title' => 'Proyek lain',
+        'status' => 'done',
+        'priority' => 'medium',
+        'due_date' => '2026-12-06',
+        'completed_at' => now(),
+    ]);
+
+    $this->actingAs(adminUser())
+        ->get("/admin/work-items?view=calendar&status=done&project={$project->id}")
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.view', 'calendar')
+            ->where('filters.status', 'done')
+            ->where('filters.project', (string) $project->id)
+            ->has('calendarItems', 1)
+            ->where('calendarItems.0.title', 'Masuk kalender')
+            ->where('calendarItems.0.project.name', 'Proyek kalender')
+        );
+});
+
+it('menyaring kalender dengan pencarian dan prioritas', function () {
+    WorkItem::create([
+        'title' => 'Rilis kalender',
+        'status' => 'todo',
+        'priority' => 'urgent',
+        'due_date' => '2026-12-10',
+    ]);
+
+    WorkItem::create([
+        'title' => 'Rilis catatan',
+        'status' => 'todo',
+        'priority' => 'low',
+        'due_date' => '2026-12-11',
+    ]);
+
+    $this->actingAs(adminUser())
+        ->get('/admin/work-items?view=calendar&q=kalender&priority=urgent')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.view', 'calendar')
+            ->has('calendarItems', 1)
+            ->where('calendarItems.0.title', 'Rilis kalender')
+        );
+});

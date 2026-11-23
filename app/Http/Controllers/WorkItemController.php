@@ -19,7 +19,8 @@ class WorkItemController extends Controller
         $status = trim($request->string('status')->toString());
         $priority = trim($request->string('priority')->toString());
         $projectId = trim($request->string('project')->toString());
-        $view = $request->string('view')->toString() === 'board' ? 'board' : 'list';
+        $view = $request->string('view')->toString();
+        $view = in_array($view, ['board', 'calendar'], true) ? $view : 'list';
 
         $baseQuery = WorkItem::query()
             ->when($search !== '', function ($query) use ($search) {
@@ -60,6 +61,20 @@ class WorkItemController extends Controller
                 ->get()
             : [];
 
+        $calendarItems = $view === 'calendar'
+            ? (clone $baseQuery)
+                ->with([
+                    'notes:id,title',
+                    'project:id,name,color',
+                    'subtasks:id,work_item_id,title,is_done,position',
+                ])
+                ->whereNotNull('due_date')
+                ->orderBy('due_date')
+                ->orderByRaw("CASE priority WHEN 'urgent' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END")
+                ->latest('created_at')
+                ->get()
+            : [];
+
         $workItems = $baseQuery
             ->with([
                 'notes:id,title',
@@ -80,6 +95,7 @@ class WorkItemController extends Controller
         return Inertia::render('admin/work-items/index', [
             'workItems' => $workItems,
             'boardItems' => $boardItems,
+            'calendarItems' => $calendarItems,
             'counts' => $counts,
             'filters' => [
                 'q' => $search,

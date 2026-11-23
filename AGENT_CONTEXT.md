@@ -28,9 +28,9 @@ kebenaran**, lalu perbarui dokumen.
   halaman **Keamanan** untuk ubah password.
 - Fitur selesai: login, shell admin, Dashboard (statistik + kebiasaan mencatat),
   Catatan (detail + Markdown + pratinjau + tautan ke pekerjaan), Pekerjaan
-  (list + Kanban drag & drop + proyek + subtask), Proyek/area
+  (list + Kanban + kalender + proyek + subtask), Proyek/area
   (CRUD + arsip + progress).
-- Test: **105 test Pest lolos** (722 assertions), build Vite berhasil.
+- Test: **108 test Pest lolos** (778 assertions), build Vite berhasil.
 - Cara kerja: **satu increment kecil**, backend → frontend → test → quality gate
   → verifikasi PostgreSQL → update checklist.
 
@@ -118,10 +118,11 @@ Dan perbarui `FEATURES.md` + tulis handoff.
 | Kebiasaan mencatat | Selesai (streak harian, zona waktu Asia/Jakarta) |
 | Proyek / area | Selesai (CRUD, arsip, filter, progress `done/total`) |
 | Subtask | Selesai (checklist di form, progress `x/y` di kartu) |
+| Kalender | Selesai (tampilan bulan, navigasi, klik untuk edit) |
 | Berita AI | Belum |
 | Multi-agent | Belum |
 
-Angka test terakhir: **105 passed, 722 assertions**.
+Angka test terakhir: **108 passed, 778 assertions**.
 
 ---
 
@@ -236,6 +237,7 @@ resources/
       markdown-content.jsx         # render Markdown aman (GFM + sanitize)
       notes/note-editor-dialog.jsx # dialog tambah/edit + pratinjau
       work-items/kanban-board.jsx  # papan Kanban + drag & drop
+      work-items/work-calendar.jsx # kalender tenggat bulanan
       ui/                          # shadcn
 routes/web.php                     # semua route admin
 tests/Feature/                     # test Pest
@@ -723,6 +725,10 @@ Gunakan urutan ini agar hasilnya konsisten:
     perubahan tersimpan saat pekerjaan disimpan.
 14. Kartu menampilkan progress subtask `x/y` + bar (hijau saat 100%); kartu
     Kanban menampilkan `x/y` ringkas.
+15. Toggle **Kalender** menampilkan bulan berjalan (mulai Senin). Navigasi
+    bulan lewat panah / **Hari ini**; item bertenggat muncul di tanggalnya
+    (maks 3 + "+N lagi"). Klik item membuka dialog edit. Item tanpa tenggat
+    tidak tampil, dan filter status diabaikan seperti papan.
 
 ### 14.4 Dashboard
 
@@ -873,6 +879,23 @@ tampilkan `x/y` dan progress bar di kartu.
 
 **Acceptance:** urutan stabil, progress dihitung benar, cascade delete,
 test CRUD subtask.
+
+### 15.5a WORK-15 — Kalender (selesai)
+
+**Backend:** `?view=calendar` mengembalikan `calendarItems` — semua item
+terfilter yang punya `due_date`, urut tenggat lalu prioritas (urgent→low).
+Filter pencarian, prioritas, dan proyek tetap berlaku; filter status diabaikan.
+Tanpa pagination.
+
+**Frontend:** `resources/js/components/work-items/work-calendar.jsx` merender
+grid 6×7 minggu mulai Senin, navigasi bulan di client (tanpa request tambahan),
+penanda hari ini, jumlah tenggat per hari/bulan, dan legenda status. Item
+selesai dicoret; item terlambat berwarna merah. Klik item → dialog edit.
+Tampilan bisa di-scroll horizontal di mobile.
+
+**Acceptance:** semua item bertenggat muncul di tanggal yang benar, item tanpa
+tenggat tidak tampil, filter proyek/pencarian/prioritas bekerja, dan item bisa
+diedit dari kalender.
 
 ### 15.6 KNOW-01/02 — Kebiasaan & statistik (KNOW-01 selesai)
 
@@ -1184,7 +1207,8 @@ Langkah berikutnya: ...
 | Auth | Database + `is_admin` | AUTH-07/08 selesai; Fortify belum dibersihkan |
 | Dashboard | Data lokal nyata + kebiasaan | Berita AI ditunda |
 | Notes | Markdown + detail + preview + tautan pekerjaan | NOTE-08/09/10/11 selesai |
-| Work Items | List + Kanban + filter proyek | Drag mengubah status |
+| Work Items | List + Kanban + Kalender | Drag mengubah status |
+| Kalender | Bulanan berbasis tenggat | Navigasi di client |
 | Projects | CRUD + arsip + progress | Hapus tidak menghapus pekerjaan |
 | Subtasks | Nested payload + progress kartu | Tanpa endpoint terpisah |
 | Notes | Detail `/admin/notes/{note}` | Update diarahkan ke detail |
@@ -1208,6 +1232,8 @@ Known issues:
 7. Urutan kartu Kanban mengikuti tenggat, belum bisa diatur manual.
 8. Streak dihitung di PHP dari seluruh `notes.created_at`; cukup untuk data
    personal, perlu query agregat jika jumlah catatan sangat besar.
+9. Kalender memuat semua item bertenggat tanpa pagination; perlu dibatasi per
+   rentang bulan jika jumlah item sudah sangat besar.
 
 ---
 
