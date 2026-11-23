@@ -6,6 +6,7 @@ import {
     ClipboardList,
     Columns3,
     LayoutList,
+    ListChecks,
     NotebookPen,
     Pencil,
     Plus,
@@ -47,6 +48,53 @@ const parseTags = (value) => {
 const boardSignature = (items) =>
     items.map((item) => `${item.id}:${item.status}`).join('|');
 
+const subtaskProgress = (subtasks = []) => {
+    const total = subtasks.length;
+    const done = subtasks.filter((subtask) => subtask.is_done).length;
+
+    return {
+        total,
+        done,
+        percent: total === 0 ? 0 : Math.round((done / total) * 100),
+    };
+};
+
+function SubtaskProgress({ subtasks, className }) {
+    const { total, done, percent } = subtaskProgress(subtasks);
+
+    if (total === 0) {
+        return null;
+    }
+
+    return (
+        <div className={cn('max-w-xs', className)}>
+            <div className="flex items-center justify-between gap-2 text-[11px] font-medium text-muted-foreground">
+                <span className="inline-flex items-center gap-1">
+                    <ListChecks className="size-3" />
+                    {done}/{total} subtask
+                </span>
+                <span className="tabular-nums">{percent}%</span>
+            </div>
+            <div
+                className="mt-1 h-1 overflow-hidden rounded-full bg-muted"
+                role="progressbar"
+                aria-valuenow={percent}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label="Progres subtask"
+            >
+                <span
+                    className={cn(
+                        'block h-full rounded-full transition-all',
+                        percent === 100 ? 'bg-emerald-500' : 'bg-indigo-500',
+                    )}
+                    style={{ width: `${percent}%` }}
+                />
+            </div>
+        </div>
+    );
+}
+
 export default function WorkItemsIndex({
     workItems,
     boardItems = [],
@@ -66,6 +114,7 @@ export default function WorkItemsIndex({
     const [editorOpen, setEditorOpen] = useState(false);
     const [editing, setEditing] = useState(null);
     const [tagInput, setTagInput] = useState('');
+    const [subtaskInput, setSubtaskInput] = useState('');
     const [noteSearch, setNoteSearch] = useState('');
     const [deleting, setDeleting] = useState(null);
     const isFirstRender = useRef(true);
@@ -133,6 +182,7 @@ export default function WorkItemsIndex({
         due_date: '',
         project_id: '',
         tags: [],
+        subtasks: [],
         notes: [],
     });
 
@@ -155,6 +205,7 @@ export default function WorkItemsIndex({
         clearErrors();
         reset();
         setTagInput('');
+        setSubtaskInput('');
         setNoteSearch('');
         setEditorOpen(true);
     };
@@ -170,9 +221,15 @@ export default function WorkItemsIndex({
             due_date: toDateInput(workItem.due_date),
             project_id: workItem.project_id ?? '',
             tags: workItem.tags ?? [],
+            subtasks: (workItem.subtasks ?? []).map((subtask) => ({
+                id: subtask.id,
+                title: subtask.title,
+                is_done: Boolean(subtask.is_done),
+            })),
             notes: (workItem.notes ?? []).map((note) => note.id),
         });
         setTagInput((workItem.tags ?? []).join(', '));
+        setSubtaskInput('');
         setNoteSearch('');
         setEditorOpen(true);
     };
@@ -191,6 +248,33 @@ export default function WorkItemsIndex({
         );
     };
 
+    const addSubtask = () => {
+        const title = subtaskInput.trim();
+
+        if (title === '' || data.subtasks.length >= 50) {
+            return;
+        }
+
+        setData('subtasks', [...data.subtasks, { title, is_done: false }]);
+        setSubtaskInput('');
+    };
+
+    const updateSubtask = (index, changes) => {
+        setData(
+            'subtasks',
+            data.subtasks.map((subtask, current) =>
+                current === index ? { ...subtask, ...changes } : subtask,
+            ),
+        );
+    };
+
+    const removeSubtask = (index) => {
+        setData(
+            'subtasks',
+            data.subtasks.filter((_, current) => current !== index),
+        );
+    };
+
     const submit = (event) => {
         event.preventDefault();
 
@@ -198,6 +282,13 @@ export default function WorkItemsIndex({
             ...current,
             due_date: current.due_date || null,
             project_id: current.project_id === '' ? null : current.project_id,
+            subtasks: current.subtasks
+                .filter((subtask) => subtask.title.trim() !== '')
+                .map((subtask) => ({
+                    id: subtask.id ?? null,
+                    title: subtask.title.trim(),
+                    is_done: Boolean(subtask.is_done),
+                })),
         }));
 
         const options = {
@@ -699,6 +790,13 @@ export default function WorkItemsIndex({
                                         </p>
                                     )}
 
+                                    {workItem.subtasks?.length > 0 && (
+                                        <SubtaskProgress
+                                            subtasks={workItem.subtasks}
+                                            className="mt-2.5"
+                                        />
+                                    )}
+
                                     {workItem.tags?.length > 0 && (
                                         <div className="mt-3 flex flex-wrap gap-1.5">
                                             {workItem.tags.map((tag) => (
@@ -986,6 +1084,104 @@ export default function WorkItemsIndex({
                                 tag.
                             </p>
                             <InputError message={errors.tags} />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <div className="flex items-center justify-between gap-2">
+                                <Label htmlFor="work-item-subtask">
+                                    Subtask
+                                </Label>
+                                <span className="text-xs text-muted-foreground">
+                                    {subtaskProgress(data.subtasks).done}/
+                                    {data.subtasks.length} selesai
+                                </span>
+                            </div>
+
+                            {data.subtasks.length > 0 && (
+                                <ul className="divide-y overflow-hidden rounded-md border">
+                                    {data.subtasks.map((subtask, index) => (
+                                        <li
+                                            key={subtask.id ?? `baru-${index}`}
+                                            className="flex items-center gap-2 px-2.5 py-1.5"
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={Boolean(
+                                                    subtask.is_done,
+                                                )}
+                                                onChange={(event) =>
+                                                    updateSubtask(index, {
+                                                        is_done:
+                                                            event.target
+                                                                .checked,
+                                                    })
+                                                }
+                                                aria-label={`Tandai ${subtask.title}`}
+                                                className="size-4 shrink-0 rounded border-input accent-indigo-500"
+                                            />
+                                            <input
+                                                value={subtask.title}
+                                                onChange={(event) =>
+                                                    updateSubtask(index, {
+                                                        title: event.target
+                                                            .value,
+                                                    })
+                                                }
+                                                aria-label={`Judul subtask ${index + 1}`}
+                                                className={cn(
+                                                    'min-w-0 flex-1 bg-transparent text-sm outline-none',
+                                                    subtask.is_done &&
+                                                        'text-muted-foreground line-through',
+                                                )}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    removeSubtask(index)
+                                                }
+                                                aria-label={`Hapus ${subtask.title}`}
+                                                title="Hapus subtask"
+                                                className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/50"
+                                            >
+                                                <Trash2 className="size-3.5" />
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    id="work-item-subtask"
+                                    value={subtaskInput}
+                                    onChange={(event) =>
+                                        setSubtaskInput(event.target.value)
+                                    }
+                                    onKeyDown={(event) => {
+                                        if (event.key === 'Enter') {
+                                            event.preventDefault();
+                                            addSubtask();
+                                        }
+                                    }}
+                                    placeholder="Tambah langkah kecil..."
+                                    className="h-9"
+                                />
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={addSubtask}
+                                    disabled={subtaskInput.trim() === ''}
+                                    className="h-9 shrink-0 gap-1.5"
+                                >
+                                    <Plus className="size-3.5" />
+                                    Tambah
+                                </Button>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                Centang langkah yang sudah selesai. Perubahan
+                                subtask disimpan bersama pekerjaan. Maksimal 50.
+                            </p>
+                            <InputError message={errors.subtasks} />
                         </div>
 
                         <div className="grid gap-2">

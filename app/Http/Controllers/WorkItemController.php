@@ -49,7 +49,11 @@ class WorkItemController extends Controller
 
         $boardItems = $view === 'board'
             ? (clone $baseQuery)
-                ->with(['notes:id,title', 'project:id,name,color'])
+                ->with([
+                    'notes:id,title',
+                    'project:id,name,color',
+                    'subtasks:id,work_item_id,title,is_done,position',
+                ])
                 ->orderByRaw('due_date IS NULL')
                 ->orderBy('due_date')
                 ->latest('created_at')
@@ -57,7 +61,11 @@ class WorkItemController extends Controller
             : [];
 
         $workItems = $baseQuery
-            ->with(['notes:id,title', 'project:id,name,color'])
+            ->with([
+                'notes:id,title',
+                'project:id,name,color',
+                'subtasks:id,work_item_id,title,is_done,position',
+            ])
             ->when(
                 $view === 'list' && in_array($status, WorkItem::STATUSES, true),
                 fn ($query) => $query->where('status', $status),
@@ -97,13 +105,15 @@ class WorkItemController extends Controller
     {
         $data = $this->validatedData($request);
         $noteIds = $data['notes'] ?? [];
-        unset($data['notes']);
+        $subtasks = $data['subtasks'] ?? [];
+        unset($data['notes'], $data['subtasks']);
 
         $workItem = WorkItem::create($data + [
             'completed_at' => $data['status'] === 'done' ? now() : null,
         ]);
 
         $workItem->notes()->sync($noteIds);
+        $this->syncSubtasks($workItem, $subtasks);
 
         return redirect()
             ->route('admin.work-items.index')
@@ -114,7 +124,9 @@ class WorkItemController extends Controller
     {
         $data = $this->validatedData($request);
         $noteIds = $data['notes'] ?? [];
-        unset($data['notes']);
+        $hasSubtasks = array_key_exists('subtasks', $data);
+        $subtasks = $data['subtasks'] ?? [];
+        unset($data['notes'], $data['subtasks']);
 
         $workItem->update($data + [
             'completed_at' => $data['status'] === 'done'
@@ -123,6 +135,10 @@ class WorkItemController extends Controller
         ]);
 
         $workItem->notes()->sync($noteIds);
+
+        if ($hasSubtasks) {
+            $this->syncSubtasks($workItem, $subtasks);
+        }
 
         return redirect()
             ->route('admin.work-items.index')
@@ -153,7 +169,7 @@ class WorkItemController extends Controller
     }
 
     /**
-     * @return array{project_id: int|null, title: string, description: string|null, status: string, priority: string, due_date: string|null, tags: array<int, string>, notes: array<int, int>}
+     * @return array{project_id: int|null, title: string, description: string|null, status: string, priority: string, due_date: string|null, tags: array<int, string>, notes: array<int, int>, subtasks: array<int, array{id?: int|null, title: string, is_done?: bool}>}
      */
     private function validatedData(Request $request): array
     {
@@ -168,6 +184,10 @@ class WorkItemController extends Controller
             'project_id' => ['nullable', 'integer', 'exists:projects,id'],
             'notes' => ['nullable', 'array', 'distinct'],
             'notes.*' => ['integer', 'exists:notes,id'],
+            'subtasks' => ['nullable', 'array', 'max:50'],
+            'subtasks.*.id' => ['nullable', 'integer'],
+            'subtasks.*.title' => ['required', 'string', 'max:150'],
+            'subtasks.*.is_done' => ['boolean'],
         ]);
 
         $data['description'] = $data['description'] ?? null;
@@ -182,5 +202,46 @@ class WorkItemController extends Controller
             ->all();
 
         return $data;
+    }
+
+    /**
+     * Sinkronisasi subtask berdasarkan urutan array. ID yang tidak lagi ada
+     * dihapus; baris baru dibuat; posisi mengikuti urutan kiriman.
+     *
+     * @param  array<int, array{id?: int|null, title: string, is_done?: bool}>  $rows
+     */
+    private function syncSubtasks(WorkItem $workItem, array $rows): void
+    {
+        $keptIds = [];
+        $position = 0;
+
+        foreach (array_values($rows) as $row) {
+            $title = trim($row['title'] ?? '');
+
+            if ($title === '') {
+                continue;
+            }
+
+            $attributes = [
+                'title' => $title,
+                'is_done' => (bool) ($row['is_done'] ?? false),
+                'position' => $position++,
+            ];
+
+            $id = $row['id'] ?? null;
+            $subtask = $id
+                ? $workItem->subtasks()->whereKey($id)->first()
+                : null;
+
+            if ($subtask) {
+                $subtask->update($attributes);
+            } else {
+                $subtask = $workItem->subtasks()->create($attributes);
+            }
+
+            $keptIds[] = $subtask->id;
+        }
+
+        $workItem->subtasks()->whereNotIn('id', $keptIds)->delete();
     }
 }

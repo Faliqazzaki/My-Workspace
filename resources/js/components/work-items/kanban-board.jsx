@@ -9,7 +9,12 @@ import {
     useSensor,
     useSensors,
 } from '@dnd-kit/core';
-import { CalendarDays, GripVertical, NotebookPen } from 'lucide-react';
+import {
+    CalendarDays,
+    GripVertical,
+    ListChecks,
+    NotebookPen,
+} from 'lucide-react';
 import { useState } from 'react';
 
 import { formatDate, isOverdue } from '@/lib/date';
@@ -25,6 +30,8 @@ function BoardCard({
 }) {
     const overdue = isOverdue(workItem.due_date, workItem.status);
     const priority = priorityMeta[workItem.priority];
+    const subtasks = workItem.subtasks ?? [];
+    const doneSubtasks = subtasks.filter((subtask) => subtask.is_done).length;
 
     return (
         <article className="rounded-xl border bg-card p-3 shadow-xs">
@@ -86,6 +93,13 @@ function BoardCard({
                         <CalendarDays className="size-3" />
                         {formatDate(workItem.due_date)}
                         {overdue && ' · terlambat'}
+                    </span>
+                )}
+
+                {subtasks.length > 0 && (
+                    <span className="inline-flex items-center gap-1">
+                        <ListChecks className="size-3" />
+                        {doneSubtasks}/{subtasks.length}
                     </span>
                 )}
 

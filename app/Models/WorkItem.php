@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class WorkItem extends Model
 {
@@ -40,5 +41,12 @@ class WorkItem extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
+    }
+
+    public function subtasks(): HasMany
+    {
+        return $this->hasMany(WorkItemSubtask::class)
+            ->orderBy('position')
+            ->orderBy('id');
     }
 }

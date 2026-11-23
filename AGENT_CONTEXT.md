@@ -28,8 +28,9 @@ kebenaran**, lalu perbarui dokumen.
   halaman **Keamanan** untuk ubah password.
 - Fitur selesai: login, shell admin, Dashboard (statistik + kebiasaan mencatat),
   Catatan (detail + Markdown + pratinjau + tautan ke pekerjaan), Pekerjaan
-  (list + Kanban drag & drop + proyek), Proyek/area (CRUD + arsip + progress).
-- Test: **99 test Pest lolos** (685 assertions), build Vite berhasil.
+  (list + Kanban drag & drop + proyek + subtask), Proyek/area
+  (CRUD + arsip + progress).
+- Test: **105 test Pest lolos** (722 assertions), build Vite berhasil.
 - Cara kerja: **satu increment kecil**, backend → frontend → test → quality gate
   → verifikasi PostgreSQL → update checklist.
 
@@ -110,16 +111,17 @@ Dan perbarui `FEATURES.md` + tulis handoff.
 | Shell admin | Selesai |
 | Dashboard | Selesai (data nyata + widget kebiasaan & streak) |
 | Catatan | Selesai (CRUD, detail, Markdown, tautan pekerjaan, search, tag, pin) |
-| Pekerjaan | Selesai (CRUD, filter, status, tenggat, catatan & proyek terkait) |
+| Pekerjaan | Selesai (CRUD, filter, status, tenggat, catatan, proyek, subtask) |
 | Markdown preview | Selesai (halaman detail + tab pratinjau editor) |
 | Tautan catatan ↔ pekerjaan | Selesai (pivot `note_work_item`, dua arah) |
 | Kanban | Selesai (toggle Daftar/Papan, drag & drop, select status) |
 | Kebiasaan mencatat | Selesai (streak harian, zona waktu Asia/Jakarta) |
 | Proyek / area | Selesai (CRUD, arsip, filter, progress `done/total`) |
+| Subtask | Selesai (checklist di form, progress `x/y` di kartu) |
 | Berita AI | Belum |
 | Multi-agent | Belum |
 
-Angka test terakhir: **99 passed, 685 assertions**.
+Angka test terakhir: **105 passed, 722 assertions**.
 
 ---
 
@@ -211,6 +213,7 @@ database/
     2026_11_22_000000_add_username_and_is_admin_to_users_table.php
     2026_11_23_160000_create_note_work_item_table.php
     2026_11_23_170000_create_projects_table.php
+    2026_11_23_180000_create_work_item_subtasks_table.php
   seeders/AdminUserSeeder.php      # akun admin dari config
 resources/
   css/app.css                      # token tema + font
@@ -377,7 +380,25 @@ Relasi: `Project::workItems()` (hasMany). Progress dihitung lewat
 `withCount` (`work_items_count`, `done_work_items_count`). Hapus proyek
 me-null-kan `work_items.project_id`, pekerjaan tetap ada.
 
-### 8.4 `note_work_item` (pivot)
+### 8.4 `work_item_subtasks`
+
+| Kolom | Tipe | Aturan |
+| --- | --- | --- |
+| `id` | bigint PK | |
+| `work_item_id` | FK `work_items` | cascade delete, index `(work_item_id, position)` |
+| `title` | varchar(150) | wajib |
+| `is_done` | boolean | default false |
+| `position` | unsigned int | default 0, urutan tampil |
+| `created_at`, `updated_at` | timestamp | |
+
+Relasi: `WorkItem::subtasks()` (hasMany, urut `position` lalu `id`).
+Subtask dikirim bersarang di payload pekerjaan (`subtasks[]`), bukan endpoint
+terpisah. `WorkItemController::syncSubtasks()` memperbarui baris ber-ID,
+membuat baris baru, menghapus yang tidak dikirim, dan menetapkan `position`
+sesuai urutan array. Jika `subtasks` tidak ada di payload update, subtask lama
+tidak diubah.
+
+### 8.5 `note_work_item` (pivot)
 
 | Kolom | Tipe | Aturan |
 | --- | --- | --- |
@@ -390,7 +411,7 @@ Unique: `(note_id, work_item_id)`. Relasi: `Note::workItems()` dan
 `WorkItem::notes()` (belongsToMany, `withTimestamps`). Sinkronisasi lewat
 `sync()` di controller; jangan menulis pivot langsung.
 
-### 8.5 `users` (auth admin)
+### 8.6 `users` (auth admin)
 
 | Kolom | Tipe | Aturan |
 | --- | --- | --- |
@@ -411,7 +432,7 @@ Middleware admin mensyaratkan `is_admin = true`.
 Tabel bawaan lain: `password_reset_tokens`, `sessions`, `cache`, `jobs`,
 `failed_jobs`, `two_factor_*` (Fortify). Sebagian tidak dipakai alur admin saat ini.
 
-### 8.6 Aturan migrasi
+### 8.7 Aturan migrasi
 
 - Nama file: `YYYY_MM_DD_HHMMSS_description.php`, timestamp setelah migrasi terakhir.
 - Selalu tulis `down()`.
@@ -682,7 +703,8 @@ Gunakan urutan ini agar hasilnya konsisten:
 
 1. Sidebar **Pekerjaan** → `/admin/work-items`.
 2. Klik **Pekerjaan baru** → dialog.
-3. Isi judul, deskripsi, proyek (opsional), status, prioritas, tenggat, tag.
+3. Isi judul, deskripsi, proyek (opsional), status, prioritas, tenggat, tag,
+   dan subtask (checklist).
 4. Simpan → redirect + flash.
 5. Filter status (tab + jumlah), prioritas, proyek (termasuk **Tanpa proyek**),
    cari.
@@ -696,6 +718,11 @@ Gunakan urutan ini agar hasilnya konsisten:
 11. Tarik kartu ke kolom lain (atau ubah select status di kartu) → status dan
     `completed_at` diperbarui; jumlah kolom ikut berubah.
 12. Kartu menampilkan badge proyek (titik warna + nama) jika ada.
+13. Tambah subtask lewat input + **Tambah** (atau Enter). Centang untuk selesai,
+    ubah judul langsung di baris, hapus lewat ikon tempat sampah. Semua
+    perubahan tersimpan saat pekerjaan disimpan.
+14. Kartu menampilkan progress subtask `x/y` + bar (hijau saat 100%); kartu
+    Kanban menampilkan `x/y` ringkas.
 
 ### 14.4 Dashboard
 
@@ -831,7 +858,7 @@ filter proyek di halaman pekerjaan, progress bar di kartu proyek.
 **Acceptance:** pekerjaan tanpa proyek tetap valid; hapus proyek tidak menghapus
 pekerjaan; filter dan progress benar.
 
-### 15.5 WORK-14 — Subtask
+### 15.5 WORK-14 — Subtask (selesai)
 
 **Data:**
 
@@ -1159,6 +1186,7 @@ Langkah berikutnya: ...
 | Notes | Markdown + detail + preview + tautan pekerjaan | NOTE-08/09/10/11 selesai |
 | Work Items | List + Kanban + filter proyek | Drag mengubah status |
 | Projects | CRUD + arsip + progress | Hapus tidak menghapus pekerjaan |
+| Subtasks | Nested payload + progress kartu | Tanpa endpoint terpisah |
 | Notes | Detail `/admin/notes/{note}` | Update diarahkan ke detail |
 | Agent | Service terpisah | Laravel control plane |
 | Wayfinder | Tidak dipakai admin | URL string literal |
@@ -1189,6 +1217,7 @@ Known issues:
 | --- | --- |
 | Catatan / Note | Dokumen Markdown dengan tag dan pin |
 | Pekerjaan / Work Item | Tugas dengan status, prioritas, tenggat |
+| Subtask | Checklist kecil di dalam pekerjaan |
 | Backlog | Belum dijadwalkan |
 | To do | Siap dikerjakan |
 | Dikerjakan / in progress | Sedang berjalan |

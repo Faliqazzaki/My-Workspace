@@ -3,6 +3,7 @@
 use App\Models\Note;
 use App\Models\Project;
 use App\Models\WorkItem;
+use App\Models\WorkItemSubtask;
 use Inertia\Testing\AssertableInertia as Assert;
 
 it('mengalihkan tamu dari halaman pekerjaan', function () {
@@ -450,4 +451,156 @@ it('memindahkan pekerjaan ke proyek lain dan melepasnya', function () {
         ]);
 
     expect($workItem->refresh()->project_id)->toBeNull();
+});
+
+it('menyimpan subtask beserta urutannya saat membuat pekerjaan', function () {
+    $this->actingAs(adminUser())
+        ->post('/admin/work-items', [
+            'title' => 'Bangun checklist',
+            'status' => 'todo',
+            'priority' => 'medium',
+            'subtasks' => [
+                ['title' => 'Rancang skema', 'is_done' => true],
+                ['title' => 'Tulis migrasi', 'is_done' => false],
+                ['title' => 'Buat test', 'is_done' => false],
+            ],
+        ])
+        ->assertRedirect(route('admin.work-items.index'));
+
+    $workItem = WorkItem::firstOrFail();
+
+    expect($workItem->subtasks()->count())->toBe(3);
+
+    $subtasks = $workItem->subtasks()->get();
+
+    expect($subtasks->pluck('title')->all())->toBe([
+        'Rancang skema',
+        'Tulis migrasi',
+        'Buat test',
+    ])
+        ->and($subtasks->pluck('position')->all())->toBe([0, 1, 2])
+        ->and($subtasks->first()->is_done)->toBeTrue()
+        ->and($subtasks->last()->is_done)->toBeFalse();
+});
+
+it('menampilkan subtask pada daftar pekerjaan', function () {
+    $workItem = WorkItem::create([
+        'title' => 'Pekerjaan dengan subtask',
+        'status' => 'todo',
+        'priority' => 'medium',
+    ]);
+
+    $workItem->subtasks()->create([
+        'title' => 'Langkah satu',
+        'is_done' => true,
+        'position' => 0,
+    ]);
+
+    $this->actingAs(adminUser())
+        ->get('/admin/work-items')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('workItems.data', 1)
+            ->where('workItems.data.0.subtasks.0.title', 'Langkah satu')
+            ->where('workItems.data.0.subtasks.0.is_done', true)
+        );
+});
+
+it('menyinkronkan subtask saat memperbarui pekerjaan', function () {
+    $workItem = WorkItem::create([
+        'title' => 'Pekerjaan bertahap',
+        'status' => 'todo',
+        'priority' => 'medium',
+    ]);
+
+    $keep = $workItem->subtasks()->create([
+        'title' => 'Tetap ada',
+        'is_done' => false,
+        'position' => 0,
+    ]);
+
+    $remove = $workItem->subtasks()->create([
+        'title' => 'Akan dihapus',
+        'is_done' => false,
+        'position' => 1,
+    ]);
+
+    $this->actingAs(adminUser())
+        ->put("/admin/work-items/{$workItem->id}", [
+            'title' => 'Pekerjaan bertahap',
+            'status' => 'todo',
+            'priority' => 'medium',
+            'subtasks' => [
+                ['id' => $keep->id, 'title' => 'Tetap ada', 'is_done' => true],
+                ['title' => 'Langkah baru', 'is_done' => false],
+            ],
+        ])
+        ->assertRedirect(route('admin.work-items.index'));
+
+    $subtasks = $workItem->subtasks()->get();
+
+    expect($subtasks->pluck('title')->all())->toBe(['Tetap ada', 'Langkah baru'])
+        ->and($subtasks->first()->id)->toBe($keep->id)
+        ->and($subtasks->first()->is_done)->toBeTrue()
+        ->and(WorkItemSubtask::whereKey($remove->id)->exists())->toBeFalse();
+});
+
+it('mempertahankan subtask jika payload update tidak menyertakannya', function () {
+    $workItem = WorkItem::create([
+        'title' => 'Tanpa perubahan subtask',
+        'status' => 'todo',
+        'priority' => 'medium',
+    ]);
+
+    $workItem->subtasks()->create([
+        'title' => 'Tetap tersimpan',
+        'is_done' => false,
+        'position' => 0,
+    ]);
+
+    $this->actingAs(adminUser())
+        ->put("/admin/work-items/{$workItem->id}", [
+            'title' => 'Judul diperbarui',
+            'status' => 'todo',
+            'priority' => 'medium',
+        ])
+        ->assertRedirect(route('admin.work-items.index'));
+
+    expect($workItem->refresh()->title)->toBe('Judul diperbarui')
+        ->and($workItem->subtasks()->count())->toBe(1);
+});
+
+it('memvalidasi judul subtask', function () {
+    $this->actingAs(adminUser())
+        ->post('/admin/work-items', [
+            'title' => 'Checklist tidak valid',
+            'status' => 'todo',
+            'priority' => 'medium',
+            'subtasks' => [
+                ['title' => '', 'is_done' => false],
+            ],
+        ])
+        ->assertSessionHasErrors('subtasks.0.title');
+
+    expect(WorkItem::count())->toBe(0);
+});
+
+it('menghapus subtask saat pekerjaan dihapus', function () {
+    $workItem = WorkItem::create([
+        'title' => 'Akan dihapus',
+        'status' => 'todo',
+        'priority' => 'medium',
+    ]);
+
+    $workItem->subtasks()->create([
+        'title' => 'Ikut terhapus',
+        'is_done' => false,
+        'position' => 0,
+    ]);
+
+    $this->actingAs(adminUser())
+        ->delete("/admin/work-items/{$workItem->id}");
+
+    expect(WorkItem::count())->toBe(0)
+        ->and(WorkItemSubtask::count())->toBe(0);
 });
