@@ -24,6 +24,7 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
     Route::put('/password', [AdminPasswordController::class, 'update'])->name('password.update');
 
     Route::get('/notes', [NoteController::class, 'index'])->name('notes.index');
+    Route::get('/notes/{note}', [NoteController::class, 'show'])->name('notes.show');
     Route::post('/notes', [NoteController::class, 'store'])->name('notes.store');
     Route::put('/notes/{note}', [NoteController::class, 'update'])->name('notes.update');
     Route::patch('/notes/{note}/pin', [NoteController::class, 'togglePin'])->name('notes.pin');

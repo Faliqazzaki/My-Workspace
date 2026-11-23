@@ -48,6 +48,13 @@ class NoteController extends Controller
         ]);
     }
 
+    public function show(Note $note): Response
+    {
+        return Inertia::render('admin/notes/show', [
+            'note' => $note,
+        ]);
+    }
+
     public function store(Request $request): RedirectResponse
     {
         Note::create($this->validatedData($request));
@@ -62,7 +69,7 @@ class NoteController extends Controller
         $note->update($this->validatedData($request));
 
         return redirect()
-            ->route('admin.notes.index')
+            ->route('admin.notes.show', $note)
             ->with('success', 'Catatan berhasil diperbarui.');
     }
 

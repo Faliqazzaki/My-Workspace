@@ -3,7 +3,7 @@
 Checklist fitur dan rencana pengembangan. Dokumen ini adalah sumber kebenaran
 untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 
-> Terakhir diperbarui: 22 November 2026
+> Terakhir diperbarui: 23 November 2026
 
 ## Cara pakai dokumen ini
 
@@ -91,9 +91,9 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 - [x] **NOTE-05** Pin catatan + urutan pin di atas
 - [x] **NOTE-06** Pagination 12 catatan/halaman
 - [x] **NOTE-07** Tag disimpan sebagai JSONB, dinormalisasi (trim, unik, maks 10)
-- [ ] **NOTE-08** Halaman detail catatan `/admin/notes/{note}`
-- [ ] **NOTE-09** Render Markdown yang aman (GFM, code block, tabel)
-- [ ] **NOTE-10** Preview Markdown saat menulis
+- [x] **NOTE-08** Halaman detail catatan `/admin/notes/{note}`
+- [x] **NOTE-09** Render Markdown yang aman (GFM, code block, tabel)
+- [x] **NOTE-10** Preview Markdown saat menulis
 - [ ] **NOTE-11** Tautan catatan ↔ pekerjaan (many-to-many)
 - [ ] **NOTE-12** Arsip / soft delete + restore
 - [ ] **NOTE-13** Auto-save draft ke localStorage
@@ -174,8 +174,8 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 
 ## 10. Kualitas & Observability
 
-- [x] **QA-01** 70 test Pest lolos (400 assertion)
-- [x] **QA-02** Test fitur untuk auth, catatan, pekerjaan, dashboard
+- [x] **QA-01** 73 test Pest lolos (423 assertion)
+- [x] **QA-02** Test fitur untuk auth, catatan (termasuk detail), pekerjaan, dashboard
 - [x] **QA-03** Format PHP dengan Pint
 - [x] **QA-04** Lint JS dengan ESLint + format Prettier
 - [x] **QA-05** Production build Vite berhasil
@@ -197,24 +197,23 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 | Autentikasi | 8 | 12 |
 | UI | 7 | 12 |
 | Dashboard | 6 | 11 |
-| Catatan | 7 | 16 |
+| Catatan | 10 | 16 |
 | Pekerjaan | 10 | 20 |
 | Pengetahuan & Produktivitas | 0 | 13 |
 | Berita & AI | 0 | 13 |
 | Multi-Agent | 0 | 10 |
 | Kualitas | 5 | 12 |
 
-**Total: 50 dari 129 item selesai.**
+**Total: 53 dari 129 item selesai.**
 
 ## Urutan pengerjaan yang disarankan
 
-1. **NOTE-08 / NOTE-09** — halaman detail + Markdown, fondasi untuk banyak fitur.
-2. **NOTE-11** — tautan catatan ↔ pekerjaan, nilai langsung terasa.
-3. **WORK-11 / WORK-12** — Kanban sebagai alternatif tampilan.
-4. **KNOW-01** — kebiasaan harian + widget dashboard.
-5. **NEWS-01 … NEWS-06** — berita teknologi + ringkasan AI.
-6. **AI-02 / AI-03** — asisten dan pencarian semantik.
-7. **AGT-01 … AGT-10** — multi-agent setelah kontrol dasar stabil.
+1. **NOTE-11** — tautan catatan ↔ pekerjaan, nilai langsung terasa.
+2. **WORK-11 / WORK-12** — Kanban sebagai alternatif tampilan.
+3. **KNOW-01** — kebiasaan harian + widget dashboard.
+4. **NEWS-01 … NEWS-06** — berita teknologi + ringkasan AI.
+5. **AI-02 / AI-03** — asisten dan pencarian semantik.
+6. **AGT-01 … AGT-10** — multi-agent setelah kontrol dasar stabil.
 
 ## Non-goals saat ini
 

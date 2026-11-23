@@ -1,4 +1,4 @@
-import { router, useForm } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import {
     CalendarDays,
     ChevronLeft,
@@ -9,7 +9,6 @@ import {
     PinOff,
     Plus,
     RotateCcw,
-    Save,
     Search,
     Tag,
     Trash2,
@@ -17,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
-import InputError from '@/components/input-error';
+import NoteEditorDialog from '@/components/notes/note-editor-dialog';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -28,8 +27,6 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
 import AdminLayout from '@/layouts/admin-layout';
 import { cn } from '@/lib/utils';
 
@@ -49,20 +46,11 @@ const excerpt = (content = '') => {
     return clean.length > 180 ? `${clean.slice(0, 180)}…` : clean;
 };
 
-const parseTags = (value) => {
-    return value
-        .split(',')
-        .map((tag) => tag.trim())
-        .filter(Boolean);
-};
-
 export default function NotesIndex({ notes, tags = [], filters = {} }) {
     const queryParam = filters.q ?? '';
     const [search, setSearch] = useState(queryParam);
     const [syncedQuery, setSyncedQuery] = useState(queryParam);
-    const [editorOpen, setEditorOpen] = useState(false);
-    const [editing, setEditing] = useState(null);
-    const [tagInput, setTagInput] = useState('');
+    const [editor, setEditor] = useState(null);
     const [deleting, setDeleting] = useState(null);
     const isFirstRender = useRef(true);
 
@@ -95,54 +83,9 @@ export default function NotesIndex({ notes, tags = [], filters = {} }) {
         return () => clearTimeout(timer);
     }, [search, queryParam, filters.tag]);
 
-    const { data, setData, post, put, processing, errors, reset, clearErrors } =
-        useForm({
-            title: '',
-            content: '',
-            tags: [],
-            is_pinned: false,
-        });
+    const openCreate = () => setEditor({ note: null });
 
-    const openCreate = () => {
-        setEditing(null);
-        clearErrors();
-        reset();
-        setTagInput('');
-        setEditorOpen(true);
-    };
-
-    const openEdit = (note) => {
-        setEditing(note);
-        clearErrors();
-        setData({
-            title: note.title,
-            content: note.content,
-            tags: note.tags ?? [],
-            is_pinned: Boolean(note.is_pinned),
-        });
-        setTagInput((note.tags ?? []).join(', '));
-        setEditorOpen(true);
-    };
-
-    const handleTagsChange = (value) => {
-        setTagInput(value);
-        setData('tags', parseTags(value));
-    };
-
-    const submit = (event) => {
-        event.preventDefault();
-
-        const options = {
-            preserveScroll: true,
-            onSuccess: () => setEditorOpen(false),
-        };
-
-        if (editing) {
-            put(`/admin/notes/${editing.id}`, options);
-        } else {
-            post('/admin/notes', options);
-        }
-    };
+    const openEdit = (note) => setEditor({ note });
 
     const confirmDelete = () => {
         if (!deleting) {
@@ -395,7 +338,9 @@ export default function NotesIndex({ notes, tags = [], filters = {} }) {
                             </div>
 
                             <h2 className="line-clamp-2 text-base font-semibold tracking-tight text-foreground transition-colors group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
-                                {note.title}
+                                <Link href={`/admin/notes/${note.id}`}>
+                                    {note.title}
+                                </Link>
                             </h2>
 
                             <p className="mt-2 line-clamp-4 text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground">
@@ -540,112 +485,17 @@ export default function NotesIndex({ notes, tags = [], filters = {} }) {
                 </div>
             )}
 
-            {/* Dialog tambah/edit */}
-            <Dialog open={editorOpen} onOpenChange={setEditorOpen}>
-                <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
-                    <DialogHeader>
-                        <DialogTitle>
-                            {editing ? 'Edit catatan' : 'Catatan baru'}
-                        </DialogTitle>
-                        <DialogDescription>
-                            {editing
-                                ? 'Perbarui isi catatanmu.'
-                                : 'Tulis satu hal yang kamu pelajari atau butuhkan hari ini.'}
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <form onSubmit={submit} className="flex flex-col gap-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="note-title">Judul</Label>
-                            <Input
-                                id="note-title"
-                                value={data.title}
-                                onChange={(event) =>
-                                    setData('title', event.target.value)
-                                }
-                                placeholder="masukkan judul"
-                                autoFocus
-                                required
-                                aria-invalid={Boolean(errors.title)}
-                            />
-                            <InputError message={errors.title} />
-                        </div>
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="note-content">Isi catatan</Label>
-                            <textarea
-                                id="note-content"
-                                value={data.content}
-                                onChange={(event) =>
-                                    setData('content', event.target.value)
-                                }
-                                placeholder="masukkan isi catatan"
-                                rows={10}
-                                required
-                                aria-invalid={Boolean(errors.content)}
-                                className="flex min-h-40 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
-                            />
-                            <InputError message={errors.content} />
-                        </div>
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="note-tags">Tag</Label>
-                            <Input
-                                id="note-tags"
-                                value={tagInput}
-                                onChange={(event) =>
-                                    handleTagsChange(event.target.value)
-                                }
-                                placeholder="masukkan tag"
-                            />
-                            <p className="text-xs text-muted-foreground">
-                                Pisahkan beberapa tag dengan koma. Maksimal 10
-                                tag.
-                            </p>
-                            <InputError message={errors.tags} />
-                        </div>
-
-                        <label className="flex w-fit items-center gap-2 text-sm">
-                            <input
-                                type="checkbox"
-                                checked={data.is_pinned}
-                                onChange={(event) =>
-                                    setData('is_pinned', event.target.checked)
-                                }
-                                className="size-4 rounded border-input accent-indigo-500"
-                            />
-                            Sematkan catatan di atas
-                        </label>
-
-                        <DialogFooter className="mt-2">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setEditorOpen(false)}
-                            >
-                                Batal
-                            </Button>
-                            <Button
-                                type="submit"
-                                disabled={processing}
-                                className="bg-neutral-900 text-white shadow-sm transition-all hover:bg-neutral-800 active:scale-[0.98] dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100"
-                            >
-                                {processing ? (
-                                    <>
-                                        <Spinner />
-                                        Menyimpan...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Save className="size-4" />
-                                        Simpan
-                                    </>
-                                )}
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
+            {editor && (
+                <NoteEditorDialog
+                    open
+                    onOpenChange={(open) => {
+                        if (!open) {
+                            setEditor(null);
+                        }
+                    }}
+                    note={editor.note}
+                />
+            )}
 
             {/* Dialog konfirmasi hapus */}
             <Dialog

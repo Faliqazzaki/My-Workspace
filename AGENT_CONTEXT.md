@@ -5,10 +5,18 @@ yang melanjutkan proyek ini. Baca dokumen ini dan `FEATURES.md` sebelum menulis
 kode. Jika ada konflik antara dokumen dan kode, **kode yang berjalan adalah
 kebenaran**, lalu perbarui dokumen.
 
-> Terakhir diperbarui: 22 November 2026
-> Status: fondasi + Dashboard + Catatan + Pekerjaan sudah berjalan.
+> Terakhir diperbarui: 23 November 2026
+> Status: fondasi + Dashboard + Catatan (termasuk detail & Markdown) +
+> Pekerjaan sudah berjalan.
 
 ---
+
+## Lokasi kerja (WAJIB)
+
+- Bekerja langsung di direktori repo ini (root berisi `artisan`, `composer.json`, `.git`).
+- Jangan membuat folder baru, salinan, clone, atau worktree di luar repo ini.
+- Jika `pwd` bukan root repo, berhenti dan laporkan; jangan membuat proyek baru.
+- Isolasi pekerjaan memakai branch (`feat/<id>-<slug>`), bukan folder baru.
 
 ## 0. TL;DR
 
@@ -18,8 +26,9 @@ kebenaran**, lalu perbarui dokumen.
   tombol **solid tanpa gradient**, mendukung dark mode.
 - Auth saat ini: database (`users.username`, password hash, flag `is_admin`),
   halaman **Keamanan** untuk ubah password.
-- Fitur selesai: login, shell admin, Dashboard, Catatan, Pekerjaan.
-- Test: **70 test Pest lolos** (400 assertions), build Vite berhasil.
+- Fitur selesai: login, shell admin, Dashboard, Catatan (detail + Markdown +
+  pratinjau), Pekerjaan.
+- Test: **73 test Pest lolos** (423 assertions), build Vite berhasil.
 - Cara kerja: **satu increment kecil**, backend → frontend → test → quality gate
   → verifikasi PostgreSQL → update checklist.
 
@@ -99,15 +108,15 @@ Dan perbarui `FEATURES.md` + tulis handoff.
 | Login admin | Selesai (database + halaman Keamanan) |
 | Shell admin | Selesai |
 | Dashboard | Selesai (data nyata) |
-| Catatan | Selesai (CRUD, search, tag, pin) |
+| Catatan | Selesai (CRUD, detail, Markdown, search, tag, pin) |
 | Pekerjaan | Selesai (CRUD, filter, status, tenggat) |
-| Markdown preview | Belum |
+| Markdown preview | Selesai (halaman detail + tab pratinjau editor) |
 | Tautan catatan ↔ pekerjaan | Belum |
 | Kanban | Belum |
 | Berita AI | Belum |
 | Multi-agent | Belum |
 
-Angka test terakhir: **70 passed, 400 assertions**.
+Angka test terakhir: **73 passed, 423 assertions**.
 
 ---
 
@@ -209,10 +218,14 @@ resources/
     pages/
       admin/index.jsx              # dashboard
       admin/password.jsx           # keamanan / ubah password
-      admin/notes/index.jsx        # catatan
+      admin/notes/index.jsx        # daftar catatan
+      admin/notes/show.jsx         # detail catatan + Markdown
       admin/work-items/index.jsx   # pekerjaan
       auth/admin-login.jsx         # login
-    components/ui/                 # shadcn
+    components/
+      markdown-content.jsx         # render Markdown aman (GFM + sanitize)
+      notes/note-editor-dialog.jsx # dialog tambah/edit + pratinjau
+      ui/                          # shadcn
 routes/web.php                     # semua route admin
 tests/Feature/                     # test Pest
 tests/Pest.php                     # helper adminUser()
@@ -385,6 +398,7 @@ Prefix `/admin`, name prefix `admin.`, middleware `admin.auth`.
 | GET | `/admin/password` | `admin.password.edit` | halaman keamanan |
 | PUT | `/admin/password` | `admin.password.update` | ubah password |
 | GET | `/admin/notes` | `admin.notes.index` | daftar catatan |
+| GET | `/admin/notes/{note}` | `admin.notes.show` | detail catatan |
 | POST | `/admin/notes` | `admin.notes.store` | simpan catatan |
 | PUT | `/admin/notes/{note}` | `admin.notes.update` | ubah catatan |
 | PATCH | `/admin/notes/{note}/pin` | `admin.notes.pin` | toggle pin |
@@ -476,6 +490,11 @@ Saat menambah route baru: ikuti pola di atas, tambahkan test tamu → redirect.
 - `@/lib/work-item-meta`: `statusMeta` (`label`, `badge`, `bar`),
   `priorityMeta` (`label`, `badge`).
 - Jangan menduplikasi label/warna status di halaman baru; impor helper.
+- Markdown dirender lewat `@/components/markdown-content` (react-markdown +
+  remark-gfm + rehype-sanitize). Styling elemen Markdown ada di kelas
+  `.markdown-body` pada `resources/css/app.css`.
+- Editor catatan memakai `@/components/notes/note-editor-dialog` dengan tab
+  **Tulis / Pratinjau**. Jangan menulis ulang dialog editor di halaman lain.
 
 ### Pola UI yang sudah ada
 
@@ -603,7 +622,11 @@ Gunakan urutan ini agar hasilnya konsisten:
 4. Simpan → redirect + flash.
 5. Cari (debounce) / filter tag / halaman.
 6. Pin → catatan naik ke atas.
-7. Edit / hapus lewat aksi di kartu.
+7. Klik judul → halaman detail `/admin/notes/{note}`; konten dirender sebagai
+   Markdown (GFM, aman dari HTML mentah).
+8. Di halaman detail: **Edit** (dialog dengan tab Tulis/Pratinjau) dan
+   **Hapus**. Setelah edit, kembali ke detail; setelah hapus, kembali ke daftar.
+9. Edit / hapus juga bisa langsung dari kartu di daftar.
 
 ### 14.3 Pekerjaan
 
@@ -633,7 +656,7 @@ Gunakan urutan ini agar hasilnya konsisten:
 > Detail checklist dan ID ada di `FEATURES.md`. Bagian ini menjelaskan
 > **bagaimana** membangunnya.
 
-### 15.1 NOTE-08/09/10 — Detail & Markdown
+### 15.1 NOTE-08/09/10 — Detail & Markdown (selesai)
 
 **Tujuan:** catatan bisa dibaca sebagai dokumen, bukan hanya di kartu.
 
@@ -1057,8 +1080,9 @@ Langkah berikutnya: ...
 | Stack | Laravel + Inertia + React | Tidak rewrite ke Node |
 | Auth | Database + `is_admin` | AUTH-07/08 selesai; Fortify belum dibersihkan |
 | Dashboard | Data lokal nyata | Berita AI ditunda |
-| Notes | Markdown textarea | Preview belum ada |
+| Notes | Markdown + detail + preview | NOTE-08/09/10 selesai |
 | Work Items | List + filter | Kanban belum |
+| Notes | Detail `/admin/notes/{note}` | Update diarahkan ke detail |
 | Agent | Service terpisah | Laravel control plane |
 | Wayfinder | Tidak dipakai admin | URL string literal |
 | Fortify | Terpasang, tidak terhubung | Hapus/integrasikan nanti |

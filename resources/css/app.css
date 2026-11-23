@@ -141,3 +141,107 @@
         @apply bg-background text-foreground;
     }
 }
+
+@layer components {
+    .markdown-body {
+        @apply leading-relaxed break-words;
+    }
+
+    .markdown-body > :first-child {
+        @apply mt-0;
+    }
+
+    .markdown-body > :last-child {
+        @apply mb-0;
+    }
+
+    .markdown-body h1 {
+        @apply mt-8 mb-4 text-2xl font-bold tracking-tight;
+    }
+
+    .markdown-body h2 {
+        @apply mt-8 mb-3 border-b pb-2 text-xl font-semibold tracking-tight;
+    }
+
+    .markdown-body h3 {
+        @apply mt-6 mb-2 text-lg font-semibold tracking-tight;
+    }
+
+    .markdown-body h4,
+    .markdown-body h5,
+    .markdown-body h6 {
+        @apply mt-5 mb-2 text-base font-semibold tracking-tight;
+    }
+
+    .markdown-body p {
+        @apply my-3 leading-7;
+    }
+
+    .markdown-body ul {
+        @apply my-3 list-disc space-y-1 pl-6;
+    }
+
+    .markdown-body ol {
+        @apply my-3 list-decimal space-y-1 pl-6;
+    }
+
+    .markdown-body li {
+        @apply leading-7;
+    }
+
+    .markdown-body li > p {
+        @apply my-0;
+    }
+
+    .markdown-body li:has(> input[type='checkbox']) {
+        @apply list-none;
+    }
+
+    .markdown-body input[type='checkbox'] {
+        @apply mr-2 align-middle accent-indigo-500;
+    }
+
+    .markdown-body a {
+        @apply font-medium break-words text-indigo-600 underline decoration-indigo-500/40 underline-offset-2 transition-colors hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300;
+    }
+
+    .markdown-body strong {
+        @apply font-semibold text-foreground;
+    }
+
+    .markdown-body blockquote {
+        @apply my-5 border-l-2 border-indigo-500/40 pl-4 text-muted-foreground italic;
+    }
+
+    .markdown-body code {
+        @apply rounded bg-muted px-1.5 py-0.5 font-mono text-[0.85em] text-foreground;
+    }
+
+    .markdown-body pre {
+        @apply my-5 overflow-x-auto rounded-xl border bg-neutral-950 p-4 text-[13px] leading-relaxed text-neutral-100;
+    }
+
+    .markdown-body pre code {
+        @apply bg-transparent p-0 text-inherit;
+    }
+
+    .markdown-body hr {
+        @apply my-8 border-border;
+    }
+
+    .markdown-body table {
+        @apply my-5 w-full border-collapse text-sm;
+    }
+
+    .markdown-body th {
+        @apply border bg-muted/60 px-3 py-2 text-left font-semibold;
+    }
+
+    .markdown-body td {
+        @apply border px-3 py-2 align-top;
+    }
+
+    .markdown-body img {
+        @apply my-4 max-w-full rounded-lg border;
+    }
+}

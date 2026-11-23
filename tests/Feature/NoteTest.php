@@ -66,7 +66,7 @@ it('memperbarui catatan', function () {
             'tags' => ['baru'],
             'is_pinned' => false,
         ])
-        ->assertRedirect(route('admin.notes.index'));
+        ->assertRedirect(route('admin.notes.show', $note));
 
     expect($note->fresh())
         ->title->toBe('Judul baru')
@@ -106,6 +106,43 @@ it('menyematkan dan melepas sematan catatan', function () {
         ->patch("/admin/notes/{$note->id}/pin");
 
     expect($note->fresh()->is_pinned)->toBeFalse();
+});
+
+it('mengalihkan tamu dari halaman detail catatan', function () {
+    $note = Note::create([
+        'title' => 'Catatan privat',
+        'content' => 'Isi.',
+        'tags' => [],
+    ]);
+
+    $this->get("/admin/notes/{$note->id}")->assertRedirect(route('home'));
+});
+
+it('menampilkan detail catatan untuk admin', function () {
+    $note = Note::create([
+        'title' => 'Belajar Markdown',
+        'content' => "## Heading\n\n**Tebal** dan `kode`.",
+        'tags' => ['markdown', 'catatan'],
+        'is_pinned' => true,
+    ]);
+
+    $this->actingAs(adminUser())
+        ->get("/admin/notes/{$note->id}")
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('admin/notes/show')
+            ->where('note.id', $note->id)
+            ->where('note.title', 'Belajar Markdown')
+            ->where('note.content', "## Heading\n\n**Tebal** dan `kode`.")
+            ->where('note.is_pinned', true)
+            ->where('note.tags', ['markdown', 'catatan'])
+        );
+});
+
+it('mengembalikan 404 saat catatan tidak ditemukan', function () {
+    $this->actingAs(adminUser())
+        ->get('/admin/notes/999')
+        ->assertNotFound();
 });
 
 it('mencari catatan berdasarkan judul dan menyaring tag', function () {
