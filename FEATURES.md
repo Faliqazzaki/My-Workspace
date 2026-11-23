@@ -76,7 +76,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 - [x] **DASH-04** Catatan terbaru (4 item)
 - [x] **DASH-05** Sapaan + tanggal panjang bahasa Indonesia
 - [x] **DASH-06** Empty state untuk pekerjaan aktif dan catatan
-- [ ] **DASH-07** Widget kebiasaan "1 Hari 1 Pengetahuan" + streak
+- [x] **DASH-07** Widget kebiasaan "1 Hari 1 Pengetahuan" + streak
 - [ ] **DASH-08** Grafik aktivitas 7/30 hari (catatan & pekerjaan selesai)
 - [ ] **DASH-09** Widget 3 berita teknologi pilihan AI
 - [ ] **DASH-10** Ringkasan agenda: tenggat hari ini dan minggu ini
@@ -126,7 +126,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 
 ## 7. Pengetahuan & Produktivitas
 
-- [ ] **KNOW-01** Kebiasaan "1 Hari 1 Pengetahuan" + streak harian
+- [x] **KNOW-01** Kebiasaan "1 Hari 1 Pengetahuan" + streak harian
 - [ ] **KNOW-02** Statistik pengetahuan: catatan/minggu, tag teratas
 - [ ] **KNOW-03** Review harian/mingguan (catatan + pekerjaan)
 - [ ] **KNOW-04** Target harian/mingguan yang bisa diatur
@@ -174,7 +174,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 
 ## 10. Kualitas & Observability
 
-- [x] **QA-01** 83 test Pest lolos (510 assertion)
+- [x] **QA-01** 88 test Pest lolos (589 assertion)
 - [x] **QA-02** Test fitur untuk auth, catatan (termasuk detail), pekerjaan, dashboard
 - [x] **QA-03** Format PHP dengan Pint
 - [x] **QA-04** Lint JS dengan ESLint + format Prettier
@@ -196,22 +196,21 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 | Fondasi | 7 | 10 |
 | Autentikasi | 8 | 12 |
 | UI | 7 | 12 |
-| Dashboard | 6 | 11 |
+| Dashboard | 7 | 11 |
 | Catatan | 11 | 16 |
 | Pekerjaan | 12 | 20 |
-| Pengetahuan & Produktivitas | 0 | 13 |
+| Pengetahuan & Produktivitas | 1 | 13 |
 | Berita & AI | 0 | 13 |
 | Multi-Agent | 0 | 10 |
 | Kualitas | 5 | 12 |
 
-**Total: 56 dari 129 item selesai.**
+**Total: 58 dari 129 item selesai.**
 
 ## Urutan pengerjaan yang disarankan
 
-1. **KNOW-01** — kebiasaan harian + widget dashboard.
-2. **NEWS-01 … NEWS-06** — berita teknologi + ringkasan AI.
-3. **AI-02 / AI-03** — asisten dan pencarian semantik.
-4. **AGT-01 … AGT-10** — multi-agent setelah kontrol dasar stabil.
+1. **NEWS-01 … NEWS-06** — berita teknologi + ringkasan AI.
+2. **AI-02 / AI-03** — asisten dan pencarian semantik.
+3. **AGT-01 … AGT-10** — multi-agent setelah kontrol dasar stabil.
 
 ## Non-goals saat ini
 

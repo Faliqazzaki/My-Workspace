@@ -6,8 +6,8 @@ kode. Jika ada konflik antara dokumen dan kode, **kode yang berjalan adalah
 kebenaran**, lalu perbarui dokumen.
 
 > Terakhir diperbarui: 23 November 2026
-> Status: fondasi + Dashboard + Catatan (detail, Markdown, tautan pekerjaan) +
-> Pekerjaan (list + Kanban) sudah berjalan.
+> Status: fondasi + Dashboard (termasuk kebiasaan mencatat) + Catatan (detail,
+> Markdown, tautan pekerjaan) + Pekerjaan (list + Kanban) sudah berjalan.
 
 ---
 
@@ -26,9 +26,10 @@ kebenaran**, lalu perbarui dokumen.
   tombol **solid tanpa gradient**, mendukung dark mode.
 - Auth saat ini: database (`users.username`, password hash, flag `is_admin`),
   halaman **Keamanan** untuk ubah password.
-- Fitur selesai: login, shell admin, Dashboard, Catatan (detail + Markdown +
-  pratinjau + tautan ke pekerjaan), Pekerjaan (list + Kanban drag & drop).
-- Test: **83 test Pest lolos** (510 assertions), build Vite berhasil.
+- Fitur selesai: login, shell admin, Dashboard (statistik + kebiasaan mencatat),
+  Catatan (detail + Markdown + pratinjau + tautan ke pekerjaan), Pekerjaan
+  (list + Kanban drag & drop).
+- Test: **88 test Pest lolos** (589 assertions), build Vite berhasil.
 - Cara kerja: **satu increment kecil**, backend → frontend → test → quality gate
   → verifikasi PostgreSQL → update checklist.
 
@@ -107,16 +108,17 @@ Dan perbarui `FEATURES.md` + tulis handoff.
 | --- | --- |
 | Login admin | Selesai (database + halaman Keamanan) |
 | Shell admin | Selesai |
-| Dashboard | Selesai (data nyata) |
+| Dashboard | Selesai (data nyata + widget kebiasaan & streak) |
 | Catatan | Selesai (CRUD, detail, Markdown, tautan pekerjaan, search, tag, pin) |
 | Pekerjaan | Selesai (CRUD, filter, status, tenggat, pilih catatan terkait) |
 | Markdown preview | Selesai (halaman detail + tab pratinjau editor) |
 | Tautan catatan ↔ pekerjaan | Selesai (pivot `note_work_item`, dua arah) |
 | Kanban | Selesai (toggle Daftar/Papan, drag & drop, select status) |
+| Kebiasaan mencatat | Selesai (streak harian, zona waktu Asia/Jakarta) |
 | Berita AI | Belum |
 | Multi-agent | Belum |
 
-Angka test terakhir: **83 passed, 510 assertions**.
+Angka test terakhir: **88 passed, 589 assertions**.
 
 ---
 
@@ -677,7 +679,9 @@ Gunakan urutan ini agar hasilnya konsisten:
 4. Pekerjaan aktif (todo + in_progress, maks 5, urut tenggat).
 5. Distribusi status dengan progress bar.
 6. Catatan terbaru (maks 4).
-7. Klik **Lihat semua** → halaman terkait.
+7. Widget **1 Hari 1 Pengetahuan**: status hari ini, jumlah catatan hari ini,
+   streak beruntun, dan CTA ke halaman catatan.
+8. Klik **Lihat semua** → halaman terkait.
 
 ---
 
@@ -805,9 +809,9 @@ tampilkan `x/y` dan progress bar di kartu.
 **Acceptance:** urutan stabil, progress dihitung benar, cascade delete,
 test CRUD subtask.
 
-### 15.6 KNOW-01/02 — Kebiasaan & statistik
+### 15.6 KNOW-01/02 — Kebiasaan & statistik (KNOW-01 selesai)
 
-**Kebiasaan "1 Hari 1 Pengetahuan":**
+**Kebiasaan "1 Hari 1 Pengetahuan":** selesai (KNOW-01).
 
 - Streak dihitung dari tanggal `notes.created_at` (zona waktu `Asia/Jakarta`).
 - Satu hari dihitung sekali walau ada banyak catatan.
@@ -815,6 +819,8 @@ test CRUD subtask.
 - Widget dashboard: "Hari ini sudah mencatat?" + streak + CTA.
 - Implementasi awal tanpa tabel baru; jika butuh backfill/riwayat, tambah
   `daily_knowledge_logs (date unique, note_count, created_at)`.
+- Logika ada di `AdminController::knowledgeHabit()`; prop `knowledge` berisi
+  `has_note_today`, `notes_today`, `streak`, `timezone`.
 
 **Statistik:**
 
@@ -1111,7 +1117,7 @@ Langkah berikutnya: ...
 | --- | --- | --- |
 | Stack | Laravel + Inertia + React | Tidak rewrite ke Node |
 | Auth | Database + `is_admin` | AUTH-07/08 selesai; Fortify belum dibersihkan |
-| Dashboard | Data lokal nyata | Berita AI ditunda |
+| Dashboard | Data lokal nyata + kebiasaan | Berita AI ditunda |
 | Notes | Markdown + detail + preview + tautan pekerjaan | NOTE-08/09/10/11 selesai |
 | Work Items | List + Kanban | Drag mengubah status |
 | Notes | Detail `/admin/notes/{note}` | Update diarahkan ke detail |
@@ -1133,6 +1139,8 @@ Known issues:
 5. Belum ada halaman detail pekerjaan; edit lewat dialog.
 6. `completed_at` dijaga controller, bukan constraint database.
 7. Urutan kartu Kanban mengikuti tenggat, belum bisa diatur manual.
+8. Streak dihitung di PHP dari seluruh `notes.created_at`; cukup untuk data
+   personal, perlu query agregat jika jumlah catatan sangat besar.
 
 ---
 

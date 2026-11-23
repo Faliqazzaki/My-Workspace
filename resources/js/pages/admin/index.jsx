@@ -5,6 +5,7 @@ import {
     CalendarDays,
     CheckCircle2,
     ClipboardList,
+    Flame,
     NotebookPen,
     Plus,
     Tag,
@@ -50,8 +51,12 @@ export default function Admin({
     statusCounts = {},
     activeWorkItems = [],
     recentNotes = [],
+    knowledge = {},
 }) {
     const username = admin?.username ?? 'my-workspace';
+    const hasNoteToday = Boolean(knowledge.has_note_today);
+    const streak = Number(knowledge.streak ?? 0);
+    const notesToday = Number(knowledge.notes_today ?? 0);
     const totalWorkItems = Number(stats.workItems ?? 0);
     const totalStatus = statusOrder.reduce(
         (total, status) => total + Number(statusCounts[status] ?? 0),
@@ -118,6 +123,79 @@ export default function Admin({
                     icon={AlertTriangle}
                     tone="bg-red-500/10 text-red-600 dark:text-red-300"
                 />
+            </section>
+
+            <section
+                className={cn(
+                    'mt-6 rounded-xl border bg-card shadow-sm',
+                    hasNoteToday
+                        ? 'border-emerald-500/30'
+                        : 'border-amber-500/30',
+                )}
+            >
+                <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+                    <div className="flex items-start gap-3">
+                        <span
+                            className={cn(
+                                'flex size-10 shrink-0 items-center justify-center rounded-xl',
+                                hasNoteToday
+                                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'
+                                    : 'bg-amber-500/10 text-amber-600 dark:text-amber-300',
+                            )}
+                        >
+                            {hasNoteToday ? (
+                                <CheckCircle2 className="size-5" />
+                            ) : (
+                                <Flame className="size-5" />
+                            )}
+                        </span>
+
+                        <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                                <h2 className="text-sm font-semibold">
+                                    {hasNoteToday
+                                        ? 'Hari ini sudah mencatat'
+                                        : 'Hari ini belum mencatat'}
+                                </h2>
+                                <span className="inline-flex items-center gap-1 rounded-full bg-orange-500/10 px-2 py-0.5 text-[11px] font-medium text-orange-600 dark:text-orange-300">
+                                    <Flame className="size-3" />
+                                    {streak > 0
+                                        ? `${streak} hari beruntun`
+                                        : 'Belum ada streak'}
+                                </span>
+                            </div>
+
+                            <p className="mt-1 max-w-xl text-xs leading-relaxed text-muted-foreground">
+                                {hasNoteToday
+                                    ? `Kamu sudah menulis ${notesToday} catatan hari ini. Pertahankan kebiasaan 1 Hari 1 Pengetahuan.`
+                                    : streak > 0
+                                      ? `Tulis satu catatan hari ini agar streak ${streak} hari tetap hidup.`
+                                      : 'Mulai kebiasaan 1 Hari 1 Pengetahuan dengan satu catatan kecil hari ini.'}
+                            </p>
+                            <p className="mt-1 text-[10px] text-muted-foreground/80">
+                                Dihitung per hari, zona waktu{' '}
+                                {knowledge.timezone ?? 'Asia/Jakarta'}.
+                            </p>
+                        </div>
+                    </div>
+
+                    <Button
+                        asChild
+                        variant={hasNoteToday ? 'outline' : 'default'}
+                        className={cn(
+                            'shrink-0 gap-2',
+                            !hasNoteToday &&
+                                'bg-neutral-900 text-white shadow-sm transition-all hover:bg-neutral-800 active:scale-[0.98] dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100',
+                        )}
+                    >
+                        <Link href="/admin/notes">
+                            <NotebookPen className="size-4" />
+                            {hasNoteToday
+                                ? 'Tulis catatan lagi'
+                                : 'Tulis catatan hari ini'}
+                        </Link>
+                    </Button>
+                </div>
             </section>
 
             <div className="mt-6 grid gap-4 lg:grid-cols-5">
