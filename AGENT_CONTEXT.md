@@ -1,8 +1,9 @@
 # AGENT_CONTEXT — My Workspace
 
 Dokumen ini adalah **kontrak kerja** untuk siapa pun (manusia atau coding agent)
-yang melanjutkan proyek ini. Baca dokumen ini dan `FEATURES.md` sebelum menulis
-kode. Jika ada konflik antara dokumen dan kode, **kode yang berjalan adalah
+yang melanjutkan proyek ini. Baca **bagian atas sampai §0**, `HANDOFF.md`, dan
+bagian `FEATURES.md` yang relevan; bagian lain dibaca hanya jika dibutuhkan.
+Jika ada konflik antara dokumen dan kode, **kode yang berjalan adalah
 kebenaran**, lalu perbarui dokumen.
 
 > Terakhir diperbarui: 23 November 2026
@@ -11,12 +12,65 @@ kebenaran**, lalu perbarui dokumen.
 
 ---
 
-## Lokasi kerja (WAJIB)
+## Lokasi kerja & shift (WAJIB)
 
 - Bekerja langsung di direktori repo ini (root berisi `artisan`, `composer.json`, `.git`).
-- Jangan membuat folder baru, salinan, clone, atau worktree di luar repo ini.
-- Jika `pwd` bukan root repo, berhenti dan laporkan; jangan membuat proyek baru.
-- Isolasi pekerjaan memakai branch (`feat/<id>-<slug>`), bukan folder baru.
+- Semua pekerjaan di branch `main`. Jangan membuat branch, folder baru, salinan,
+  clone, atau worktree.
+- Jika `pwd` bukan root repo, berhenti dan laporkan.
+- Hanya **satu agent aktif pada satu waktu** (sistem shift). Agent lain tidak
+  boleh mengedit repo sampai shift diserahterimakan.
+
+### Awal shift
+1. `git status` dan `git log --oneline -5`.
+2. Baca `HANDOFF.md` (pendek). Jika ada pekerjaan tertinggal (`[~]` di
+   `FEATURES.md` atau perubahan belum di-commit), **lanjutkan itu dulu**;
+   jangan mulai item baru.
+3. Pastikan baseline hijau sebelum menambah fitur.
+
+### Akhir shift (atau saat kuota hampir habis)
+- **Item selesai:** jalankan `bash scripts/check.sh`, centang `FEATURES.md`,
+  lalu commit `feat(<area>): ...`.
+- **Item belum selesai:** jangan biarkan perubahan menggantung. Commit sebagai
+  `wip(<ID>): <apa yang sudah dan belum>`, biarkan `[~]` di `FEATURES.md`.
+- Tulis ulang `HANDOFF.md` (maks ±10 baris, timpa isi lama): item, status,
+  file utama, yang belum selesai, langkah berikutnya, apakah test/build hijau.
+- Jangan `git add .` secara buta; stage hanya file yang terkait item.
+- Jangan commit `.env` atau kredensial.
+
+## Hemat token (WAJIB)
+
+**Membaca**
+- Baca hanya bagian dokumen yang relevan dengan item yang dikerjakan. Spesifikasi
+  fitur yang sudah selesai ada di `docs/specs-done.md`; jangan dibaca kecuali perlu.
+- Cari dulu (grep / nama simbol / graph), baru baca rentang baris yang dibutuhkan.
+  Jangan membaca seluruh file besar.
+- Jangan membaca: `package-lock.json`, `composer.lock`, `vendor/`, `node_modules/`,
+  `public/build/`, `storage/`, `bootstrap/cache/`.
+- Jangan membaca ulang file yang baru saja kamu edit.
+
+**Menjalankan perintah**
+- Selama iterasi: `php artisan test --compact --filter=<NamaTest>` dan
+  `npx eslint <file>` hanya pada file yang diubah.
+- Format PHP: `vendor/bin/pint --dirty`.
+- Quality gate penuh cukup **sekali di akhir** lewat `bash scripts/check.sh`
+  (hanya mencetak yang gagal).
+- Lihat perubahan dengan `git diff --stat`, bukan diff penuh.
+- Jangan menjalankan `npm install` / `composer install` kecuali dependency berubah.
+- Jangan menjalankan dev server atau `pail` di sesi agent.
+
+**Menghindari pemborosan**
+- Jika test/build gagal dengan error yang sama 2 kali, berhenti dan laporkan
+  error-nya. Jangan menebak berulang.
+- Satu sesi = satu item `FEATURES.md`. Setelah commit, akhiri sesi.
+- Jika terkena limit/kuota, berhenti, tulis handoff singkat, dan jangan pindah
+  ke folder/repo lain.
+- Jangan merekap langkah kerja. Laporan akhir: hasil, file utama, status test.
+- Handoff maksimal ±10 baris, tanpa menempel diff atau log.
+
+**Jika graph tersedia**
+- Untuk pertanyaan struktur ("di mana X", "apa yang memanggil Y"), query graph
+  dulu (`/graphify query ...`), baru buka file yang ditunjuk.
 
 ## 0. TL;DR
 
@@ -64,8 +118,7 @@ mengikuti kebutuhan nyata.
 
 ### 2.1 Sebelum menulis kode
 
-1. Baca `AGENT_CONTEXT.md`, `FEATURES.md`, dan `my-workspace-project-overview.md`
-   (jika tersedia).
+1. Baca bagian atas `AGENT_CONTEXT` (sampai §0), `HANDOFF.md`, dan bagian `FEATURES.md` yang relevan.
 2. Jalankan `git status`. **Jangan menimpa perubahan yang belum di-commit** milik
    orang lain. Jika file yang ingin diubah sedang berubah, koordinasikan dulu.
 3. Pilih **satu** item dari `FEATURES.md` yang dependensinya selesai.
@@ -82,24 +135,30 @@ mengikuti kebutuhan nyata.
 
 ### 2.3 Setelah menulis kode
 
-Wajib lolos semua:
+Jalankan berurutan:
 
 ```bash
-vendor/bin/pint
+# 1. Rapikan format hanya pada file yang diubah
+vendor/bin/pint --dirty
 npx prettier --write <file-yang-diubah>
-npx eslint <file-yang-diubah>
-php artisan test
-npm run build
+
+# 2. Quality gate (Pint check, ESLint, seluruh test, build). Diam jika lulus.
+bash scripts/check.sh
 ```
 
-Lalu verifikasi di PostgreSQL (bukan hanya SQLite):
+Jangan mencentang item di `FEATURES.md` sebelum `check.sh` menampilkan ✓ untuk
+semua langkah. Selama iterasi, cukup jalankan test dan ESLint yang relevan
+(lihat bagian *Hemat token*); `check.sh` dijalankan sekali di akhir.
+
+Jika migrasi berubah, verifikasi juga di PostgreSQL (bukan hanya SQLite):
 
 ```bash
 php artisan migrate --force
 php artisan tinker
 ```
 
-Dan perbarui `FEATURES.md` + tulis handoff.
+Terakhir: perbarui `FEATURES.md` (centang item + tabel ringkasan progres) dan
+timpa `HANDOFF.md`. Hapus data uji yang dibuat di PostgreSQL.
 
 ---
 
@@ -629,15 +688,11 @@ $admin = adminUser([
 
 ### Quality gate
 
-```bash
-vendor/bin/pint
-npx prettier --write <file>
-npx eslint <file>
-php artisan test
-npm run build
-```
+Jalankan `bash scripts/check.sh` (Pint check, ESLint, seluruh test, build).
+Format dulu dengan `vendor/bin/pint --dirty` dan `npx prettier --write <file>`.
 
-Jangan mencentang item di `FEATURES.md` sebelum kelima perintah di atas lolos.
+Jangan mencentang item di `FEATURES.md` sebelum semua langkah menampilkan ✓.
+
 
 ---
 
@@ -655,13 +710,13 @@ Gunakan urutan ini agar hasilnya konsisten:
    - halaman/komponen + props
    - state loading/empty/error
    - responsif + dark mode
-5. **Test** — jalankan test fitur, lalu seluruh suite.
-6. **Quality gate** — Pint, Prettier, ESLint, build.
-7. **Verifikasi PostgreSQL**
+5. **Test** — selama iterasi: `php artisan test --compact --filter=...`.
+6. **Quality gate** — sekali di akhir: `bash scripts/check.sh` (§2.3).
+7. **Verifikasi PostgreSQL** (hanya jika migrasi berubah)
    - `php artisan migrate --force`
    - uji query/CRUD lewat tinker atau aplikasi
    - hapus data uji yang dibuat (kecuali data milik user)
-8. **Dokumentasi** — update `FEATURES.md`, tulis handoff.
+8. **Dokumentasi** — update `FEATURES.md`, timpa `HANDOFF.md`.
 9. **Commit** — satu commit per fitur dengan pesan jelas.
 
 ---
@@ -761,141 +816,7 @@ Gunakan urutan ini agar hasilnya konsisten:
 > Detail checklist dan ID ada di `FEATURES.md`. Bagian ini menjelaskan
 > **bagaimana** membangunnya.
 
-### 15.1 NOTE-08/09/10 — Detail & Markdown (selesai)
-
-**Tujuan:** catatan bisa dibaca sebagai dokumen, bukan hanya di kartu.
-
-**Perubahan:**
-
-- Route `GET /admin/notes/{note}` → `admin.notes.show`.
-- `NoteController@show` → `Inertia::render('admin/notes/show', ['note' => $note])`.
-- Halaman baru `resources/js/pages/admin/notes/show.jsx`.
-- Dependency: `react-markdown`, `remark-gfm`, `rehype-sanitize`.
-- Preview di dialog editor: tab **Tulis / Pratinjau**.
-
-**Alur:** daftar → klik judul → detail → **Edit** membuka dialog yang sama →
-**Kembali**.
-
-**Acceptance:**
-
-- Markdown aman (HTML mentah disanitasi; tidak ada XSS).
-- Code block, list, tabel, link, dan heading tampil benar.
-- Catatan tidak ditemukan → 404.
-- Tanggal, tag, status pin tampil.
-- Test: guest redirect, admin bisa buka, 404, sanitasi.
-
-**Out of scope:** komentar, versi catatan, kolaborasi.
-
-### 15.2 NOTE-11 — Tautan catatan ↔ pekerjaan (selesai)
-
-**Tujuan:** pekerjaan bisa merujuk pengetahuan pendukung.
-
-**Data:**
-
-```
-note_work_item
-  note_id FK notes cascade
-  work_item_id FK work_items cascade
-  timestamps
-  unique(note_id, work_item_id)
-```
-
-**Model:** `Note::workItems()`, `WorkItem::notes()` (belongsToMany).
-
-**Backend:**
-
-- `WorkItemController` menerima `notes: array` berisi ID; validasi `exists:notes,id`;
-  `sync()` setelah create/update.
-- `NoteController@index`/`show` memuat `workItems` ringkas.
-- Dashboard tidak perlu berubah.
-
-**Frontend:**
-
-- Di form pekerjaan: pemilih catatan (multi-select / checklist dengan pencarian).
-- Di detail catatan: daftar pekerjaan terkait + status.
-- Bisa lepas tautan.
-
-**Acceptance:** tautan tersimpan dua arah, tidak duplikat, validasi ID,
-test attach/detach.
-
-**Out of scope:** membuat catatan baru dari form pekerjaan (bisa menyusul).
-
-### 15.3 WORK-11/12 — Kanban (selesai)
-
-**Tujuan:** mengelola alur kerja secara visual.
-
-**Frontend:**
-
-- Toggle **Daftar / Papan** (query `?view=board` atau state).
-- 4 kolom: Backlog, To do, Dikerjakan, Selesai.
-- `@dnd-kit/core` + `@dnd-kit/sortable`.
-- Kartu: judul, prioritas, tenggat, tag, overdue.
-- Drop → `PATCH /admin/work-items/{id}/status` (endpoint sudah ada).
-- Optimistic update; rollback jika gagal.
-- Alternatif keyboard: select status di kartu (aksesibilitas).
-
-**Backend:** tidak ada perubahan wajib. `?view=board` mengembalikan
-`boardItems` (semua item terfilter, tanpa pagination); daftar tetap paginated.
-Jika butuh urutan manual, tambah `position` + endpoint reorder (fase berikutnya,
-butuh `@dnd-kit/sortable`).
-
-**Acceptance:** drag mengubah status + `completed_at`, jumlah tab ikut berubah,
-mobile bisa scroll horizontal, list view tidak regresi.
-
-**Out of scope:** WIP limit, kolom kustom, swimlane.
-
-### 15.4 WORK-13 — Proyek / area (selesai)
-
-**Data:**
-
-```
-projects
-  id, name, description nullable, color nullable,
-  archived_at nullable, timestamps
-work_items.project_id FK nullable nullOnDelete
-```
-
-**Backend:** CRUD proyek, filter `project_id` di index pekerjaan, progress
-`done/total` per proyek.
-
-**Frontend:** halaman `/admin/projects`, pemilih proyek di form pekerjaan,
-filter proyek di halaman pekerjaan, progress bar di kartu proyek.
-
-**Acceptance:** pekerjaan tanpa proyek tetap valid; hapus proyek tidak menghapus
-pekerjaan; filter dan progress benar.
-
-### 15.5 WORK-14 — Subtask (selesai)
-
-**Data:**
-
-```
-work_item_subtasks
-  id, work_item_id FK cascade, title,
-  is_done boolean default false, position int default 0, timestamps
-```
-
-**Frontend:** di dialog/detail pekerjaan, tambah/hapus/centang subtask;
-tampilkan `x/y` dan progress bar di kartu.
-
-**Acceptance:** urutan stabil, progress dihitung benar, cascade delete,
-test CRUD subtask.
-
-### 15.5a WORK-15 — Kalender (selesai)
-
-**Backend:** `?view=calendar` mengembalikan `calendarItems` — semua item
-terfilter yang punya `due_date`, urut tenggat lalu prioritas (urgent→low).
-Filter pencarian, prioritas, dan proyek tetap berlaku; filter status diabaikan.
-Tanpa pagination.
-
-**Frontend:** `resources/js/components/work-items/work-calendar.jsx` merender
-grid 6×7 minggu mulai Senin, navigasi bulan di client (tanpa request tambahan),
-penanda hari ini, jumlah tenggat per hari/bulan, dan legenda status. Item
-selesai dicoret; item terlambat berwarna merah. Klik item → dialog edit.
-Tampilan bisa di-scroll horizontal di mobile.
-
-**Acceptance:** semua item bertenggat muncul di tanggal yang benar, item tanpa
-tenggat tidak tampil, filter proyek/pencarian/prioritas bekerja, dan item bisa
-diedit dari kalender.
+> Spesifikasi fitur selesai (NOTE-08..11, WORK-11..15) ada di `docs/specs-done.md`.
 
 ### 15.6 KNOW-01/02 — Kebiasaan & statistik (KNOW-01 selesai)
 
@@ -1116,17 +1037,16 @@ Aturan:
 Karena proyek bisa dikerjakan beberapa agent, ikuti aturan ini.
 
 ### 18.1 Klaim pekerjaan
+- Satu item `FEATURES.md` = satu agent pada satu waktu (sistem shift).
+- Tandai `[~]` di `FEATURES.md` saat mulai; serah-terima lewat `HANDOFF.md`.
+- Jangan mengerjakan item yang dependensinya belum selesai.
 
-- Satu item `FEATURES.md` = satu agent pada satu waktu.
-- Tandai `[~]` dan tulis nama/branch di commit atau handoff.
-- Jangan mengerjakan item yang dependensinya belum selesai tanpa koordinasi.
-
-### 18.2 Branch & commit
-
-- Branch: `feat/<id>-<slug>` (mis. `feat/note-11-link`).
-- Commit kecil dan fokus: `feat(notes): add markdown detail page`.
-- Jenis: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`.
-- Satu commit/PR per fitur; jangan campur refactor besar.
+### 18.2 Commit
+- Semua commit langsung ke `main`.
+- Format: `feat(notes): add markdown detail page`; pekerjaan belum selesai:
+  `wip(<ID>): ...`.
+- Jenis: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `wip`.
+- Satu commit per fitur selesai; jangan campur refactor besar.
 
 ### 18.3 File panas (rawan konflik)
 
@@ -1172,23 +1092,11 @@ Sebuah item boleh dicentang jika:
 - [ ] Tidak ada data uji tertinggal (kecuali milik user).
 - [ ] Tidak ada secret/API key di repo.
 
-### 18.6 Format handoff
+### 18.6 Handoff
 
-Tulis di akhir pekerjaan:
-
-```md
-## Handoff — <FEATURE-ID>
-
-Status: selesai / sebagian
-Branch: feat/...
-File utama: ...
-Migrasi: ...
-Test: ... (jumlah)
-Verifikasi PostgreSQL: ya/tidak, catatan
-Perubahan dokumen: FEATURES.md ...
-Belum selesai / risiko: ...
-Langkah berikutnya: ...
-```
+Serah-terima memakai `HANDOFF.md` (lihat bagian *Lokasi kerja & shift*), maks ±10
+baris, ditimpa setiap akhir shift. Isi: item, status, file utama, belum selesai,
+berikutnya, test/build hijau.
 
 ### 18.7 Jika menemukan pekerjaan orang lain
 
@@ -1257,31 +1165,41 @@ Known issues:
 
 ## 21. Cara memulai cepat untuk agent baru
 
+### Awal shift (rutin, repo sudah siap)
+
 ```bash
 # 1. Cek kondisi repo
 git status
 git log --oneline -5
 
-# 2. Baca konteks
-cat AGENT_CONTEXT.md
-cat FEATURES.md
+# 2. Baca konteks (jangan baca seluruh dokumen)
+cat HANDOFF.md
+grep -n "\[~\]" FEATURES.md      # item yang sedang dikerjakan
+# Lalu baca AGENT_CONTEXT.md bagian atas saja (sampai §0 TL;DR)
+# dan bagian FEATURES.md "Antrean berikutnya".
 
-# 3. Siapkan environment
+# 3. Pastikan baseline hijau
+bash scripts/check.sh
+
+# 4. Lanjutkan item di HANDOFF.md / yang bertanda [~];
+#    jika tidak ada, ambil item pertama di "Antrean berikutnya".
+```
+
+Jika baseline tidak hijau, **perbaiki dulu** sebelum menambah fitur, dan catat
+apa yang diperbaiki di `HANDOFF.md`.
+
+### Setup awal (hanya di mesin baru atau repo baru di-clone)
+
+```bash
 composer install
 npm install
 cp .env.example .env   # jika belum ada
 php artisan key:generate
 php artisan migrate
-
-# 4. Pastikan baseline hijau
-php artisan test
-npm run build
-
-# 5. Mulai satu item dari FEATURES.md
 ```
 
-Jika baseline tidak hijau, **perbaiki dulu** sebelum menambah fitur, dan catat
-apa yang diperbaiki.
+Jangan jalankan blok setup ini di awal shift biasa; hanya jika dependency
+berubah atau environment belum ada.
 
 ---
 

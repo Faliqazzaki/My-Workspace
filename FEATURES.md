@@ -121,7 +121,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 - [ ] **WORK-16** Pekerjaan berulang (recurring)
 - [ ] **WORK-17** Lampiran file pada pekerjaan
 - [ ] **WORK-18** Riwayat aktivitas pekerjaan
-- [ ] **WORK-19** Saved views / filter tersimpan
+- [~] **WORK-19** Saved views / filter tersimpan
 - [ ] **WORK-20** Bulk action (ubah status/hapus beberapa item)
 
 ## 7. Pengetahuan & Produktivitas
