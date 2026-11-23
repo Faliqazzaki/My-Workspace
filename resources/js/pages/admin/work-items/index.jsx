@@ -4,6 +4,8 @@ import {
     ChevronLeft,
     ChevronRight,
     ClipboardList,
+    Columns3,
+    LayoutList,
     NotebookPen,
     Pencil,
     Plus,
@@ -29,6 +31,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import KanbanBoard from '@/components/work-items/kanban-board';
 import AdminLayout from '@/layouts/admin-layout';
 import { formatDate, isOverdue, toDateInput } from '@/lib/date';
 import { cn } from '@/lib/utils';
@@ -41,8 +44,12 @@ const parseTags = (value) => {
         .filter(Boolean);
 };
 
+const boardSignature = (items) =>
+    items.map((item) => `${item.id}:${item.status}`).join('|');
+
 export default function WorkItemsIndex({
     workItems,
+    boardItems = [],
     counts = {},
     filters = {},
     statuses = [],
@@ -50,6 +57,9 @@ export default function WorkItemsIndex({
     notes = [],
 }) {
     const queryParam = filters.q ?? '';
+    const view = filters.view === 'board' ? 'board' : 'list';
+    const [board, setBoard] = useState(boardItems);
+    const [syncedBoard, setSyncedBoard] = useState(boardSignature(boardItems));
     const [search, setSearch] = useState(queryParam);
     const [syncedQuery, setSyncedQuery] = useState(queryParam);
     const [editorOpen, setEditorOpen] = useState(false);
@@ -62,6 +72,12 @@ export default function WorkItemsIndex({
     if (queryParam !== syncedQuery) {
         setSyncedQuery(queryParam);
         setSearch(queryParam);
+    }
+
+    const incomingBoardSignature = boardSignature(boardItems);
+    if (incomingBoardSignature !== syncedBoard) {
+        setSyncedBoard(incomingBoardSignature);
+        setBoard(boardItems);
     }
 
     useEffect(() => {
@@ -81,13 +97,14 @@ export default function WorkItemsIndex({
                     q: search || undefined,
                     status: filters.status || undefined,
                     priority: filters.priority || undefined,
+                    view: filters.view === 'board' ? 'board' : undefined,
                 },
                 { preserveScroll: true, preserveState: true, replace: true },
             );
         }, 300);
 
         return () => clearTimeout(timer);
-    }, [search, queryParam, filters.status, filters.priority]);
+    }, [search, queryParam, filters.status, filters.priority, filters.view]);
 
     const {
         data,
@@ -191,6 +208,52 @@ export default function WorkItemsIndex({
         );
     };
 
+    const moveStatus = (workItem, status) => {
+        const previous = board;
+
+        setBoard((current) =>
+            current.map((item) =>
+                item.id === workItem.id
+                    ? {
+                          ...item,
+                          status,
+                          completed_at:
+                              status === 'done'
+                                  ? new Date().toISOString()
+                                  : null,
+                      }
+                    : item,
+            ),
+        );
+
+        router.patch(
+            `/admin/work-items/${workItem.id}/status`,
+            { status },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onError: () => setBoard(previous),
+            },
+        );
+    };
+
+    const changeView = (nextView) => {
+        if (nextView === view) {
+            return;
+        }
+
+        router.get(
+            '/admin/work-items',
+            {
+                q: search || undefined,
+                status: filters.status || undefined,
+                priority: filters.priority || undefined,
+                view: nextView === 'board' ? 'board' : undefined,
+            },
+            { preserveScroll: true, preserveState: true },
+        );
+    };
+
     const confirmDelete = () => {
         if (!deleting) {
             return;
@@ -215,6 +278,7 @@ export default function WorkItemsIndex({
                 q: search || undefined,
                 status: filters.status || undefined,
                 priority: filters.priority || undefined,
+                view: view === 'board' ? 'board' : undefined,
             },
             { preserveScroll: true, preserveState: true, replace: true },
         );
@@ -230,6 +294,7 @@ export default function WorkItemsIndex({
             {
                 status: filters.status || undefined,
                 priority: filters.priority || undefined,
+                view: view === 'board' ? 'board' : undefined,
             },
             { preserveScroll: true, preserveState: true, replace: true },
         );
@@ -242,6 +307,7 @@ export default function WorkItemsIndex({
                 q: search || undefined,
                 status: status || undefined,
                 priority: filters.priority || undefined,
+                view: view === 'board' ? 'board' : undefined,
             },
             { preserveScroll: true, preserveState: true, replace: true },
         );
@@ -254,6 +320,7 @@ export default function WorkItemsIndex({
                 q: search || undefined,
                 status: filters.status || undefined,
                 priority: priority || undefined,
+                view: view === 'board' ? 'board' : undefined,
             },
             { preserveScroll: true, preserveState: true, replace: true },
         );
@@ -263,7 +330,9 @@ export default function WorkItemsIndex({
         setSearch('');
         router.get(
             '/admin/work-items',
-            {},
+            {
+                view: view === 'board' ? 'board' : undefined,
+            },
             { preserveScroll: true, preserveState: true, replace: true },
         );
     };
@@ -295,14 +364,51 @@ export default function WorkItemsIndex({
                     </p>
                 </div>
 
-                <Button
-                    type="button"
-                    onClick={openCreate}
-                    className="h-10 gap-2 bg-neutral-900 px-4 text-white shadow-sm transition-all hover:bg-neutral-800 active:scale-[0.98] dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100"
-                >
-                    <Plus className="size-4" />
-                    <span>Pekerjaan baru</span>
-                </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                    <div
+                        className="inline-flex rounded-lg border bg-card p-0.5"
+                        role="group"
+                        aria-label="Tampilan pekerjaan"
+                    >
+                        <button
+                            type="button"
+                            aria-pressed={view === 'list'}
+                            onClick={() => changeView('list')}
+                            className={cn(
+                                'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                                view === 'list'
+                                    ? 'bg-background text-foreground shadow-xs'
+                                    : 'text-muted-foreground hover:text-foreground',
+                            )}
+                        >
+                            <LayoutList className="size-3.5" />
+                            Daftar
+                        </button>
+                        <button
+                            type="button"
+                            aria-pressed={view === 'board'}
+                            onClick={() => changeView('board')}
+                            className={cn(
+                                'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                                view === 'board'
+                                    ? 'bg-background text-foreground shadow-xs'
+                                    : 'text-muted-foreground hover:text-foreground',
+                            )}
+                        >
+                            <Columns3 className="size-3.5" />
+                            Papan
+                        </button>
+                    </div>
+
+                    <Button
+                        type="button"
+                        onClick={openCreate}
+                        className="h-10 gap-2 bg-neutral-900 px-4 text-white shadow-sm transition-all hover:bg-neutral-800 active:scale-[0.98] dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100"
+                    >
+                        <Plus className="size-4" />
+                        <span>Pekerjaan baru</span>
+                    </Button>
+                </div>
             </div>
 
             {/* Filter & Search Bar */}
@@ -369,40 +475,50 @@ export default function WorkItemsIndex({
                 </div>
 
                 {/* Status Tabs */}
-                <div className="flex gap-1 overflow-x-auto rounded-xl border bg-background/80 p-1.5">
-                    {statusTabs.map((tab) => {
-                        const active = (filters.status ?? '') === tab.value;
+                {view === 'list' && (
+                    <div className="flex gap-1 overflow-x-auto rounded-xl border bg-background/80 p-1.5">
+                        {statusTabs.map((tab) => {
+                            const active = (filters.status ?? '') === tab.value;
 
-                        return (
-                            <button
-                                key={tab.value || 'all'}
-                                type="button"
-                                onClick={() => applyStatus(tab.value)}
-                                className={cn(
-                                    'flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all',
-                                    active
-                                        ? 'bg-indigo-600 text-white shadow-xs'
-                                        : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-                                )}
-                            >
-                                <span>{tab.label}</span>
-                                <span
+                            return (
+                                <button
+                                    key={tab.value || 'all'}
+                                    type="button"
+                                    onClick={() => applyStatus(tab.value)}
                                     className={cn(
-                                        'rounded-full px-1.5 py-0.5 text-[10px] font-semibold',
+                                        'flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all',
                                         active
-                                            ? 'bg-white/20 text-white'
-                                            : 'bg-muted text-muted-foreground',
+                                            ? 'bg-indigo-600 text-white shadow-xs'
+                                            : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                                     )}
                                 >
-                                    {tab.count}
-                                </span>
-                            </button>
-                        );
-                    })}
-                </div>
+                                    <span>{tab.label}</span>
+                                    <span
+                                        className={cn(
+                                            'rounded-full px-1.5 py-0.5 text-[10px] font-semibold',
+                                            active
+                                                ? 'bg-white/20 text-white'
+                                                : 'bg-muted text-muted-foreground',
+                                        )}
+                                    >
+                                        {tab.count}
+                                    </span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
 
-            {workItems.data.length === 0 ? (
+            {view === 'board' ? (
+                <div className="-mx-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:px-0">
+                    <KanbanBoard
+                        items={board}
+                        statuses={statuses}
+                        onStatusChange={moveStatus}
+                    />
+                </div>
+            ) : workItems.data.length === 0 ? (
                 <div className="flex min-h-[44vh] flex-col items-center justify-center rounded-2xl border border-dashed bg-card/50 p-10 text-center">
                     <span className="flex size-14 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-500">
                         <ClipboardList className="size-7" />
@@ -595,7 +711,7 @@ export default function WorkItemsIndex({
                 </div>
             )}
 
-            {workItems.last_page > 1 && (
+            {view === 'list' && workItems.last_page > 1 && (
                 <div className="mt-8 flex items-center justify-between gap-3 rounded-xl border bg-card/50 px-4 py-3">
                     <p className="text-xs text-muted-foreground">
                         Menampilkan{' '}

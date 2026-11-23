@@ -25,6 +25,7 @@ it('menampilkan halaman pekerjaan untuk admin', function () {
             ->has('workItems.data', 1)
             ->where('workItems.data.0.title', 'Rancang skema agent')
             ->where('counts.todo', 1)
+            ->where('filters.view', 'list')
         );
 });
 
@@ -248,4 +249,82 @@ it('menolak tautan catatan yang tidak ada', function () {
         ->assertSessionHasErrors('notes.0');
 
     expect(WorkItem::count())->toBe(0);
+});
+
+it('menampilkan papan kanban untuk semua status', function () {
+    WorkItem::create([
+        'title' => 'Ide backlog',
+        'status' => 'backlog',
+        'priority' => 'low',
+    ]);
+
+    WorkItem::create([
+        'title' => 'Siap dikerjakan',
+        'status' => 'todo',
+        'priority' => 'medium',
+    ]);
+
+    WorkItem::create([
+        'title' => 'Sudah selesai',
+        'status' => 'done',
+        'priority' => 'high',
+        'completed_at' => now(),
+    ]);
+
+    $this->actingAs(adminUser())
+        ->get('/admin/work-items?view=board')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('admin/work-items/index')
+            ->where('filters.view', 'board')
+            ->has('boardItems', 3)
+            ->where('counts.backlog', 1)
+            ->where('counts.todo', 1)
+            ->where('counts.done', 1)
+        );
+});
+
+it('mengabaikan filter status pada tampilan papan', function () {
+    WorkItem::create([
+        'title' => 'Backlog',
+        'status' => 'backlog',
+        'priority' => 'low',
+    ]);
+
+    WorkItem::create([
+        'title' => 'To do',
+        'status' => 'todo',
+        'priority' => 'medium',
+    ]);
+
+    $this->actingAs(adminUser())
+        ->get('/admin/work-items?view=board&status=todo')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.view', 'board')
+            ->has('boardItems', 2)
+        );
+});
+
+it('menyaring papan dengan pencarian dan prioritas', function () {
+    WorkItem::create([
+        'title' => 'Riset kanban',
+        'status' => 'backlog',
+        'priority' => 'high',
+    ]);
+
+    WorkItem::create([
+        'title' => 'Riset catatan',
+        'status' => 'todo',
+        'priority' => 'low',
+    ]);
+
+    $this->actingAs(adminUser())
+        ->get('/admin/work-items?view=board&q=kanban&priority=high')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.view', 'board')
+            ->has('boardItems', 1)
+            ->where('boardItems.0.title', 'Riset kanban')
+        );
 });

@@ -113,8 +113,8 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 - [x] **WORK-08** Indikator tenggat dan "terlambat"
 - [x] **WORK-09** `completed_at` otomatis saat status `done`
 - [x] **WORK-10** Pagination 15 item + empty state
-- [ ] **WORK-11** Kanban board dengan drag & drop
-- [ ] **WORK-12** Toggle tampilan list ↔ board
+- [x] **WORK-11** Kanban board dengan drag & drop
+- [x] **WORK-12** Toggle tampilan list ↔ board
 - [ ] **WORK-13** Proyek / area + filter per proyek
 - [ ] **WORK-14** Subtask / checklist di dalam pekerjaan
 - [ ] **WORK-15** Tampilan kalender berdasarkan tenggat
@@ -174,7 +174,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 
 ## 10. Kualitas & Observability
 
-- [x] **QA-01** 80 test Pest lolos (460 assertion)
+- [x] **QA-01** 83 test Pest lolos (510 assertion)
 - [x] **QA-02** Test fitur untuk auth, catatan (termasuk detail), pekerjaan, dashboard
 - [x] **QA-03** Format PHP dengan Pint
 - [x] **QA-04** Lint JS dengan ESLint + format Prettier
@@ -198,21 +198,20 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 | UI | 7 | 12 |
 | Dashboard | 6 | 11 |
 | Catatan | 11 | 16 |
-| Pekerjaan | 10 | 20 |
+| Pekerjaan | 12 | 20 |
 | Pengetahuan & Produktivitas | 0 | 13 |
 | Berita & AI | 0 | 13 |
 | Multi-Agent | 0 | 10 |
 | Kualitas | 5 | 12 |
 
-**Total: 54 dari 129 item selesai.**
+**Total: 56 dari 129 item selesai.**
 
 ## Urutan pengerjaan yang disarankan
 
-1. **WORK-11 / WORK-12** — Kanban sebagai alternatif tampilan.
-2. **KNOW-01** — kebiasaan harian + widget dashboard.
-3. **NEWS-01 … NEWS-06** — berita teknologi + ringkasan AI.
-4. **AI-02 / AI-03** — asisten dan pencarian semantik.
-5. **AGT-01 … AGT-10** — multi-agent setelah kontrol dasar stabil.
+1. **KNOW-01** — kebiasaan harian + widget dashboard.
+2. **NEWS-01 … NEWS-06** — berita teknologi + ringkasan AI.
+3. **AI-02 / AI-03** — asisten dan pencarian semantik.
+4. **AGT-01 … AGT-10** — multi-agent setelah kontrol dasar stabil.
 
 ## Non-goals saat ini
 

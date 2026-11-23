@@ -7,7 +7,7 @@ kebenaran**, lalu perbarui dokumen.
 
 > Terakhir diperbarui: 23 November 2026
 > Status: fondasi + Dashboard + Catatan (detail, Markdown, tautan pekerjaan) +
-> Pekerjaan sudah berjalan.
+> Pekerjaan (list + Kanban) sudah berjalan.
 
 ---
 
@@ -27,8 +27,8 @@ kebenaran**, lalu perbarui dokumen.
 - Auth saat ini: database (`users.username`, password hash, flag `is_admin`),
   halaman **Keamanan** untuk ubah password.
 - Fitur selesai: login, shell admin, Dashboard, Catatan (detail + Markdown +
-  pratinjau + tautan ke pekerjaan), Pekerjaan.
-- Test: **80 test Pest lolos** (460 assertions), build Vite berhasil.
+  pratinjau + tautan ke pekerjaan), Pekerjaan (list + Kanban drag & drop).
+- Test: **83 test Pest lolos** (510 assertions), build Vite berhasil.
 - Cara kerja: **satu increment kecil**, backend → frontend → test → quality gate
   → verifikasi PostgreSQL → update checklist.
 
@@ -111,12 +111,12 @@ Dan perbarui `FEATURES.md` + tulis handoff.
 | Catatan | Selesai (CRUD, detail, Markdown, tautan pekerjaan, search, tag, pin) |
 | Pekerjaan | Selesai (CRUD, filter, status, tenggat, pilih catatan terkait) |
 | Markdown preview | Selesai (halaman detail + tab pratinjau editor) |
-| Tautan catatan ↔ pekerjaan | Belum |
-| Kanban | Belum |
+| Tautan catatan ↔ pekerjaan | Selesai (pivot `note_work_item`, dua arah) |
+| Kanban | Selesai (toggle Daftar/Papan, drag & drop, select status) |
 | Berita AI | Belum |
 | Multi-agent | Belum |
 
-Angka test terakhir: **80 passed, 460 assertions**.
+Angka test terakhir: **83 passed, 510 assertions**.
 
 ---
 
@@ -130,6 +130,7 @@ Angka test terakhir: **80 passed, 460 assertions**.
 | CSS | Tailwind CSS v4 |
 | Komponen | shadcn/ui (Radix + CVA) |
 | Ikon | `lucide-react` |
+| Drag & drop | `@dnd-kit/core` (Kanban) |
 | Database runtime | PostgreSQL, database `my_workspace` |
 | Database test | SQLite `:memory:` |
 | Test | Pest 3 + `RefreshDatabase` |
@@ -226,6 +227,7 @@ resources/
     components/
       markdown-content.jsx         # render Markdown aman (GFM + sanitize)
       notes/note-editor-dialog.jsx # dialog tambah/edit + pratinjau
+      work-items/kanban-board.jsx  # papan Kanban + drag & drop
       ui/                          # shadcn
 routes/web.php                     # semua route admin
 tests/Feature/                     # test Pest
@@ -510,6 +512,10 @@ Saat menambah route baru: ikuti pola di atas, tambahkan test tamu → redirect.
   `.markdown-body` pada `resources/css/app.css`.
 - Editor catatan memakai `@/components/notes/note-editor-dialog` dengan tab
   **Tulis / Pratinjau**. Jangan menulis ulang dialog editor di halaman lain.
+- Kanban memakai `@/components/work-items/kanban-board` (`@dnd-kit/core`).
+  Kolom adalah droppable (`status`), kartu draggable. Perubahan status
+  di-optimistic-update di state lokal lalu `PATCH`; rollback lewat `onError`.
+  Urutan manual belum didukung (belum ada `position`/endpoint reorder).
 
 ### Pola UI yang sudah ada
 
@@ -658,6 +664,10 @@ Gunakan urutan ini agar hasilnya konsisten:
 8. Tenggat lewat + belum selesai → indikator merah "terlambat".
 9. Di form, pilih **Catatan terkait** lewat daftar centang dengan pencarian;
    tautan disimpan dua arah dan bisa dilepas dari detail catatan.
+10. Toggle **Daftar / Papan** di header. Papan menampilkan 4 kolom status
+    (Backlog, To do, Dikerjakan, Selesai) dan mengabaikan filter status.
+11. Tarik kartu ke kolom lain (atau ubah select status di kartu) → status dan
+    `completed_at` diperbarui; jumlah kolom ikut berubah.
 
 ### 14.4 Dashboard
 
@@ -735,7 +745,7 @@ test attach/detach.
 
 **Out of scope:** membuat catatan baru dari form pekerjaan (bisa menyusul).
 
-### 15.3 WORK-11/12 — Kanban
+### 15.3 WORK-11/12 — Kanban (selesai)
 
 **Tujuan:** mengelola alur kerja secara visual.
 
@@ -749,8 +759,10 @@ test attach/detach.
 - Optimistic update; rollback jika gagal.
 - Alternatif keyboard: select status di kartu (aksesibilitas).
 
-**Backend:** tidak ada perubahan wajib. Jika butuh urutan manual, tambah
-`position` + endpoint reorder (fase berikutnya).
+**Backend:** tidak ada perubahan wajib. `?view=board` mengembalikan
+`boardItems` (semua item terfilter, tanpa pagination); daftar tetap paginated.
+Jika butuh urutan manual, tambah `position` + endpoint reorder (fase berikutnya,
+butuh `@dnd-kit/sortable`).
 
 **Acceptance:** drag mengubah status + `completed_at`, jumlah tab ikut berubah,
 mobile bisa scroll horizontal, list view tidak regresi.
@@ -1101,7 +1113,7 @@ Langkah berikutnya: ...
 | Auth | Database + `is_admin` | AUTH-07/08 selesai; Fortify belum dibersihkan |
 | Dashboard | Data lokal nyata | Berita AI ditunda |
 | Notes | Markdown + detail + preview + tautan pekerjaan | NOTE-08/09/10/11 selesai |
-| Work Items | List + filter | Kanban belum |
+| Work Items | List + Kanban | Drag mengubah status |
 | Notes | Detail `/admin/notes/{note}` | Update diarahkan ke detail |
 | Agent | Service terpisah | Laravel control plane |
 | Wayfinder | Tidak dipakai admin | URL string literal |
@@ -1120,6 +1132,7 @@ Known issues:
 4. Belum ada backup otomatis.
 5. Belum ada halaman detail pekerjaan; edit lewat dialog.
 6. `completed_at` dijaga controller, bukan constraint database.
+7. Urutan kartu Kanban mengikuti tenggat, belum bisa diatur manual.
 
 ---
 

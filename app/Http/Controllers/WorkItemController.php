@@ -17,6 +17,7 @@ class WorkItemController extends Controller
         $search = trim($request->string('q')->toString());
         $status = trim($request->string('status')->toString());
         $priority = trim($request->string('priority')->toString());
+        $view = $request->string('view')->toString() === 'board' ? 'board' : 'list';
 
         $baseQuery = WorkItem::query()
             ->when($search !== '', function ($query) use ($search) {
@@ -36,10 +37,19 @@ class WorkItemController extends Controller
             ->groupBy('status')
             ->pluck('total', 'status');
 
+        $boardItems = $view === 'board'
+            ? (clone $baseQuery)
+                ->with('notes:id,title')
+                ->orderByRaw('due_date IS NULL')
+                ->orderBy('due_date')
+                ->latest('created_at')
+                ->get()
+            : [];
+
         $workItems = $baseQuery
             ->with('notes:id,title')
             ->when(
-                in_array($status, WorkItem::STATUSES, true),
+                $view === 'list' && in_array($status, WorkItem::STATUSES, true),
                 fn ($query) => $query->where('status', $status),
             )
             ->orderByRaw("CASE WHEN status = 'done' THEN 1 ELSE 0 END")
@@ -51,11 +61,13 @@ class WorkItemController extends Controller
 
         return Inertia::render('admin/work-items/index', [
             'workItems' => $workItems,
+            'boardItems' => $boardItems,
             'counts' => $counts,
             'filters' => [
                 'q' => $search,
                 'status' => $status,
                 'priority' => $priority,
+                'view' => $view,
             ],
             'statuses' => WorkItem::STATUSES,
             'priorities' => WorkItem::PRIORITIES,
