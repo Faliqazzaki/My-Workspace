@@ -28,6 +28,7 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
     Route::post('/notes', [NoteController::class, 'store'])->name('notes.store');
     Route::put('/notes/{note}', [NoteController::class, 'update'])->name('notes.update');
     Route::patch('/notes/{note}/pin', [NoteController::class, 'togglePin'])->name('notes.pin');
+    Route::delete('/notes/{note}/work-items/{workItem}', [NoteController::class, 'detachWorkItem'])->name('notes.work-items.detach');
     Route::delete('/notes/{note}', [NoteController::class, 'destroy'])->name('notes.destroy');
 
     Route::get('/work-items', [WorkItemController::class, 'index'])->name('work-items.index');

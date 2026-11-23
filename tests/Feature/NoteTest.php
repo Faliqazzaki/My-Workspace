@@ -1,6 +1,8 @@
 <?php
 
 use App\Models\Note;
+use App\Models\WorkItem;
+use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
 
 it('mengalihkan tamu dari halaman catatan', function () {
@@ -173,4 +175,97 @@ it('mencari catatan berdasarkan judul dan menyaring tag', function () {
             ->has('notes.data', 1)
             ->where('notes.data.0.title', 'React Basics')
         );
+});
+
+it('menampilkan pekerjaan terkait di detail catatan', function () {
+    $note = Note::create([
+        'title' => 'Catatan dengan pekerjaan',
+        'content' => 'Isi.',
+        'tags' => [],
+    ]);
+
+    $workItem = WorkItem::create([
+        'title' => 'Tindak lanjut catatan',
+        'status' => 'todo',
+        'priority' => 'high',
+        'due_date' => '2026-12-01',
+    ]);
+
+    $note->workItems()->attach($workItem);
+
+    $this->actingAs(adminUser())
+        ->get("/admin/notes/{$note->id}")
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('admin/notes/show')
+            ->has('note.work_items', 1)
+            ->where('note.work_items.0.id', $workItem->id)
+            ->where('note.work_items.0.title', 'Tindak lanjut catatan')
+            ->where('note.work_items.0.status', 'todo')
+        );
+});
+
+it('melepas tautan pekerjaan dari catatan', function () {
+    $note = Note::create([
+        'title' => 'Catatan',
+        'content' => 'Isi.',
+        'tags' => [],
+    ]);
+
+    $workItem = WorkItem::create([
+        'title' => 'Pekerjaan',
+        'status' => 'todo',
+        'priority' => 'medium',
+    ]);
+
+    $note->workItems()->attach($workItem);
+
+    $this->actingAs(adminUser())
+        ->delete("/admin/notes/{$note->id}/work-items/{$workItem->id}")
+        ->assertRedirect(route('admin.notes.show', $note));
+
+    expect($note->workItems()->count())->toBe(0)
+        ->and(WorkItem::count())->toBe(1)
+        ->and(Note::count())->toBe(1);
+});
+
+it('mengalihkan tamu saat melepas tautan pekerjaan', function () {
+    $note = Note::create([
+        'title' => 'Catatan',
+        'content' => 'Isi.',
+        'tags' => [],
+    ]);
+
+    $workItem = WorkItem::create([
+        'title' => 'Pekerjaan',
+        'status' => 'todo',
+        'priority' => 'medium',
+    ]);
+
+    $note->workItems()->attach($workItem);
+
+    $this->delete("/admin/notes/{$note->id}/work-items/{$workItem->id}")
+        ->assertRedirect(route('home'));
+
+    expect($note->workItems()->count())->toBe(1);
+});
+
+it('menghapus tautan saat catatan dihapus', function () {
+    $note = Note::create([
+        'title' => 'Catatan',
+        'content' => 'Isi.',
+        'tags' => [],
+    ]);
+
+    $workItem = WorkItem::create([
+        'title' => 'Pekerjaan',
+        'status' => 'todo',
+        'priority' => 'medium',
+    ]);
+
+    $note->workItems()->attach($workItem);
+    $note->delete();
+
+    expect(DB::table('note_work_item')->count())->toBe(0)
+        ->and(WorkItem::count())->toBe(1);
 });

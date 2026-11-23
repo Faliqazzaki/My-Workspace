@@ -6,7 +6,7 @@ kode. Jika ada konflik antara dokumen dan kode, **kode yang berjalan adalah
 kebenaran**, lalu perbarui dokumen.
 
 > Terakhir diperbarui: 23 November 2026
-> Status: fondasi + Dashboard + Catatan (termasuk detail & Markdown) +
+> Status: fondasi + Dashboard + Catatan (detail, Markdown, tautan pekerjaan) +
 > Pekerjaan sudah berjalan.
 
 ---
@@ -27,8 +27,8 @@ kebenaran**, lalu perbarui dokumen.
 - Auth saat ini: database (`users.username`, password hash, flag `is_admin`),
   halaman **Keamanan** untuk ubah password.
 - Fitur selesai: login, shell admin, Dashboard, Catatan (detail + Markdown +
-  pratinjau), Pekerjaan.
-- Test: **73 test Pest lolos** (423 assertions), build Vite berhasil.
+  pratinjau + tautan ke pekerjaan), Pekerjaan.
+- Test: **80 test Pest lolos** (460 assertions), build Vite berhasil.
 - Cara kerja: **satu increment kecil**, backend → frontend → test → quality gate
   → verifikasi PostgreSQL → update checklist.
 
@@ -108,15 +108,15 @@ Dan perbarui `FEATURES.md` + tulis handoff.
 | Login admin | Selesai (database + halaman Keamanan) |
 | Shell admin | Selesai |
 | Dashboard | Selesai (data nyata) |
-| Catatan | Selesai (CRUD, detail, Markdown, search, tag, pin) |
-| Pekerjaan | Selesai (CRUD, filter, status, tenggat) |
+| Catatan | Selesai (CRUD, detail, Markdown, tautan pekerjaan, search, tag, pin) |
+| Pekerjaan | Selesai (CRUD, filter, status, tenggat, pilih catatan terkait) |
 | Markdown preview | Selesai (halaman detail + tab pratinjau editor) |
 | Tautan catatan ↔ pekerjaan | Belum |
 | Kanban | Belum |
 | Berita AI | Belum |
 | Multi-agent | Belum |
 
-Angka test terakhir: **73 passed, 423 assertions**.
+Angka test terakhir: **80 passed, 460 assertions**.
 
 ---
 
@@ -205,6 +205,7 @@ database/
     2026_11_21_120000_create_notes_table.php
     2026_11_21_130000_create_work_items_table.php
     2026_11_22_000000_add_username_and_is_admin_to_users_table.php
+    2026_11_23_160000_create_note_work_item_table.php
   seeders/AdminUserSeeder.php      # akun admin dari config
 resources/
   css/app.css                      # token tema + font
@@ -353,7 +354,20 @@ Prioritas valid: `low`, `medium`, `high`, `urgent` (`WorkItem::PRIORITIES`).
 **Invarian:** `completed_at` diisi saat status menjadi `done` dan dikosongkan
 saat keluar dari `done`. Ini dijaga controller, **bukan** constraint database.
 
-### 8.3 `users` (auth admin)
+### 8.3 `note_work_item` (pivot)
+
+| Kolom | Tipe | Aturan |
+| --- | --- | --- |
+| `id` | bigint PK | |
+| `note_id` | FK `notes` | cascade delete |
+| `work_item_id` | FK `work_items` | cascade delete |
+| `created_at`, `updated_at` | timestamp | |
+
+Unique: `(note_id, work_item_id)`. Relasi: `Note::workItems()` dan
+`WorkItem::notes()` (belongsToMany, `withTimestamps`). Sinkronisasi lewat
+`sync()` di controller; jangan menulis pivot langsung.
+
+### 8.4 `users` (auth admin)
 
 | Kolom | Tipe | Aturan |
 | --- | --- | --- |
@@ -374,7 +388,7 @@ Middleware admin mensyaratkan `is_admin = true`.
 Tabel bawaan lain: `password_reset_tokens`, `sessions`, `cache`, `jobs`,
 `failed_jobs`, `two_factor_*` (Fortify). Sebagian tidak dipakai alur admin saat ini.
 
-### 8.4 Aturan migrasi
+### 8.5 Aturan migrasi
 
 - Nama file: `YYYY_MM_DD_HHMMSS_description.php`, timestamp setelah migrasi terakhir.
 - Selalu tulis `down()`.
@@ -402,6 +416,7 @@ Prefix `/admin`, name prefix `admin.`, middleware `admin.auth`.
 | POST | `/admin/notes` | `admin.notes.store` | simpan catatan |
 | PUT | `/admin/notes/{note}` | `admin.notes.update` | ubah catatan |
 | PATCH | `/admin/notes/{note}/pin` | `admin.notes.pin` | toggle pin |
+| DELETE | `/admin/notes/{note}/work-items/{workItem}` | `admin.notes.work-items.detach` | lepas tautan pekerjaan |
 | DELETE | `/admin/notes/{note}` | `admin.notes.destroy` | hapus catatan |
 | GET | `/admin/work-items` | `admin.work-items.index` | daftar pekerjaan |
 | POST | `/admin/work-items` | `admin.work-items.store` | simpan pekerjaan |
@@ -627,6 +642,9 @@ Gunakan urutan ini agar hasilnya konsisten:
 8. Di halaman detail: **Edit** (dialog dengan tab Tulis/Pratinjau) dan
    **Hapus**. Setelah edit, kembali ke detail; setelah hapus, kembali ke daftar.
 9. Edit / hapus juga bisa langsung dari kartu di daftar.
+10. Bagian **Pekerjaan terkait** menampilkan pekerjaan yang tertaut beserta
+    status dan tenggat; tombol **Lepas** menghapus tautan tanpa menghapus data.
+    Tautan dibuat dari form pekerjaan.
 
 ### 14.3 Pekerjaan
 
@@ -638,6 +656,8 @@ Gunakan urutan ini agar hasilnya konsisten:
 6. Ubah status langsung dari select di kartu.
 7. Jika status `done` → `completed_at` diisi; jika dikembalikan → dikosongkan.
 8. Tenggat lewat + belum selesai → indikator merah "terlambat".
+9. Di form, pilih **Catatan terkait** lewat daftar centang dengan pencarian;
+   tautan disimpan dua arah dan bisa dilepas dari detail catatan.
 
 ### 14.4 Dashboard
 
@@ -681,7 +701,7 @@ Gunakan urutan ini agar hasilnya konsisten:
 
 **Out of scope:** komentar, versi catatan, kolaborasi.
 
-### 15.2 NOTE-11 — Tautan catatan ↔ pekerjaan
+### 15.2 NOTE-11 — Tautan catatan ↔ pekerjaan (selesai)
 
 **Tujuan:** pekerjaan bisa merujuk pengetahuan pendukung.
 
@@ -1080,7 +1100,7 @@ Langkah berikutnya: ...
 | Stack | Laravel + Inertia + React | Tidak rewrite ke Node |
 | Auth | Database + `is_admin` | AUTH-07/08 selesai; Fortify belum dibersihkan |
 | Dashboard | Data lokal nyata | Berita AI ditunda |
-| Notes | Markdown + detail + preview | NOTE-08/09/10 selesai |
+| Notes | Markdown + detail + preview + tautan pekerjaan | NOTE-08/09/10/11 selesai |
 | Work Items | List + filter | Kanban belum |
 | Notes | Detail `/admin/notes/{note}` | Update diarahkan ke detail |
 | Agent | Service terpisah | Laravel control plane |

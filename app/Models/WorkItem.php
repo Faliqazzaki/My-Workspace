@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class WorkItem extends Model
 {
@@ -27,5 +28,10 @@ class WorkItem extends Model
             'due_date' => 'date',
             'completed_at' => 'datetime',
         ];
+    }
+
+    public function notes(): BelongsToMany
+    {
+        return $this->belongsToMany(Note::class)->withTimestamps();
     }
 }

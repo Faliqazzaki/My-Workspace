@@ -3,6 +3,7 @@ import {
     CalendarDays,
     ChevronLeft,
     ChevronRight,
+    ClipboardList,
     NotebookPen,
     Pencil,
     Pin,
@@ -358,6 +359,13 @@ export default function NotesIndex({ notes, tags = [], filters = {} }) {
                                         </span>
                                     ))}
                                 </div>
+                            )}
+
+                            {note.work_items_count > 0 && (
+                                <p className="mt-2.5 inline-flex w-fit items-center gap-1 rounded-full bg-indigo-500/10 px-2 py-0.5 text-[11px] font-medium text-indigo-600 dark:text-indigo-400">
+                                    <ClipboardList className="size-3" />
+                                    {note.work_items_count} pekerjaan terkait
+                                </p>
                             )}
 
                             <div className="mt-auto flex items-center justify-end gap-1 border-t border-border/50 pt-3">

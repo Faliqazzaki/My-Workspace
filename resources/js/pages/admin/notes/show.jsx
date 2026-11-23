@@ -2,7 +2,9 @@ import { Link, router } from '@inertiajs/react';
 import {
     ArrowLeft,
     CalendarDays,
+    ClipboardList,
     Clock,
+    Link2Off,
     NotebookPen,
     Pencil,
     Pin,
@@ -23,6 +25,8 @@ import {
 } from '@/components/ui/dialog';
 import AdminLayout from '@/layouts/admin-layout';
 import { formatDate } from '@/lib/date';
+import { cn } from '@/lib/utils';
+import { statusMeta } from '@/lib/work-item-meta';
 
 export default function NoteShow({ note }) {
     const [editorOpen, setEditorOpen] = useState(false);
@@ -31,6 +35,12 @@ export default function NoteShow({ note }) {
     const confirmDelete = () => {
         router.delete(`/admin/notes/${note.id}`, {
             onSuccess: () => setDeleteOpen(false),
+        });
+    };
+
+    const detachWorkItem = (workItem) => {
+        router.delete(`/admin/notes/${note.id}/work-items/${workItem.id}`, {
+            preserveScroll: true,
         });
     };
 
@@ -116,6 +126,75 @@ export default function NoteShow({ note }) {
                 </div>
                 <MarkdownContent content={note.content} />
             </article>
+
+            <section className="mt-4 rounded-2xl border bg-card p-5 shadow-xs sm:p-6">
+                <div className="flex items-center gap-2">
+                    <ClipboardList className="size-4 text-indigo-500" />
+                    <h2 className="text-sm font-semibold">Pekerjaan terkait</h2>
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                        {note.work_items?.length ?? 0}
+                    </span>
+                </div>
+
+                {note.work_items?.length === 0 ? (
+                    <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                        Belum ada pekerjaan terkait. Tautkan catatan ini dari
+                        form pekerjaan di menu{' '}
+                        <Link
+                            href="/admin/work-items"
+                            className="font-medium text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400"
+                        >
+                            Pekerjaan
+                        </Link>
+                        .
+                    </p>
+                ) : (
+                    <ul className="mt-2 divide-y">
+                        {note.work_items.map((workItem) => (
+                            <li
+                                key={workItem.id}
+                                className="flex flex-col gap-2 py-3 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
+                            >
+                                <div className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1.5">
+                                    <span
+                                        className={cn(
+                                            'rounded-full px-2.5 py-0.5 text-[11px] font-medium ring-1 ring-inset',
+                                            statusMeta[workItem.status]?.badge,
+                                        )}
+                                    >
+                                        {statusMeta[workItem.status]?.label ??
+                                            workItem.status}
+                                    </span>
+                                    <Link
+                                        href={`/admin/work-items?q=${encodeURIComponent(workItem.title)}`}
+                                        className="min-w-0 truncate text-sm font-medium transition-colors hover:text-indigo-600 dark:hover:text-indigo-400"
+                                    >
+                                        {workItem.title}
+                                    </Link>
+                                    {workItem.due_date && (
+                                        <span className="text-xs text-muted-foreground">
+                                            Tenggat{' '}
+                                            {formatDate(workItem.due_date)}
+                                        </span>
+                                    )}
+                                </div>
+
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => detachWorkItem(workItem)}
+                                    className="h-8 shrink-0 gap-1.5 px-2.5 text-xs text-muted-foreground transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/50"
+                                    aria-label={`Lepas tautan ${workItem.title}`}
+                                >
+                                    <Link2Off className="size-3.5" />
+                                    Lepas
+                                </Button>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </section>
 
             {editorOpen && (
                 <NoteEditorDialog

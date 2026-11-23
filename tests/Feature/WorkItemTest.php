@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Note;
 use App\Models\WorkItem;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -181,4 +182,70 @@ it('mencari dan menyaring pekerjaan', function () {
             ->has('workItems.data', 1)
             ->where('workItems.data.0.title', 'Rancang multi agent')
         );
+});
+
+it('menautkan catatan saat menyimpan pekerjaan', function () {
+    $first = Note::create([
+        'title' => 'Riset PostgreSQL',
+        'content' => 'Catatan pendukung.',
+        'tags' => [],
+    ]);
+
+    $second = Note::create([
+        'title' => 'Panduan Inertia',
+        'content' => 'Catatan pendukung lainnya.',
+        'tags' => [],
+    ]);
+
+    $this->actingAs(adminUser())
+        ->post('/admin/work-items', [
+            'title' => 'Implementasi tautan catatan',
+            'status' => 'todo',
+            'priority' => 'medium',
+            'notes' => [$first->id, $second->id],
+        ])
+        ->assertRedirect(route('admin.work-items.index'));
+
+    $workItem = WorkItem::firstOrFail();
+
+    expect($workItem->notes->pluck('id')->sort()->values()->all())
+        ->toBe([$first->id, $second->id]);
+});
+
+it('menyinkronkan tautan catatan saat memperbarui pekerjaan', function () {
+    $first = Note::create(['title' => 'Catatan A', 'content' => 'A.', 'tags' => []]);
+    $second = Note::create(['title' => 'Catatan B', 'content' => 'B.', 'tags' => []]);
+    $third = Note::create(['title' => 'Catatan C', 'content' => 'C.', 'tags' => []]);
+
+    $workItem = WorkItem::create([
+        'title' => 'Pekerjaan dengan tautan',
+        'status' => 'todo',
+        'priority' => 'medium',
+    ]);
+    $workItem->notes()->sync([$first->id, $second->id]);
+
+    $this->actingAs(adminUser())
+        ->put("/admin/work-items/{$workItem->id}", [
+            'title' => 'Pekerjaan dengan tautan',
+            'status' => 'todo',
+            'priority' => 'medium',
+            'notes' => [$second->id, $third->id],
+        ])
+        ->assertRedirect(route('admin.work-items.index'));
+
+    expect($workItem->fresh()->notes->pluck('id')->sort()->values()->all())
+        ->toBe([$second->id, $third->id]);
+});
+
+it('menolak tautan catatan yang tidak ada', function () {
+    $this->actingAs(adminUser())
+        ->post('/admin/work-items', [
+            'title' => 'Pekerjaan',
+            'status' => 'todo',
+            'priority' => 'medium',
+            'notes' => [999],
+        ])
+        ->assertSessionHasErrors('notes.0');
+
+    expect(WorkItem::count())->toBe(0);
 });

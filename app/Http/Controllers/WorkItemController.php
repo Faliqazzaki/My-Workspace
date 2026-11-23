@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Note;
 use App\Models\WorkItem;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -36,6 +37,7 @@ class WorkItemController extends Controller
             ->pluck('total', 'status');
 
         $workItems = $baseQuery
+            ->with('notes:id,title')
             ->when(
                 in_array($status, WorkItem::STATUSES, true),
                 fn ($query) => $query->where('status', $status),
@@ -57,16 +59,24 @@ class WorkItemController extends Controller
             ],
             'statuses' => WorkItem::STATUSES,
             'priorities' => WorkItem::PRIORITIES,
+            'notes' => Note::query()
+                ->orderByDesc('is_pinned')
+                ->latest('updated_at')
+                ->get(['id', 'title']),
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validatedData($request);
+        $noteIds = $data['notes'] ?? [];
+        unset($data['notes']);
 
-        WorkItem::create($data + [
+        $workItem = WorkItem::create($data + [
             'completed_at' => $data['status'] === 'done' ? now() : null,
         ]);
+
+        $workItem->notes()->sync($noteIds);
 
         return redirect()
             ->route('admin.work-items.index')
@@ -76,12 +86,16 @@ class WorkItemController extends Controller
     public function update(Request $request, WorkItem $workItem): RedirectResponse
     {
         $data = $this->validatedData($request);
+        $noteIds = $data['notes'] ?? [];
+        unset($data['notes']);
 
         $workItem->update($data + [
             'completed_at' => $data['status'] === 'done'
                 ? ($workItem->completed_at ?? now())
                 : null,
         ]);
+
+        $workItem->notes()->sync($noteIds);
 
         return redirect()
             ->route('admin.work-items.index')
@@ -112,7 +126,7 @@ class WorkItemController extends Controller
     }
 
     /**
-     * @return array{title: string, description: string|null, status: string, priority: string, due_date: string|null, tags: array<int, string>}
+     * @return array{title: string, description: string|null, status: string, priority: string, due_date: string|null, tags: array<int, string>, notes: array<int, int>}
      */
     private function validatedData(Request $request): array
     {
@@ -124,10 +138,13 @@ class WorkItemController extends Controller
             'due_date' => ['nullable', 'date'],
             'tags' => ['nullable', 'array', 'max:10'],
             'tags.*' => ['string', 'max:30'],
+            'notes' => ['nullable', 'array', 'distinct'],
+            'notes.*' => ['integer', 'exists:notes,id'],
         ]);
 
         $data['description'] = $data['description'] ?? null;
         $data['due_date'] = $data['due_date'] ?? null;
+        $data['notes'] = $data['notes'] ?? [];
         $data['tags'] = collect($data['tags'] ?? [])
             ->map(fn (string $tag) => trim($tag))
             ->filter()

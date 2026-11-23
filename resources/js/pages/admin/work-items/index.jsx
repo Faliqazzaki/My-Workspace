@@ -4,6 +4,7 @@ import {
     ChevronLeft,
     ChevronRight,
     ClipboardList,
+    NotebookPen,
     Pencil,
     Plus,
     RotateCcw,
@@ -46,6 +47,7 @@ export default function WorkItemsIndex({
     filters = {},
     statuses = [],
     priorities = [],
+    notes = [],
 }) {
     const queryParam = filters.q ?? '';
     const [search, setSearch] = useState(queryParam);
@@ -53,6 +55,7 @@ export default function WorkItemsIndex({
     const [editorOpen, setEditorOpen] = useState(false);
     const [editing, setEditing] = useState(null);
     const [tagInput, setTagInput] = useState('');
+    const [noteSearch, setNoteSearch] = useState('');
     const [deleting, setDeleting] = useState(null);
     const isFirstRender = useRef(true);
 
@@ -103,6 +106,7 @@ export default function WorkItemsIndex({
         priority: 'medium',
         due_date: '',
         tags: [],
+        notes: [],
     });
 
     const totalCount = Object.values(counts).reduce(
@@ -124,6 +128,7 @@ export default function WorkItemsIndex({
         clearErrors();
         reset();
         setTagInput('');
+        setNoteSearch('');
         setEditorOpen(true);
     };
 
@@ -137,14 +142,25 @@ export default function WorkItemsIndex({
             priority: workItem.priority,
             due_date: toDateInput(workItem.due_date),
             tags: workItem.tags ?? [],
+            notes: (workItem.notes ?? []).map((note) => note.id),
         });
         setTagInput((workItem.tags ?? []).join(', '));
+        setNoteSearch('');
         setEditorOpen(true);
     };
 
     const handleTagsChange = (value) => {
         setTagInput(value);
         setData('tags', parseTags(value));
+    };
+
+    const toggleNote = (noteId) => {
+        setData(
+            'notes',
+            data.notes.includes(noteId)
+                ? data.notes.filter((id) => id !== noteId)
+                : [...data.notes, noteId],
+        );
     };
 
     const submit = (event) => {
@@ -253,6 +269,14 @@ export default function WorkItemsIndex({
     };
 
     const hasFilters = Boolean(filters.q || filters.status || filters.priority);
+
+    const noteKeyword = noteSearch.trim().toLowerCase();
+    const filteredNotes =
+        noteKeyword === ''
+            ? notes
+            : notes.filter((note) =>
+                  note.title.toLowerCase().includes(noteKeyword),
+              );
 
     return (
         <AdminLayout title="Pekerjaan">
@@ -502,6 +526,22 @@ export default function WorkItemsIndex({
                                             ))}
                                         </div>
                                     )}
+
+                                    {workItem.notes?.length > 0 && (
+                                        <div className="mt-2 flex flex-wrap gap-1.5">
+                                            {workItem.notes.map((note) => (
+                                                <span
+                                                    key={note.id}
+                                                    className="flex max-w-full items-center gap-1 rounded-full bg-indigo-500/10 px-2 py-0.5 text-[11px] font-medium text-indigo-600 dark:text-indigo-400"
+                                                >
+                                                    <NotebookPen className="size-3 shrink-0" />
+                                                    <span className="truncate">
+                                                        {note.title}
+                                                    </span>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="flex shrink-0 items-center gap-2 border-t pt-2 lg:border-t-0 lg:pt-0">
@@ -736,6 +776,64 @@ export default function WorkItemsIndex({
                                 tag.
                             </p>
                             <InputError message={errors.tags} />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <div className="flex items-center justify-between gap-2">
+                                <Label htmlFor="work-item-note-search">
+                                    Catatan terkait
+                                </Label>
+                                <span className="text-xs text-muted-foreground">
+                                    {data.notes.length} dipilih
+                                </span>
+                            </div>
+                            <div className="relative">
+                                <Search className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                                <Input
+                                    id="work-item-note-search"
+                                    value={noteSearch}
+                                    onChange={(event) =>
+                                        setNoteSearch(event.target.value)
+                                    }
+                                    placeholder="Cari catatan..."
+                                    className="h-9 bg-background pl-9"
+                                />
+                            </div>
+                            <div className="max-h-40 divide-y overflow-y-auto rounded-md border">
+                                {filteredNotes.length === 0 ? (
+                                    <p className="px-3 py-4 text-center text-xs text-muted-foreground">
+                                        {notes.length === 0
+                                            ? 'Belum ada catatan. Buat catatan lebih dulu di menu Catatan.'
+                                            : 'Tidak ada catatan yang cocok.'}
+                                    </p>
+                                ) : (
+                                    filteredNotes.map((note) => (
+                                        <label
+                                            key={note.id}
+                                            className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm transition-colors hover:bg-muted/50"
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={data.notes.includes(
+                                                    note.id,
+                                                )}
+                                                onChange={() =>
+                                                    toggleNote(note.id)
+                                                }
+                                                className="size-4 rounded border-input accent-indigo-500"
+                                            />
+                                            <span className="line-clamp-1">
+                                                {note.title}
+                                            </span>
+                                        </label>
+                                    ))
+                                )}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                Tautkan catatan pengetahuan yang mendukung
+                                pekerjaan ini. Opsional.
+                            </p>
+                            <InputError message={errors.notes} />
                         </div>
 
                         <DialogFooter className="mt-2">

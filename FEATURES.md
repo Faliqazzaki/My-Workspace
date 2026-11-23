@@ -94,7 +94,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 - [x] **NOTE-08** Halaman detail catatan `/admin/notes/{note}`
 - [x] **NOTE-09** Render Markdown yang aman (GFM, code block, tabel)
 - [x] **NOTE-10** Preview Markdown saat menulis
-- [ ] **NOTE-11** Tautan catatan ↔ pekerjaan (many-to-many)
+- [x] **NOTE-11** Tautan catatan ↔ pekerjaan (many-to-many)
 - [ ] **NOTE-12** Arsip / soft delete + restore
 - [ ] **NOTE-13** Auto-save draft ke localStorage
 - [ ] **NOTE-14** Template catatan (harian, belajar, snippet)
@@ -174,7 +174,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 
 ## 10. Kualitas & Observability
 
-- [x] **QA-01** 73 test Pest lolos (423 assertion)
+- [x] **QA-01** 80 test Pest lolos (460 assertion)
 - [x] **QA-02** Test fitur untuk auth, catatan (termasuk detail), pekerjaan, dashboard
 - [x] **QA-03** Format PHP dengan Pint
 - [x] **QA-04** Lint JS dengan ESLint + format Prettier
@@ -197,23 +197,22 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 | Autentikasi | 8 | 12 |
 | UI | 7 | 12 |
 | Dashboard | 6 | 11 |
-| Catatan | 10 | 16 |
+| Catatan | 11 | 16 |
 | Pekerjaan | 10 | 20 |
 | Pengetahuan & Produktivitas | 0 | 13 |
 | Berita & AI | 0 | 13 |
 | Multi-Agent | 0 | 10 |
 | Kualitas | 5 | 12 |
 
-**Total: 53 dari 129 item selesai.**
+**Total: 54 dari 129 item selesai.**
 
 ## Urutan pengerjaan yang disarankan
 
-1. **NOTE-11** — tautan catatan ↔ pekerjaan, nilai langsung terasa.
-2. **WORK-11 / WORK-12** — Kanban sebagai alternatif tampilan.
-3. **KNOW-01** — kebiasaan harian + widget dashboard.
-4. **NEWS-01 … NEWS-06** — berita teknologi + ringkasan AI.
-5. **AI-02 / AI-03** — asisten dan pencarian semantik.
-6. **AGT-01 … AGT-10** — multi-agent setelah kontrol dasar stabil.
+1. **WORK-11 / WORK-12** — Kanban sebagai alternatif tampilan.
+2. **KNOW-01** — kebiasaan harian + widget dashboard.
+3. **NEWS-01 … NEWS-06** — berita teknologi + ringkasan AI.
+4. **AI-02 / AI-03** — asisten dan pencarian semantik.
+5. **AGT-01 … AGT-10** — multi-agent setelah kontrol dasar stabil.
 
 ## Non-goals saat ini
 

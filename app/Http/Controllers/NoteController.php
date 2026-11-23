@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Note;
+use App\Models\WorkItem;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -24,6 +25,7 @@ class NoteController extends Controller
                 });
             })
             ->when($activeTag !== '', fn ($query) => $query->whereJsonContains('tags', $activeTag))
+            ->withCount('workItems')
             ->orderByDesc('is_pinned')
             ->latest('updated_at')
             ->paginate(12)
@@ -50,6 +52,8 @@ class NoteController extends Controller
 
     public function show(Note $note): Response
     {
+        $note->load(['workItems:id,title,status,priority,due_date']);
+
         return Inertia::render('admin/notes/show', [
             'note' => $note,
         ]);
@@ -71,6 +75,15 @@ class NoteController extends Controller
         return redirect()
             ->route('admin.notes.show', $note)
             ->with('success', 'Catatan berhasil diperbarui.');
+    }
+
+    public function detachWorkItem(Note $note, WorkItem $workItem): RedirectResponse
+    {
+        $note->workItems()->detach($workItem->id);
+
+        return redirect()
+            ->route('admin.notes.show', $note)
+            ->with('success', 'Tautan pekerjaan dilepas.');
     }
 
     public function destroy(Note $note): RedirectResponse
