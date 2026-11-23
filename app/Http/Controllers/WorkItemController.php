@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Note;
+use App\Models\Project;
 use App\Models\WorkItem;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,6 +18,7 @@ class WorkItemController extends Controller
         $search = trim($request->string('q')->toString());
         $status = trim($request->string('status')->toString());
         $priority = trim($request->string('priority')->toString());
+        $projectId = trim($request->string('project')->toString());
         $view = $request->string('view')->toString() === 'board' ? 'board' : 'list';
 
         $baseQuery = WorkItem::query()
@@ -30,6 +32,14 @@ class WorkItemController extends Controller
             ->when(
                 in_array($priority, WorkItem::PRIORITIES, true),
                 fn ($query) => $query->where('priority', $priority),
+            )
+            ->when(
+                $projectId === 'none',
+                fn ($query) => $query->whereNull('project_id'),
+            )
+            ->when(
+                ctype_digit($projectId) && $projectId !== '0',
+                fn ($query) => $query->where('project_id', (int) $projectId),
             );
 
         $counts = (clone $baseQuery)
@@ -39,7 +49,7 @@ class WorkItemController extends Controller
 
         $boardItems = $view === 'board'
             ? (clone $baseQuery)
-                ->with('notes:id,title')
+                ->with(['notes:id,title', 'project:id,name,color'])
                 ->orderByRaw('due_date IS NULL')
                 ->orderBy('due_date')
                 ->latest('created_at')
@@ -47,7 +57,7 @@ class WorkItemController extends Controller
             : [];
 
         $workItems = $baseQuery
-            ->with('notes:id,title')
+            ->with(['notes:id,title', 'project:id,name,color'])
             ->when(
                 $view === 'list' && in_array($status, WorkItem::STATUSES, true),
                 fn ($query) => $query->where('status', $status),
@@ -67,10 +77,15 @@ class WorkItemController extends Controller
                 'q' => $search,
                 'status' => $status,
                 'priority' => $priority,
+                'project' => $projectId,
                 'view' => $view,
             ],
             'statuses' => WorkItem::STATUSES,
             'priorities' => WorkItem::PRIORITIES,
+            'projects' => Project::query()
+                ->orderByRaw('archived_at IS NOT NULL')
+                ->orderBy('name')
+                ->get(['id', 'name', 'color', 'archived_at']),
             'notes' => Note::query()
                 ->orderByDesc('is_pinned')
                 ->latest('updated_at')
@@ -138,7 +153,7 @@ class WorkItemController extends Controller
     }
 
     /**
-     * @return array{title: string, description: string|null, status: string, priority: string, due_date: string|null, tags: array<int, string>, notes: array<int, int>}
+     * @return array{project_id: int|null, title: string, description: string|null, status: string, priority: string, due_date: string|null, tags: array<int, string>, notes: array<int, int>}
      */
     private function validatedData(Request $request): array
     {
@@ -150,12 +165,14 @@ class WorkItemController extends Controller
             'due_date' => ['nullable', 'date'],
             'tags' => ['nullable', 'array', 'max:10'],
             'tags.*' => ['string', 'max:30'],
+            'project_id' => ['nullable', 'integer', 'exists:projects,id'],
             'notes' => ['nullable', 'array', 'distinct'],
             'notes.*' => ['integer', 'exists:notes,id'],
         ]);
 
         $data['description'] = $data['description'] ?? null;
         $data['due_date'] = $data['due_date'] ?? null;
+        $data['project_id'] = $data['project_id'] ?? null;
         $data['notes'] = $data['notes'] ?? [];
         $data['tags'] = collect($data['tags'] ?? [])
             ->map(fn (string $tag) => trim($tag))

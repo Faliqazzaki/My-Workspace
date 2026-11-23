@@ -115,7 +115,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 - [x] **WORK-10** Pagination 15 item + empty state
 - [x] **WORK-11** Kanban board dengan drag & drop
 - [x] **WORK-12** Toggle tampilan list ↔ board
-- [ ] **WORK-13** Proyek / area + filter per proyek
+- [x] **WORK-13** Proyek / area + filter per proyek
 - [ ] **WORK-14** Subtask / checklist di dalam pekerjaan
 - [ ] **WORK-15** Tampilan kalender berdasarkan tenggat
 - [ ] **WORK-16** Pekerjaan berulang (recurring)
@@ -174,7 +174,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 
 ## 10. Kualitas & Observability
 
-- [x] **QA-01** 88 test Pest lolos (589 assertion)
+- [x] **QA-01** 99 test Pest lolos (685 assertion)
 - [x] **QA-02** Test fitur untuk auth, catatan (termasuk detail), pekerjaan, dashboard
 - [x] **QA-03** Format PHP dengan Pint
 - [x] **QA-04** Lint JS dengan ESLint + format Prettier
@@ -198,13 +198,13 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 | UI | 7 | 12 |
 | Dashboard | 7 | 11 |
 | Catatan | 11 | 16 |
-| Pekerjaan | 12 | 20 |
+| Pekerjaan | 13 | 20 |
 | Pengetahuan & Produktivitas | 1 | 13 |
 | Berita & AI | 0 | 13 |
 | Multi-Agent | 0 | 10 |
 | Kualitas | 5 | 12 |
 
-**Total: 58 dari 129 item selesai.**
+**Total: 59 dari 129 item selesai.**
 
 ## Urutan pengerjaan yang disarankan
 

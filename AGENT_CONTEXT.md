@@ -28,8 +28,8 @@ kebenaran**, lalu perbarui dokumen.
   halaman **Keamanan** untuk ubah password.
 - Fitur selesai: login, shell admin, Dashboard (statistik + kebiasaan mencatat),
   Catatan (detail + Markdown + pratinjau + tautan ke pekerjaan), Pekerjaan
-  (list + Kanban drag & drop).
-- Test: **88 test Pest lolos** (589 assertions), build Vite berhasil.
+  (list + Kanban drag & drop + proyek), Proyek/area (CRUD + arsip + progress).
+- Test: **99 test Pest lolos** (685 assertions), build Vite berhasil.
 - Cara kerja: **satu increment kecil**, backend → frontend → test → quality gate
   → verifikasi PostgreSQL → update checklist.
 
@@ -110,15 +110,16 @@ Dan perbarui `FEATURES.md` + tulis handoff.
 | Shell admin | Selesai |
 | Dashboard | Selesai (data nyata + widget kebiasaan & streak) |
 | Catatan | Selesai (CRUD, detail, Markdown, tautan pekerjaan, search, tag, pin) |
-| Pekerjaan | Selesai (CRUD, filter, status, tenggat, pilih catatan terkait) |
+| Pekerjaan | Selesai (CRUD, filter, status, tenggat, catatan & proyek terkait) |
 | Markdown preview | Selesai (halaman detail + tab pratinjau editor) |
 | Tautan catatan ↔ pekerjaan | Selesai (pivot `note_work_item`, dua arah) |
 | Kanban | Selesai (toggle Daftar/Papan, drag & drop, select status) |
 | Kebiasaan mencatat | Selesai (streak harian, zona waktu Asia/Jakarta) |
+| Proyek / area | Selesai (CRUD, arsip, filter, progress `done/total`) |
 | Berita AI | Belum |
 | Multi-agent | Belum |
 
-Angka test terakhir: **88 passed, 589 assertions**.
+Angka test terakhir: **99 passed, 685 assertions**.
 
 ---
 
@@ -209,6 +210,7 @@ database/
     2026_11_21_130000_create_work_items_table.php
     2026_11_22_000000_add_username_and_is_admin_to_users_table.php
     2026_11_23_160000_create_note_work_item_table.php
+    2026_11_23_170000_create_projects_table.php
   seeders/AdminUserSeeder.php      # akun admin dari config
 resources/
   css/app.css                      # token tema + font
@@ -225,6 +227,7 @@ resources/
       admin/notes/index.jsx        # daftar catatan
       admin/notes/show.jsx         # detail catatan + Markdown
       admin/work-items/index.jsx   # pekerjaan
+      admin/projects/index.jsx     # proyek + progress
       auth/admin-login.jsx         # login
     components/
       markdown-content.jsx         # render Markdown aman (GFM + sanitize)
@@ -343,6 +346,7 @@ Urutan tag dipertahankan.
 | Kolom | Tipe | Aturan |
 | --- | --- | --- |
 | `id` | bigint PK | |
+| `project_id` | FK `projects` nullable | `nullOnDelete`, index |
 | `title` | varchar(150) | wajib |
 | `description` | text nullable | |
 | `status` | varchar(20) | default `backlog`, index |
@@ -358,7 +362,22 @@ Prioritas valid: `low`, `medium`, `high`, `urgent` (`WorkItem::PRIORITIES`).
 **Invarian:** `completed_at` diisi saat status menjadi `done` dan dikosongkan
 saat keluar dari `done`. Ini dijaga controller, **bukan** constraint database.
 
-### 8.3 `note_work_item` (pivot)
+### 8.3 `projects`
+
+| Kolom | Tipe | Aturan |
+| --- | --- | --- |
+| `id` | bigint PK | |
+| `name` | varchar(100) | wajib |
+| `description` | text nullable | |
+| `color` | varchar(20) nullable | salah satu `ProjectController::COLORS` |
+| `archived_at` | timestamp nullable | arsip = tidak null |
+| `created_at`, `updated_at` | timestamp | |
+
+Relasi: `Project::workItems()` (hasMany). Progress dihitung lewat
+`withCount` (`work_items_count`, `done_work_items_count`). Hapus proyek
+me-null-kan `work_items.project_id`, pekerjaan tetap ada.
+
+### 8.4 `note_work_item` (pivot)
 
 | Kolom | Tipe | Aturan |
 | --- | --- | --- |
@@ -371,7 +390,7 @@ Unique: `(note_id, work_item_id)`. Relasi: `Note::workItems()` dan
 `WorkItem::notes()` (belongsToMany, `withTimestamps`). Sinkronisasi lewat
 `sync()` di controller; jangan menulis pivot langsung.
 
-### 8.4 `users` (auth admin)
+### 8.5 `users` (auth admin)
 
 | Kolom | Tipe | Aturan |
 | --- | --- | --- |
@@ -392,7 +411,7 @@ Middleware admin mensyaratkan `is_admin = true`.
 Tabel bawaan lain: `password_reset_tokens`, `sessions`, `cache`, `jobs`,
 `failed_jobs`, `two_factor_*` (Fortify). Sebagian tidak dipakai alur admin saat ini.
 
-### 8.5 Aturan migrasi
+### 8.6 Aturan migrasi
 
 - Nama file: `YYYY_MM_DD_HHMMSS_description.php`, timestamp setelah migrasi terakhir.
 - Selalu tulis `down()`.
@@ -423,6 +442,11 @@ Prefix `/admin`, name prefix `admin.`, middleware `admin.auth`.
 | DELETE | `/admin/notes/{note}/work-items/{workItem}` | `admin.notes.work-items.detach` | lepas tautan pekerjaan |
 | DELETE | `/admin/notes/{note}` | `admin.notes.destroy` | hapus catatan |
 | GET | `/admin/work-items` | `admin.work-items.index` | daftar pekerjaan |
+| GET | `/admin/projects` | `admin.projects.index` | daftar proyek + progress |
+| POST | `/admin/projects` | `admin.projects.store` | simpan proyek |
+| PUT | `/admin/projects/{project}` | `admin.projects.update` | ubah proyek |
+| PATCH | `/admin/projects/{project}/archive` | `admin.projects.archive` | arsip / kembalikan |
+| DELETE | `/admin/projects/{project}` | `admin.projects.destroy` | hapus proyek (pekerjaan tetap) |
 | POST | `/admin/work-items` | `admin.work-items.store` | simpan pekerjaan |
 | PUT | `/admin/work-items/{workItem}` | `admin.work-items.update` | ubah pekerjaan |
 | PATCH | `/admin/work-items/{workItem}/status` | `admin.work-items.status` | ubah status |
@@ -658,9 +682,10 @@ Gunakan urutan ini agar hasilnya konsisten:
 
 1. Sidebar **Pekerjaan** → `/admin/work-items`.
 2. Klik **Pekerjaan baru** → dialog.
-3. Isi judul, deskripsi, status, prioritas, tenggat, tag.
+3. Isi judul, deskripsi, proyek (opsional), status, prioritas, tenggat, tag.
 4. Simpan → redirect + flash.
-5. Filter status (tab + jumlah), prioritas, cari.
+5. Filter status (tab + jumlah), prioritas, proyek (termasuk **Tanpa proyek**),
+   cari.
 6. Ubah status langsung dari select di kartu.
 7. Jika status `done` → `completed_at` diisi; jika dikembalikan → dikosongkan.
 8. Tenggat lewat + belum selesai → indikator merah "terlambat".
@@ -670,6 +695,7 @@ Gunakan urutan ini agar hasilnya konsisten:
     (Backlog, To do, Dikerjakan, Selesai) dan mengabaikan filter status.
 11. Tarik kartu ke kolom lain (atau ubah select status di kartu) → status dan
     `completed_at` diperbarui; jumlah kolom ikut berubah.
+12. Kartu menampilkan badge proyek (titik warna + nama) jika ada.
 
 ### 14.4 Dashboard
 
@@ -682,6 +708,18 @@ Gunakan urutan ini agar hasilnya konsisten:
 7. Widget **1 Hari 1 Pengetahuan**: status hari ini, jumlah catatan hari ini,
    streak beruntun, dan CTA ke halaman catatan.
 8. Klik **Lihat semua** → halaman terkait.
+
+### 14.5 Proyek
+
+1. Sidebar **Proyek** → `/admin/projects`.
+2. Klik **Proyek baru** → dialog: nama, deskripsi, warna (8 swatch).
+3. Kartu proyek menampilkan deskripsi, progress `done/total` + bar, dan
+   tombol **Lihat pekerjaan** (membuka `/admin/work-items?project={id}`).
+4. **Arsipkan** menyembunyikan proyek dari daftar aktif (tetap muncul di
+   bagian **Diarsipkan** dan di picker dengan label `(arsip)`); **Kembalikan**
+   membatalkan arsip.
+5. **Hapus** meminta konfirmasi; pekerjaan di dalamnya tidak dihapus, hanya
+   kehilangan label proyek.
 
 ---
 
@@ -773,7 +811,7 @@ mobile bisa scroll horizontal, list view tidak regresi.
 
 **Out of scope:** WIP limit, kolom kustom, swimlane.
 
-### 15.4 WORK-13 — Proyek / area
+### 15.4 WORK-13 — Proyek / area (selesai)
 
 **Data:**
 
@@ -1119,7 +1157,8 @@ Langkah berikutnya: ...
 | Auth | Database + `is_admin` | AUTH-07/08 selesai; Fortify belum dibersihkan |
 | Dashboard | Data lokal nyata + kebiasaan | Berita AI ditunda |
 | Notes | Markdown + detail + preview + tautan pekerjaan | NOTE-08/09/10/11 selesai |
-| Work Items | List + Kanban | Drag mengubah status |
+| Work Items | List + Kanban + filter proyek | Drag mengubah status |
+| Projects | CRUD + arsip + progress | Hapus tidak menghapus pekerjaan |
 | Notes | Detail `/admin/notes/{note}` | Update diarahkan ke detail |
 | Agent | Service terpisah | Laravel control plane |
 | Wayfinder | Tidak dipakai admin | URL string literal |

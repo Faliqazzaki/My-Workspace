@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Note;
+use App\Models\Project;
 use App\Models\WorkItem;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -327,4 +328,126 @@ it('menyaring papan dengan pencarian dan prioritas', function () {
             ->has('boardItems', 1)
             ->where('boardItems.0.title', 'Riset kanban')
         );
+});
+
+it('menyaring pekerjaan berdasarkan proyek', function () {
+    $project = Project::create([
+        'name' => 'Proyek A',
+        'color' => '#6366f1',
+    ]);
+
+    WorkItem::create([
+        'project_id' => $project->id,
+        'title' => 'Masuk proyek',
+        'status' => 'todo',
+        'priority' => 'medium',
+    ]);
+
+    WorkItem::create([
+        'title' => 'Tanpa proyek',
+        'status' => 'todo',
+        'priority' => 'medium',
+    ]);
+
+    $this->actingAs(adminUser())
+        ->get("/admin/work-items?project={$project->id}")
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.project', (string) $project->id)
+            ->has('workItems.data', 1)
+            ->where('workItems.data.0.title', 'Masuk proyek')
+            ->where('workItems.data.0.project.name', 'Proyek A')
+            ->where('counts.todo', 1)
+            ->has('projects', 1)
+        );
+});
+
+it('menyaring pekerjaan tanpa proyek', function () {
+    $project = Project::create([
+        'name' => 'Proyek B',
+        'color' => '#0ea5e9',
+    ]);
+
+    WorkItem::create([
+        'project_id' => $project->id,
+        'title' => 'Masuk proyek',
+        'status' => 'todo',
+        'priority' => 'medium',
+    ]);
+
+    WorkItem::create([
+        'title' => 'Tanpa proyek',
+        'status' => 'todo',
+        'priority' => 'medium',
+    ]);
+
+    $this->actingAs(adminUser())
+        ->get('/admin/work-items?project=none')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.project', 'none')
+            ->has('workItems.data', 1)
+            ->where('workItems.data.0.title', 'Tanpa proyek')
+        );
+});
+
+it('menyimpan pekerjaan dengan proyek dan menolak proyek tidak valid', function () {
+    $project = Project::create([
+        'name' => 'Proyek C',
+        'color' => '#10b981',
+    ]);
+
+    $this->actingAs(adminUser())
+        ->post('/admin/work-items', [
+            'title' => 'Tugas proyek',
+            'status' => 'todo',
+            'priority' => 'medium',
+            'project_id' => $project->id,
+        ])
+        ->assertRedirect(route('admin.work-items.index'));
+
+    expect(WorkItem::firstOrFail()->project_id)->toBe($project->id);
+
+    $this->actingAs(adminUser())
+        ->post('/admin/work-items', [
+            'title' => 'Tugas tanpa proyek valid',
+            'status' => 'todo',
+            'priority' => 'medium',
+            'project_id' => 9999,
+        ])
+        ->assertSessionHasErrors('project_id');
+
+    expect(WorkItem::count())->toBe(1);
+});
+
+it('memindahkan pekerjaan ke proyek lain dan melepasnya', function () {
+    $first = Project::create(['name' => 'Pertama', 'color' => '#6366f1']);
+    $second = Project::create(['name' => 'Kedua', 'color' => '#ef4444']);
+
+    $workItem = WorkItem::create([
+        'project_id' => $first->id,
+        'title' => 'Pindah proyek',
+        'status' => 'todo',
+        'priority' => 'medium',
+    ]);
+
+    $this->actingAs(adminUser())
+        ->put("/admin/work-items/{$workItem->id}", [
+            'title' => 'Pindah proyek',
+            'status' => 'todo',
+            'priority' => 'medium',
+            'project_id' => $second->id,
+        ]);
+
+    expect($workItem->refresh()->project_id)->toBe($second->id);
+
+    $this->actingAs(adminUser())
+        ->put("/admin/work-items/{$workItem->id}", [
+            'title' => 'Pindah proyek',
+            'status' => 'todo',
+            'priority' => 'medium',
+            'project_id' => null,
+        ]);
+
+    expect($workItem->refresh()->project_id)->toBeNull();
 });

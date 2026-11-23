@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminPasswordController;
 use App\Http\Controllers\NoteController;
+use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\WorkItemController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -30,6 +31,12 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
     Route::patch('/notes/{note}/pin', [NoteController::class, 'togglePin'])->name('notes.pin');
     Route::delete('/notes/{note}/work-items/{workItem}', [NoteController::class, 'detachWorkItem'])->name('notes.work-items.detach');
     Route::delete('/notes/{note}', [NoteController::class, 'destroy'])->name('notes.destroy');
+
+    Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
+    Route::post('/projects', [ProjectController::class, 'store'])->name('projects.store');
+    Route::put('/projects/{project}', [ProjectController::class, 'update'])->name('projects.update');
+    Route::patch('/projects/{project}/archive', [ProjectController::class, 'toggleArchive'])->name('projects.archive');
+    Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
 
     Route::get('/work-items', [WorkItemController::class, 'index'])->name('work-items.index');
     Route::post('/work-items', [WorkItemController::class, 'store'])->name('work-items.store');

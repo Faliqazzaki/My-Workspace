@@ -54,6 +54,7 @@ export default function WorkItemsIndex({
     filters = {},
     statuses = [],
     priorities = [],
+    projects = [],
     notes = [],
 }) {
     const queryParam = filters.q ?? '';
@@ -97,6 +98,7 @@ export default function WorkItemsIndex({
                     q: search || undefined,
                     status: filters.status || undefined,
                     priority: filters.priority || undefined,
+                    project: filters.project || undefined,
                     view: filters.view === 'board' ? 'board' : undefined,
                 },
                 { preserveScroll: true, preserveState: true, replace: true },
@@ -104,7 +106,14 @@ export default function WorkItemsIndex({
         }, 300);
 
         return () => clearTimeout(timer);
-    }, [search, queryParam, filters.status, filters.priority, filters.view]);
+    }, [
+        search,
+        queryParam,
+        filters.status,
+        filters.priority,
+        filters.project,
+        filters.view,
+    ]);
 
     const {
         data,
@@ -122,6 +131,7 @@ export default function WorkItemsIndex({
         status: 'backlog',
         priority: 'medium',
         due_date: '',
+        project_id: '',
         tags: [],
         notes: [],
     });
@@ -158,6 +168,7 @@ export default function WorkItemsIndex({
             status: workItem.status,
             priority: workItem.priority,
             due_date: toDateInput(workItem.due_date),
+            project_id: workItem.project_id ?? '',
             tags: workItem.tags ?? [],
             notes: (workItem.notes ?? []).map((note) => note.id),
         });
@@ -186,6 +197,7 @@ export default function WorkItemsIndex({
         transform((current) => ({
             ...current,
             due_date: current.due_date || null,
+            project_id: current.project_id === '' ? null : current.project_id,
         }));
 
         const options = {
@@ -278,6 +290,7 @@ export default function WorkItemsIndex({
                 q: search || undefined,
                 status: filters.status || undefined,
                 priority: filters.priority || undefined,
+                project: filters.project || undefined,
                 view: view === 'board' ? 'board' : undefined,
             },
             { preserveScroll: true, preserveState: true, replace: true },
@@ -294,6 +307,7 @@ export default function WorkItemsIndex({
             {
                 status: filters.status || undefined,
                 priority: filters.priority || undefined,
+                project: filters.project || undefined,
                 view: view === 'board' ? 'board' : undefined,
             },
             { preserveScroll: true, preserveState: true, replace: true },
@@ -307,6 +321,7 @@ export default function WorkItemsIndex({
                 q: search || undefined,
                 status: status || undefined,
                 priority: filters.priority || undefined,
+                project: filters.project || undefined,
                 view: view === 'board' ? 'board' : undefined,
             },
             { preserveScroll: true, preserveState: true, replace: true },
@@ -320,6 +335,21 @@ export default function WorkItemsIndex({
                 q: search || undefined,
                 status: filters.status || undefined,
                 priority: priority || undefined,
+                project: filters.project || undefined,
+                view: view === 'board' ? 'board' : undefined,
+            },
+            { preserveScroll: true, preserveState: true, replace: true },
+        );
+    };
+
+    const applyProject = (project) => {
+        router.get(
+            '/admin/work-items',
+            {
+                q: search || undefined,
+                status: filters.status || undefined,
+                priority: filters.priority || undefined,
+                project: project || undefined,
                 view: view === 'board' ? 'board' : undefined,
             },
             { preserveScroll: true, preserveState: true, replace: true },
@@ -337,7 +367,9 @@ export default function WorkItemsIndex({
         );
     };
 
-    const hasFilters = Boolean(filters.q || filters.status || filters.priority);
+    const hasFilters = Boolean(
+        filters.q || filters.status || filters.priority || filters.project,
+    );
 
     const noteKeyword = noteSearch.trim().toLowerCase();
     const filteredNotes =
@@ -459,6 +491,29 @@ export default function WorkItemsIndex({
                             </select>
                         </div>
 
+                        <div className="relative flex-1 sm:w-44">
+                            <select
+                                value={filters.project ?? ''}
+                                onChange={(event) =>
+                                    applyProject(event.target.value)
+                                }
+                                aria-label="Filter proyek"
+                                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm shadow-xs transition-colors outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                            >
+                                <option value="">Semua proyek</option>
+                                <option value="none">Tanpa proyek</option>
+                                {projects.map((project) => (
+                                    <option
+                                        key={project.id}
+                                        value={String(project.id)}
+                                    >
+                                        {project.name}
+                                        {project.archived_at ? ' (arsip)' : ''}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
                         {hasFilters && (
                             <Button
                                 type="button"
@@ -530,7 +585,7 @@ export default function WorkItemsIndex({
                     </h2>
                     <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
                         {hasFilters
-                            ? 'Coba kata kunci, status, atau prioritas lain, atau klik reset.'
+                            ? 'Coba kata kunci, status, prioritas, atau proyek lain, atau klik reset.'
                             : 'Mulai catat kebutuhan atau pekerjaan pertamamu di sini.'}
                     </p>
                     {hasFilters ? (
@@ -590,6 +645,21 @@ export default function WorkItemsIndex({
                                                     .label
                                             }
                                         </span>
+
+                                        {workItem.project && (
+                                            <span className="flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                                                <span
+                                                    className="size-2 rounded-full"
+                                                    style={{
+                                                        backgroundColor:
+                                                            workItem.project
+                                                                .color ??
+                                                            '#6366f1',
+                                                    }}
+                                                />
+                                                {workItem.project.name}
+                                            </span>
+                                        )}
 
                                         {workItem.due_date && (
                                             <span
@@ -818,6 +888,30 @@ export default function WorkItemsIndex({
                                 className="flex min-h-24 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
                             />
                             <InputError message={errors.description} />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="work-item-project">Proyek</Label>
+                            <select
+                                id="work-item-project"
+                                value={data.project_id ?? ''}
+                                onChange={(event) =>
+                                    setData('project_id', event.target.value)
+                                }
+                                className="h-9 rounded-md border border-input bg-background px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                            >
+                                <option value="">Tanpa proyek</option>
+                                {projects.map((project) => (
+                                    <option
+                                        key={project.id}
+                                        value={String(project.id)}
+                                    >
+                                        {project.name}
+                                        {project.archived_at ? ' (arsip)' : ''}
+                                    </option>
+                                ))}
+                            </select>
+                            <InputError message={errors.project_id} />
                         </div>
 
                         <div className="grid gap-4 sm:grid-cols-2">

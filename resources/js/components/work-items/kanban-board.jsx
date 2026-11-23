@@ -62,6 +62,19 @@ function BoardCard({
             </h3>
 
             <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                {workItem.project && (
+                    <span className="inline-flex items-center gap-1">
+                        <span
+                            className="size-2 rounded-full"
+                            style={{
+                                backgroundColor:
+                                    workItem.project.color ?? '#6366f1',
+                            }}
+                        />
+                        {workItem.project.name}
+                    </span>
+                )}
+
                 {workItem.due_date && (
                     <span
                         className={cn(

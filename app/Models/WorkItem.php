@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class WorkItem extends Model
@@ -12,6 +13,7 @@ class WorkItem extends Model
     public const PRIORITIES = ['low', 'medium', 'high', 'urgent'];
 
     protected $fillable = [
+        'project_id',
         'title',
         'description',
         'status',
@@ -33,5 +35,10 @@ class WorkItem extends Model
     public function notes(): BelongsToMany
     {
         return $this->belongsToMany(Note::class)->withTimestamps();
+    }
+
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
     }
 }
