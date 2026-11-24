@@ -698,3 +698,174 @@ it('menyaring kalender dengan pencarian dan prioritas', function () {
             ->where('calendarItems.0.title', 'Rilis kalender')
         );
 });
+
+it('mengubah status banyak pekerjaan sekaligus', function () {
+    $first = WorkItem::create([
+        'title' => 'Pekerjaan pertama',
+        'status' => 'todo',
+        'priority' => 'medium',
+    ]);
+
+    $third = WorkItem::create([
+        'title' => 'Pekerjaan ketiga',
+        'status' => 'backlog',
+        'priority' => 'low',
+    ]);
+
+    $untouched = WorkItem::create([
+        'title' => 'Pekerjaan lain',
+        'status' => 'in_progress',
+        'priority' => 'high',
+    ]);
+
+    $this->actingAs(adminUser())
+        ->from('/admin/work-items')
+        ->patch('/admin/work-items/bulk-status', [
+            'ids' => [$first->id, $third->id],
+            'status' => 'done',
+        ])
+        ->assertRedirect('/admin/work-items')
+        ->assertSessionHas('success');
+
+    expect($first->fresh()->status)->toBe('done')
+        ->and($first->fresh()->completed_at)->not->toBeNull()
+        ->and($third->fresh()->status)->toBe('done')
+        ->and($third->fresh()->completed_at)->not->toBeNull()
+        ->and($untouched->fresh()->status)->toBe('in_progress')
+        ->and($untouched->fresh()->completed_at)->toBeNull();
+});
+
+it('mempertahankan completed_at saat bulk ke done dan mengosongkannya saat keluar dari done', function () {
+    $completedAt = now()->subDays(3)->startOfSecond();
+
+    $workItem = WorkItem::create([
+        'title' => 'Sudah selesai',
+        'status' => 'done',
+        'priority' => 'medium',
+        'completed_at' => $completedAt,
+    ]);
+
+    $this->actingAs(adminUser())
+        ->from('/admin/work-items')
+        ->patch('/admin/work-items/bulk-status', [
+            'ids' => [$workItem->id],
+            'status' => 'done',
+        ])
+        ->assertRedirect('/admin/work-items');
+
+    expect($workItem->fresh()->completed_at->timestamp)->toBe(
+        $completedAt->timestamp,
+    );
+
+    $this->actingAs(adminUser())
+        ->from('/admin/work-items')
+        ->patch('/admin/work-items/bulk-status', [
+            'ids' => [$workItem->id],
+            'status' => 'todo',
+        ])
+        ->assertRedirect('/admin/work-items');
+
+    expect($workItem->fresh()->status)->toBe('todo')
+        ->and($workItem->fresh()->completed_at)->toBeNull();
+});
+
+it('memvalidasi aksi massal status pekerjaan', function () {
+    $workItem = WorkItem::create([
+        'title' => 'Tidak berubah',
+        'status' => 'todo',
+        'priority' => 'medium',
+    ]);
+
+    $this->actingAs(adminUser())
+        ->patch('/admin/work-items/bulk-status', [
+            'ids' => [],
+            'status' => 'done',
+        ])
+        ->assertSessionHasErrors('ids');
+
+    $this->actingAs(adminUser())
+        ->patch('/admin/work-items/bulk-status', [
+            'ids' => [$workItem->id],
+            'status' => 'invalid',
+        ])
+        ->assertSessionHasErrors('status');
+
+    $this->actingAs(adminUser())
+        ->patch('/admin/work-items/bulk-status', [
+            'ids' => [999999],
+            'status' => 'done',
+        ])
+        ->assertSessionHasErrors('ids.0');
+
+    expect($workItem->fresh()->status)->toBe('todo');
+});
+
+it('menghapus banyak pekerjaan sekaligus', function () {
+    $first = WorkItem::create([
+        'title' => 'Hapus pertama',
+        'status' => 'backlog',
+        'priority' => 'low',
+    ]);
+
+    $second = WorkItem::create([
+        'title' => 'Hapus kedua',
+        'status' => 'todo',
+        'priority' => 'medium',
+    ]);
+
+    $remaining = WorkItem::create([
+        'title' => 'Tetap ada',
+        'status' => 'done',
+        'priority' => 'high',
+    ]);
+
+    $this->actingAs(adminUser())
+        ->from('/admin/work-items')
+        ->delete('/admin/work-items/bulk', [
+            'ids' => [$first->id, $second->id],
+        ])
+        ->assertRedirect('/admin/work-items')
+        ->assertSessionHas('success');
+
+    expect(WorkItem::count())->toBe(1)
+        ->and(WorkItem::firstOrFail()->id)->toBe($remaining->id);
+});
+
+it('memvalidasi hapus massal pekerjaan', function () {
+    $workItem = WorkItem::create([
+        'title' => 'Tetap ada',
+        'status' => 'todo',
+        'priority' => 'medium',
+    ]);
+
+    $this->actingAs(adminUser())
+        ->delete('/admin/work-items/bulk', ['ids' => []])
+        ->assertSessionHasErrors('ids');
+
+    $this->actingAs(adminUser())
+        ->delete('/admin/work-items/bulk', ['ids' => [999999]])
+        ->assertSessionHasErrors('ids.0');
+
+    expect(WorkItem::count())->toBe(1)
+        ->and($workItem->fresh())->not->toBeNull();
+});
+
+it('mengalihkan tamu dari aksi massal pekerjaan', function () {
+    $workItem = WorkItem::create([
+        'title' => 'Pekerjaan',
+        'status' => 'todo',
+        'priority' => 'medium',
+    ]);
+
+    $this->patch('/admin/work-items/bulk-status', [
+        'ids' => [$workItem->id],
+        'status' => 'done',
+    ])->assertRedirect(route('home'));
+
+    $this->delete('/admin/work-items/bulk', [
+        'ids' => [$workItem->id],
+    ])->assertRedirect(route('home'));
+
+    expect($workItem->fresh()->status)->toBe('todo')
+        ->and(WorkItem::count())->toBe(1);
+});

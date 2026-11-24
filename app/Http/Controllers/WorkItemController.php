@@ -188,6 +188,47 @@ class WorkItemController extends Controller
         return back()->with('success', 'Pekerjaan berhasil dihapus.');
     }
 
+    public function bulkStatus(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1', 'max:100'],
+            'ids.*' => ['integer', 'distinct', 'exists:work_items,id'],
+            'status' => ['required', Rule::in(WorkItem::STATUSES)],
+        ]);
+
+        $workItems = WorkItem::query()
+            ->whereIn('id', $data['ids'])
+            ->get();
+
+        foreach ($workItems as $workItem) {
+            $workItem->update([
+                'status' => $data['status'],
+                'completed_at' => $data['status'] === 'done'
+                    ? ($workItem->completed_at ?? now())
+                    : null,
+            ]);
+        }
+
+        return back()->with(
+            'success',
+            $workItems->count().' pekerjaan diperbarui.',
+        );
+    }
+
+    public function bulkDestroy(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1', 'max:100'],
+            'ids.*' => ['integer', 'distinct', 'exists:work_items,id'],
+        ]);
+
+        $deleted = WorkItem::query()
+            ->whereIn('id', $data['ids'])
+            ->delete();
+
+        return back()->with('success', $deleted.' pekerjaan dihapus.');
+    }
+
     /**
      * @return array{project_id: int|null, title: string, description: string|null, status: string, priority: string, due_date: string|null, tags: array<int, string>, notes: array<int, int>, subtasks: array<int, array{id?: int|null, title: string, is_done?: bool}>}
      */

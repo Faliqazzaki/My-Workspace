@@ -1,8 +1,9 @@
 # HANDOFF
 Terakhir: 24 Nov 2026
-Item: NOTE-12 (arsip catatan / soft delete + restore) — SELESAI
-File utama: migrasi add_deleted_at_to_notes, Note (SoftDeletes), NoteController,
-  routes/web.php, notes/index.jsx, NoteTest
-Status: siap commit di main; migrasi terverifikasi di PostgreSQL my_workspace;
-  arsip menyembunyikan catatan dari daftar/dashboard/picker, pivot tetap utuh
-Berikutnya: WORK-20 (bulk action) dari "Antrean berikutnya" FEATURES.md
+Item: WORK-20 (aksi massal pekerjaan) — SELESAI
+File utama: WorkItemController (bulkStatus/bulkDestroy), routes/web.php,
+  work-items/index.jsx, WorkItemTest
+Status: siap commit di main; bilah aksi massal di tampilan Daftar (pilih per
+  kartu / semua di halaman, ubah status, hapus dengan konfirmasi); maks 100 id;
+  completed_at mengikuti aturan status; test 124 lolos (924 assertion)
+Berikutnya: DASH-08 (grafik aktivitas) dari "Antrean berikutnya" FEATURES.md

@@ -85,7 +85,7 @@ kebenaran**, lalu perbarui dokumen.
   Catatan (detail + Markdown + pratinjau + tautan ke pekerjaan), Pekerjaan
   (list + Kanban + kalender + proyek + subtask), Proyek/area
   (CRUD + arsip + progress).
-- Test: **118 test Pest lolos** (884 assertions), build Vite berhasil.
+- Test: **124 test Pest lolos** (924 assertions), build Vite berhasil.
 - Cara kerja: **satu increment kecil**, backend → frontend → test → quality gate
   → verifikasi PostgreSQL → update checklist.
 
@@ -171,7 +171,7 @@ timpa `HANDOFF.md`. Hapus data uji yang dibuat di PostgreSQL.
 | Shell admin | Selesai |
 | Dashboard | Selesai (data nyata + widget kebiasaan & streak) |
 | Catatan | Selesai (CRUD, detail, Markdown, tautan pekerjaan, arsip/restore, search, tag, pin) |
-| Pekerjaan | Selesai (CRUD, filter, status, tenggat, catatan, proyek, subtask) |
+| Pekerjaan | Selesai (CRUD, filter, status, tenggat, catatan, proyek, subtask, saved views, aksi massal) |
 | Markdown preview | Selesai (halaman detail + tab pratinjau editor) |
 | Tautan catatan ↔ pekerjaan | Selesai (pivot `note_work_item`, dua arah) |
 | Kanban | Selesai (toggle Daftar/Papan, drag & drop, select status) |
@@ -182,7 +182,7 @@ timpa `HANDOFF.md`. Hapus data uji yang dibuat di PostgreSQL.
 | Berita AI | Belum |
 | Multi-agent | Belum |
 
-Angka test terakhir: **118 passed, 884 assertions**.
+Angka test terakhir: **124 passed, 924 assertions**.
 
 ---
 
@@ -544,6 +544,8 @@ Prefix `/admin`, name prefix `admin.`, middleware `admin.auth`.
 | PATCH | `/admin/projects/{project}/archive` | `admin.projects.archive` | arsip / kembalikan |
 | DELETE | `/admin/projects/{project}` | `admin.projects.destroy` | hapus proyek (pekerjaan tetap) |
 | POST | `/admin/work-items` | `admin.work-items.store` | simpan pekerjaan |
+| PATCH | `/admin/work-items/bulk-status` | `admin.work-items.bulk-status` | ubah status banyak item (maks 100) |
+| DELETE | `/admin/work-items/bulk` | `admin.work-items.bulk-destroy` | hapus banyak item (maks 100) |
 | PUT | `/admin/work-items/{workItem}` | `admin.work-items.update` | ubah pekerjaan |
 | PATCH | `/admin/work-items/{workItem}/status` | `admin.work-items.status` | ubah status |
 | DELETE | `/admin/work-items/{workItem}` | `admin.work-items.destroy` | hapus pekerjaan |
@@ -804,6 +806,13 @@ Gunakan urutan ini agar hasilnya konsisten:
     bulan lewat panah / **Hari ini**; item bertenggat muncul di tanggalnya
     (maks 3 + "+N lagi"). Klik item membuka dialog edit. Item tanpa tenggat
     tidak tampil, dan filter status diabaikan seperti papan.
+16. Di tampilan **Daftar**, centang pekerjaan (atau **Pilih semua di halaman
+    ini**) untuk memunculkan bilah aksi massal. Pilih status lalu **Terapkan**
+    untuk mengubah banyak item sekaligus (`completed_at` mengikuti aturan yang
+    sama), atau **Hapus** untuk menghapus massal setelah konfirmasi. Pilihan
+    otomatis dibersihkan saat filter, tampilan, atau halaman berubah, dan
+    dibatasi maksimal 100 item per aksi. Aksi massal tidak tersedia di Papan
+    dan Kalender.
 
 ### 14.4 Dashboard
 

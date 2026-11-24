@@ -44,6 +44,8 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
     Route::post('/work-items/views', [SavedViewController::class, 'store'])->name('work-items.views.store');
     Route::delete('/work-items/views/{view}', [SavedViewController::class, 'destroy'])->name('work-items.views.destroy');
     Route::post('/work-items', [WorkItemController::class, 'store'])->name('work-items.store');
+    Route::patch('/work-items/bulk-status', [WorkItemController::class, 'bulkStatus'])->name('work-items.bulk-status');
+    Route::delete('/work-items/bulk', [WorkItemController::class, 'bulkDestroy'])->name('work-items.bulk-destroy');
     Route::put('/work-items/{workItem}', [WorkItemController::class, 'update'])->name('work-items.update');
     Route::patch('/work-items/{workItem}/status', [WorkItemController::class, 'updateStatus'])->name('work-items.status');
     Route::delete('/work-items/{workItem}', [WorkItemController::class, 'destroy'])->name('work-items.destroy');

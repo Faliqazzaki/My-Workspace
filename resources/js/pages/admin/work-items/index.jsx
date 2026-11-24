@@ -3,6 +3,7 @@ import {
     Bookmark,
     BookmarkPlus,
     CalendarDays,
+    Check,
     ChevronLeft,
     ChevronRight,
     ClipboardList,
@@ -123,6 +124,7 @@ export default function WorkItemsIndex({
         : 'list';
     const [board, setBoard] = useState(boardItems);
     const [syncedBoard, setSyncedBoard] = useState(boardSignature(boardItems));
+    const [syncedSelectionKey, setSyncedSelectionKey] = useState(null);
     const [search, setSearch] = useState(queryParam);
     const [syncedQuery, setSyncedQuery] = useState(queryParam);
     const [editorOpen, setEditorOpen] = useState(false);
@@ -132,6 +134,10 @@ export default function WorkItemsIndex({
     const [noteSearch, setNoteSearch] = useState('');
     const [saveViewOpen, setSaveViewOpen] = useState(false);
     const [deleting, setDeleting] = useState(null);
+    const [selected, setSelected] = useState([]);
+    const [bulkStatus, setBulkStatus] = useState('');
+    const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+    const selectAllRef = useRef(null);
     const isFirstRender = useRef(true);
 
     if (queryParam !== syncedQuery) {
@@ -144,6 +150,33 @@ export default function WorkItemsIndex({
         setSyncedBoard(incomingBoardSignature);
         setBoard(boardItems);
     }
+
+    const visibleIds = workItems.data.map((workItem) => workItem.id);
+    const selectedSet = new Set(selected);
+    const allSelected =
+        visibleIds.length > 0 && visibleIds.every((id) => selectedSet.has(id));
+    const someSelected = selected.length > 0 && !allSelected;
+
+    const selectionKey = [
+        queryParam,
+        filters.status ?? '',
+        filters.priority ?? '',
+        filters.project ?? '',
+        view,
+        workItems.current_page ?? 1,
+    ].join('|');
+
+    if (selectionKey !== syncedSelectionKey) {
+        setSyncedSelectionKey(selectionKey);
+        setSelected([]);
+        setBulkStatus('');
+    }
+
+    useEffect(() => {
+        if (selectAllRef.current) {
+            selectAllRef.current.indeterminate = someSelected;
+        }
+    }, [someSelected]);
 
     useEffect(() => {
         if (isFirstRender.current) {
@@ -478,6 +511,71 @@ export default function WorkItemsIndex({
         router.delete(`/admin/work-items/${deleting.id}`, {
             preserveScroll: true,
             onSuccess: () => setDeleting(null),
+        });
+    };
+
+    const toggleSelect = (id) => {
+        setSelected((current) =>
+            current.includes(id)
+                ? current.filter((item) => item !== id)
+                : [...current, id],
+        );
+    };
+
+    const toggleSelectAll = () => {
+        const currentSet = new Set(selected);
+
+        if (
+            visibleIds.length > 0 &&
+            visibleIds.every((id) => currentSet.has(id))
+        ) {
+            setSelected(selected.filter((id) => !visibleIds.includes(id)));
+            setBulkStatus('');
+            return;
+        }
+
+        const next = new Set(selected);
+        visibleIds.forEach((id) => next.add(id));
+        setSelected(Array.from(next));
+    };
+
+    const clearSelection = () => {
+        setSelected([]);
+        setBulkStatus('');
+    };
+
+    const applyBulkStatus = () => {
+        if (selected.length === 0 || bulkStatus === '') {
+            return;
+        }
+
+        router.patch(
+            '/admin/work-items/bulk-status',
+            { ids: selected, status: bulkStatus },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: () => {
+                    setSelected([]);
+                    setBulkStatus('');
+                },
+            },
+        );
+    };
+
+    const confirmBulkDelete = () => {
+        if (selected.length === 0) {
+            return;
+        }
+
+        router.delete('/admin/work-items/bulk', {
+            data: { ids: selected },
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: () => {
+                setBulkDeleteOpen(false);
+                setSelected([]);
+            },
         });
     };
 
@@ -851,6 +949,86 @@ export default function WorkItemsIndex({
                 </div>
             </div>
 
+            {view === 'list' && workItems.data.length > 0 && (
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2 px-1">
+                    <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-muted-foreground">
+                        <input
+                            ref={selectAllRef}
+                            type="checkbox"
+                            checked={allSelected}
+                            onChange={toggleSelectAll}
+                            aria-label="Pilih semua pekerjaan di halaman ini"
+                            className="size-4 cursor-pointer rounded border-input accent-indigo-600"
+                        />
+                        {allSelected
+                            ? 'Semua di halaman ini dipilih'
+                            : 'Pilih semua di halaman ini'}
+                    </label>
+
+                    {selected.length > 0 && (
+                        <button
+                            type="button"
+                            onClick={clearSelection}
+                            className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        >
+                            <X className="size-3" />
+                            Bersihkan pilihan
+                        </button>
+                    )}
+                </div>
+            )}
+
+            {view === 'list' && selected.length > 0 && (
+                <div className="mb-3 flex flex-col gap-3 rounded-2xl border border-indigo-500/30 bg-indigo-50/70 p-3 shadow-xs sm:flex-row sm:items-center sm:justify-between dark:border-indigo-400/25 dark:bg-indigo-950/25">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-indigo-700 dark:text-indigo-300">
+                        <ListChecks className="size-4" />
+                        {selected.length} pekerjaan dipilih
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                        <select
+                            value={bulkStatus}
+                            onChange={(event) =>
+                                setBulkStatus(event.target.value)
+                            }
+                            aria-label="Status baru untuk pekerjaan terpilih"
+                            className="h-8.5 rounded-lg border border-input bg-background px-2.5 text-xs font-medium shadow-xs transition-colors outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                        >
+                            <option value="" disabled>
+                                Ubah status…
+                            </option>
+                            {statuses.map((status) => (
+                                <option key={status} value={status}>
+                                    {statusMeta[status].label}
+                                </option>
+                            ))}
+                        </select>
+
+                        <Button
+                            type="button"
+                            size="sm"
+                            onClick={applyBulkStatus}
+                            disabled={bulkStatus === ''}
+                            className="h-8.5 gap-1.5 bg-indigo-600 px-3 text-xs text-white shadow-sm transition-colors hover:bg-indigo-700"
+                        >
+                            <Check className="size-3.5" />
+                            Terapkan
+                        </Button>
+
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setBulkDeleteOpen(true)}
+                            className="h-8.5 gap-1.5 border-red-200 px-3 text-xs text-red-600 transition-colors hover:bg-red-50 hover:text-red-700 dark:border-red-900/60 dark:text-red-400 dark:hover:bg-red-950/40"
+                        >
+                            <Trash2 className="size-3.5" />
+                            Hapus
+                        </Button>
+                    </div>
+                </div>
+            )}
+
             {view === 'calendar' ? (
                 <WorkCalendar items={calendarItems} onEdit={openEdit} />
             ) : view === 'board' ? (
@@ -907,11 +1085,24 @@ export default function WorkItemsIndex({
                                 workItem.status === 'done'
                                     ? 'border-border/60 bg-muted/20 opacity-90'
                                     : 'hover:border-indigo-500/40',
+                                selectedSet.has(workItem.id) &&
+                                    'border-indigo-500/60 ring-2 ring-indigo-500/20',
                             )}
                         >
                             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                                 <div className="min-w-0 flex-1">
                                     <div className="flex flex-wrap items-center gap-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedSet.has(
+                                                workItem.id,
+                                            )}
+                                            onChange={() =>
+                                                toggleSelect(workItem.id)
+                                            }
+                                            aria-label={`Pilih ${workItem.title}`}
+                                            className="size-4 cursor-pointer rounded border-input accent-indigo-600"
+                                        />
                                         <span
                                             className={cn(
                                                 'rounded-full px-2.5 py-0.5 text-[11px] font-medium ring-1 ring-inset',
@@ -1569,6 +1760,38 @@ export default function WorkItemsIndex({
                         >
                             <Trash2 className="size-4" />
                             Hapus
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog konfirmasi hapus massal */}
+            <Dialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>
+                            Hapus {selected.length} pekerjaan?
+                        </DialogTitle>
+                        <DialogDescription>
+                            Semua pekerjaan yang dipilih akan dihapus permanen.
+                            Tindakan ini tidak bisa dibatalkan.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setBulkDeleteOpen(false)}
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={confirmBulkDelete}
+                        >
+                            <Trash2 className="size-4" />
+                            Hapus {selected.length} pekerjaan
                         </Button>
                     </DialogFooter>
                 </DialogContent>

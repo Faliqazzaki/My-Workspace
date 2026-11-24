@@ -122,7 +122,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 - [ ] **WORK-17** Lampiran file pada pekerjaan
 - [ ] **WORK-18** Riwayat aktivitas pekerjaan
 - [x] **WORK-19** Saved views / filter tersimpan
-- [ ] **WORK-20** Bulk action (ubah status/hapus beberapa item)
+- [x] **WORK-20** Bulk action (ubah status/hapus beberapa item)
 
 ## 7. Pengetahuan & Produktivitas
 
@@ -174,7 +174,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 
 ## 10. Kualitas & Observability
 
-- [x] **QA-01** 118 test Pest lolos (884 assertion)
+- [x] **QA-01** 124 test Pest lolos (924 assertion)
 - [x] **QA-02** Test fitur untuk auth, catatan (termasuk detail), pekerjaan, dashboard
 - [x] **QA-03** Format PHP dengan Pint
 - [x] **QA-04** Lint JS dengan ESLint + format Prettier
@@ -198,20 +198,19 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 | UI | 7 | 12 |
 | Dashboard | 7 | 11 |
 | Catatan | 12 | 16 |
-| Pekerjaan | 16 | 20 |
+| Pekerjaan | 17 | 20 |
 | Pengetahuan & Produktivitas | 1 | 13 |
 | Berita & AI | 0 | 13 |
 | Multi-Agent | 0 | 10 |
 | Kualitas | 5 | 12 |
 
-**Total: 63 dari 129 item selesai.**
+**Total: 64 dari 129 item selesai.**
 
 ## Antrean berikutnya (urut)
 
-1. WORK-20 bulk action
-2. DASH-08 grafik aktivitas
-3. UI-08 command palette (Ctrl/Cmd + K)
-4. FND-08 CI
+1. DASH-08 grafik aktivitas
+2. UI-08 command palette (Ctrl/Cmd + K)
+3. FND-08 CI
 
 Ditunda (butuh biaya token AI): NEWS-*, AI-*, AGT-*
 
