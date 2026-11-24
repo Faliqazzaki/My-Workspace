@@ -9,7 +9,8 @@ kebenaran**, lalu perbarui dokumen.
 > Terakhir diperbarui: 24 November 2026
 > Status: fondasi + Dashboard (termasuk kebiasaan mencatat) + Catatan (detail,
 > Markdown, tautan pekerjaan, arsip/restore) + Pekerjaan (list + Kanban +
-> kalender + proyek + subtask + saved views) sudah berjalan.
+> kalender + proyek + subtask + saved views) + command palette (Ctrl/Cmd + K)
+> sudah berjalan.
 
 ---
 
@@ -81,10 +82,10 @@ kebenaran**, lalu perbarui dokumen.
   tombol **solid tanpa gradient**, mendukung dark mode.
 - Auth saat ini: database (`users.username`, password hash, flag `is_admin`),
   halaman **Keamanan** untuk ubah password.
-- Fitur selesai: login, shell admin, Dashboard (statistik + kebiasaan mencatat),
-  Catatan (detail + Markdown + pratinjau + tautan ke pekerjaan), Pekerjaan
-  (list + Kanban + kalender + proyek + subtask), Proyek/area
-  (CRUD + arsip + progress).
+- Fitur selesai: login, shell admin (command palette Ctrl/Cmd + K), Dashboard
+  (statistik + kebiasaan mencatat), Catatan (detail + Markdown + pratinjau +
+  tautan ke pekerjaan), Pekerjaan (list + Kanban + kalender + proyek + subtask +
+  saved views), Proyek/area (CRUD + arsip + progress).
 - Test: **127 test Pest lolos** (995 assertions), build Vite berhasil.
 - Cara kerja: **satu increment kecil**, backend → frontend → test → quality gate
   → verifikasi PostgreSQL → update checklist.
@@ -169,6 +170,7 @@ timpa `HANDOFF.md`. Hapus data uji yang dibuat di PostgreSQL.
 | --- | --- |
 | Login admin | Selesai (database + halaman Keamanan) |
 | Shell admin | Selesai |
+| Command palette | Selesai (Ctrl/Cmd + K, navigasi + quick create) |
 | Dashboard | Selesai (data nyata + kebiasaan/streak + grafik aktivitas 7/30 hari) |
 | Catatan | Selesai (CRUD, detail, Markdown, tautan pekerjaan, arsip/restore, search, tag, pin) |
 | Pekerjaan | Selesai (CRUD, filter, status, tenggat, catatan, proyek, subtask, saved views, aksi massal) |
@@ -298,6 +300,7 @@ resources/
       admin/projects/index.jsx     # proyek + progress
       auth/admin-login.jsx         # login
     components/
+      command-palette.jsx          # palette Ctrl/Cmd+K (navigasi + quick create)
       markdown-content.jsx         # render Markdown aman (GFM + sanitize)
       notes/note-editor-dialog.jsx # dialog tambah/edit + pratinjau
       work-items/kanban-board.jsx  # papan Kanban + drag & drop
@@ -554,6 +557,9 @@ Route tampilan tersimpan menerima `name` (unik, maks 50) dan `filters`
 opsional (`q`, `status`, `priority`, `project`, `view`). Filter kosong dibuang,
 `view=list` tidak disimpan, dan `destroy` memakai route model binding `{view}`.
 
+`?new=1` pada `/admin/notes` dan `/admin/work-items` hanya sinyal klien untuk
+membuka dialog tambah dari command palette; tidak mengubah query filter.
+
 Route lain yang ada tetapi **tidak dipakai**: `GET /dashboard` (Fortify auth),
 `/settings/*`, `/login`, `/register`.
 
@@ -656,6 +662,9 @@ Saat menambah route baru: ikuti pola di atas, tambahkan test tamu → redirect.
 - Kartu list dengan badge, tenggat, tag, aksi edit/hapus.
 - Dialog tambah/edit dan dialog konfirmasi hapus.
 - Empty state dengan ikon, judul, deskripsi, dan CTA.
+- Command palette global di `@/components/command-palette` (Ctrl/Cmd + K):
+  filter perintah, navigasi keyboard (↑/↓/Enter), dan aksi buat cepat yang
+  membuka dialog lewat `?new=1` pada halaman catatan/pekerjaan.
 - Flash sukses ditampilkan layout di atas konten.
 
 ---

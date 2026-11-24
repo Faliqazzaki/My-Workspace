@@ -1,4 +1,4 @@
-import { Link, router } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import {
     Archive,
     ArchiveRestore,
@@ -61,7 +61,11 @@ export default function NotesIndex({
     const [syncedQuery, setSyncedQuery] = useState(queryParam);
     const [editor, setEditor] = useState(null);
     const [deleting, setDeleting] = useState(null);
+    const [quickCreateHandled, setQuickCreateHandled] = useState(false);
     const isFirstRender = useRef(true);
+    const { url } = usePage();
+    const quickCreate =
+        new URLSearchParams(url.split('?')[1] ?? '').get('new') === '1';
 
     if (queryParam !== syncedQuery) {
         setSyncedQuery(queryParam);
@@ -94,6 +98,15 @@ export default function NotesIndex({
     }, [search, queryParam, filters.tag, archived]);
 
     const openCreate = () => setEditor({ note: null });
+
+    if (quickCreate && !quickCreateHandled) {
+        setQuickCreateHandled(true);
+        openCreate();
+    }
+
+    if (!quickCreate && quickCreateHandled) {
+        setQuickCreateHandled(false);
+    }
 
     const openEdit = (note) => setEditor({ note });
 

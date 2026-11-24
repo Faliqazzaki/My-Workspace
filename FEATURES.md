@@ -62,7 +62,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 - [x] **UI-05** Palet indigo/fuchsia/sky, tombol solid tanpa gradient
 - [x] **UI-06** Komponen dialog, input, label, button, spinner, input error
 - [x] **UI-07** Empty state yang konsisten di setiap halaman
-- [ ] **UI-08** Command palette / quick capture (`Ctrl/Cmd + K`)
+- [x] **UI-08** Command palette / quick capture (`Ctrl/Cmd + K`)
 - [ ] **UI-09** Keyboard shortcuts untuk aksi utama
 - [ ] **UI-10** Audit aksesibilitas (fokus, label, kontras, navigasi keyboard)
 - [ ] **UI-11** Toast global (bukan hanya banner flash)
@@ -195,7 +195,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 | --- | ---: | ---: |
 | Fondasi | 7 | 10 |
 | Autentikasi | 8 | 12 |
-| UI | 7 | 12 |
+| UI | 8 | 12 |
 | Dashboard | 8 | 11 |
 | Catatan | 12 | 16 |
 | Pekerjaan | 17 | 20 |
@@ -204,12 +204,11 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 | Multi-Agent | 0 | 10 |
 | Kualitas | 5 | 12 |
 
-**Total: 65 dari 129 item selesai.**
+**Total: 66 dari 129 item selesai.**
 
 ## Antrean berikutnya (urut)
 
-1. UI-08 command palette (Ctrl/Cmd + K)
-2. FND-08 CI
+1. FND-08 CI
 
 Ditunda (butuh biaya token AI): NEWS-*, AI-*, AGT-*
 

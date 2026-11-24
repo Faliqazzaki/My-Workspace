@@ -6,11 +6,13 @@ import {
     LogOut,
     Menu,
     NotebookPen,
+    Search,
     ShieldCheck,
     X,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
+import CommandPalette from '@/components/command-palette';
 import ThemeToggle from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import WorkspaceLogo from '@/components/workspace-logo';
@@ -28,8 +30,30 @@ export default function AdminLayout({ title = 'Beranda', children }) {
     const { url, props } = usePage();
     const { admin, flash } = props;
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [paletteOpen, setPaletteOpen] = useState(false);
 
     const username = admin?.username ?? 'my-workspace';
+    const shortcutLabel =
+        typeof navigator !== 'undefined' &&
+        /Mac|iPhone|iPad/.test(navigator.platform)
+            ? '⌘ K'
+            : 'Ctrl K';
+
+    useEffect(() => {
+        const handleShortcut = (event) => {
+            if (
+                (event.metaKey || event.ctrlKey) &&
+                event.key.toLowerCase() === 'k'
+            ) {
+                event.preventDefault();
+                setPaletteOpen((current) => !current);
+            }
+        };
+
+        window.addEventListener('keydown', handleShortcut);
+
+        return () => window.removeEventListener('keydown', handleShortcut);
+    }, []);
 
     const logout = () => {
         router.post('/keluar');
@@ -155,6 +179,30 @@ export default function AdminLayout({ title = 'Beranda', children }) {
                         </div>
 
                         <div className="flex items-center gap-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setPaletteOpen(true)}
+                                className="hidden gap-2 text-muted-foreground sm:inline-flex"
+                                aria-label="Buka command palette"
+                            >
+                                <Search className="size-4" />
+                                <span>Cari…</span>
+                                <kbd className="rounded border bg-muted px-1.5 py-0.5 font-mono text-[10px]">
+                                    {shortcutLabel}
+                                </kbd>
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setPaletteOpen(true)}
+                                className="sm:hidden"
+                                aria-label="Buka command palette"
+                            >
+                                <Search className="size-4" />
+                            </Button>
                             <ThemeToggle />
                             <Button
                                 type="button"
@@ -180,6 +228,8 @@ export default function AdminLayout({ title = 'Beranda', children }) {
                     </main>
                 </div>
             </div>
+
+            <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
         </>
     );
 }

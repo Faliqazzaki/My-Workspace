@@ -1,4 +1,4 @@
-import { router, useForm } from '@inertiajs/react';
+import { router, useForm, usePage } from '@inertiajs/react';
 import {
     Bookmark,
     BookmarkPlus,
@@ -137,8 +137,12 @@ export default function WorkItemsIndex({
     const [selected, setSelected] = useState([]);
     const [bulkStatus, setBulkStatus] = useState('');
     const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+    const [quickCreateHandled, setQuickCreateHandled] = useState(false);
     const selectAllRef = useRef(null);
     const isFirstRender = useRef(true);
+    const { url } = usePage();
+    const quickCreate =
+        new URLSearchParams(url.split('?')[1] ?? '').get('new') === '1';
 
     if (queryParam !== syncedQuery) {
         setSyncedQuery(queryParam);
@@ -316,6 +320,15 @@ export default function WorkItemsIndex({
         setNoteSearch('');
         setEditorOpen(true);
     };
+
+    if (quickCreate && !quickCreateHandled) {
+        setQuickCreateHandled(true);
+        openCreate();
+    }
+
+    if (!quickCreate && quickCreateHandled) {
+        setQuickCreateHandled(false);
+    }
 
     const openEdit = (workItem) => {
         setEditing(workItem);
