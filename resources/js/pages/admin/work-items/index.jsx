@@ -1,5 +1,7 @@
 import { router, useForm } from '@inertiajs/react';
 import {
+    Bookmark,
+    BookmarkPlus,
     CalendarDays,
     ChevronLeft,
     ChevronRight,
@@ -48,6 +50,13 @@ const parseTags = (value) => {
 
 const boardSignature = (items) =>
     items.map((item) => `${item.id}:${item.status}`).join('|');
+
+const normalizeFilterEntries = (filters) =>
+    JSON.stringify(
+        Object.entries(filters ?? {})
+            .filter(([, value]) => value !== '' && value != null)
+            .sort(([first], [second]) => first.localeCompare(second)),
+    );
 
 const subtaskProgress = (subtasks = []) => {
     const total = subtasks.length;
@@ -105,6 +114,7 @@ export default function WorkItemsIndex({
     statuses = [],
     priorities = [],
     projects = [],
+    savedViews = [],
     notes = [],
 }) {
     const queryParam = filters.q ?? '';
@@ -120,6 +130,7 @@ export default function WorkItemsIndex({
     const [tagInput, setTagInput] = useState('');
     const [subtaskInput, setSubtaskInput] = useState('');
     const [noteSearch, setNoteSearch] = useState('');
+    const [saveViewOpen, setSaveViewOpen] = useState(false);
     const [deleting, setDeleting] = useState(null);
     const isFirstRender = useRef(true);
 
@@ -191,6 +202,63 @@ export default function WorkItemsIndex({
         subtasks: [],
         notes: [],
     });
+
+    const {
+        data: viewFormData,
+        setData: setViewFormData,
+        post: postView,
+        processing: savingView,
+        errors: viewErrors,
+        reset: resetViewForm,
+        clearErrors: clearViewErrors,
+        transform: transformView,
+    } = useForm({
+        name: '',
+        filters: {},
+    });
+
+    const currentViewFilters = {
+        ...(filters.q ? { q: filters.q } : {}),
+        ...(filters.status ? { status: filters.status } : {}),
+        ...(filters.priority ? { priority: filters.priority } : {}),
+        ...(filters.project ? { project: filters.project } : {}),
+        ...(view !== 'list' ? { view } : {}),
+    };
+
+    const activeSavedView = savedViews.find(
+        (savedView) =>
+            normalizeFilterEntries(savedView.filters) ===
+            normalizeFilterEntries(currentViewFilters),
+    );
+
+    const savedViewSummary =
+        [
+            currentViewFilters.q
+                ? `kata kunci “${currentViewFilters.q}”`
+                : null,
+            currentViewFilters.status
+                ? `status ${statusMeta[currentViewFilters.status]?.label ?? currentViewFilters.status}`
+                : null,
+            currentViewFilters.priority
+                ? `prioritas ${priorityMeta[currentViewFilters.priority]?.label ?? currentViewFilters.priority}`
+                : null,
+            currentViewFilters.project
+                ? currentViewFilters.project === 'none'
+                    ? 'tanpa proyek'
+                    : `proyek ${
+                          projects.find(
+                              (project) =>
+                                  String(project.id) ===
+                                  currentViewFilters.project,
+                          )?.name ?? currentViewFilters.project
+                      }`
+                : null,
+            currentViewFilters.view
+                ? `tampilan ${currentViewFilters.view === 'board' ? 'papan' : 'kalender'}`
+                : null,
+        ]
+            .filter(Boolean)
+            .join(' · ') || 'Tampilan default';
 
     const totalCount = Object.values(counts).reduce(
         (total, value) => total + Number(value),
@@ -362,6 +430,44 @@ export default function WorkItemsIndex({
             },
             { preserveScroll: true, preserveState: true },
         );
+    };
+
+    const openSaveView = () => {
+        clearViewErrors();
+        resetViewForm();
+        setSaveViewOpen(true);
+    };
+
+    const submitSaveView = (event) => {
+        event.preventDefault();
+
+        transformView((current) => ({
+            ...current,
+            filters: currentViewFilters,
+        }));
+
+        postView('/admin/work-items/views', {
+            preserveScroll: true,
+            onSuccess: () => {
+                setSaveViewOpen(false);
+                resetViewForm();
+            },
+        });
+    };
+
+    const applySavedView = (savedView) => {
+        const params = Array.isArray(savedView.filters)
+            ? {}
+            : (savedView.filters ?? {});
+
+        router.get('/admin/work-items', params, { preserveScroll: true });
+    };
+
+    const deleteSavedView = (savedView) => {
+        router.delete(`/admin/work-items/views/${savedView.id}`, {
+            preserveScroll: true,
+            preserveState: true,
+        });
     };
 
     const confirmDelete = () => {
@@ -675,6 +781,74 @@ export default function WorkItemsIndex({
                         })}
                     </div>
                 )}
+
+                <div className="flex flex-wrap items-center gap-1.5 border-t pt-3">
+                    <span className="mr-1 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                        <Bookmark className="size-3.5 text-indigo-500" />
+                        Tampilan:
+                    </span>
+
+                    {savedViews.length === 0 ? (
+                        <span className="text-xs text-muted-foreground/80">
+                            Belum ada tampilan tersimpan.
+                        </span>
+                    ) : (
+                        savedViews.map((savedView) => {
+                            const active = activeSavedView?.id === savedView.id;
+
+                            return (
+                                <span
+                                    key={savedView.id}
+                                    className={cn(
+                                        'inline-flex items-center rounded-full border text-xs font-medium transition-colors',
+                                        active
+                                            ? 'border-indigo-600 bg-indigo-600 text-white shadow-xs'
+                                            : 'border-border/70 bg-background text-muted-foreground hover:border-indigo-500/40 hover:text-indigo-600 dark:hover:text-indigo-300',
+                                    )}
+                                >
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            applySavedView(savedView)
+                                        }
+                                        className="py-1 pr-1.5 pl-2.5"
+                                    >
+                                        {savedView.name}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            deleteSavedView(savedView)
+                                        }
+                                        aria-label={`Hapus tampilan ${savedView.name}`}
+                                        title="Hapus tampilan"
+                                        className={cn(
+                                            'mr-1 ml-0.5 rounded-full p-0.5 transition-colors',
+                                            active
+                                                ? 'hover:bg-white/20'
+                                                : 'hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/50',
+                                        )}
+                                    >
+                                        <X className="size-3" />
+                                    </button>
+                                </span>
+                            );
+                        })
+                    )}
+
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={openSaveView}
+                        disabled={!hasFilters && view === 'list'}
+                        className="ml-auto h-7 gap-1.5 border-dashed px-2 text-[11px]"
+                        title="Simpan kombinasi filter saat ini"
+                    >
+                        <BookmarkPlus className="size-3.5" />
+                        Simpan tampilan
+                    </Button>
+                </div>
             </div>
 
             {view === 'calendar' ? (
@@ -1289,6 +1463,74 @@ export default function WorkItemsIndex({
                                         Simpan
                                     </>
                                 )}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog simpan tampilan */}
+            <Dialog open={saveViewOpen} onOpenChange={setSaveViewOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Simpan tampilan</DialogTitle>
+                        <DialogDescription>
+                            Simpan kombinasi filter dan mode tampilan saat ini
+                            agar bisa dibuka lagi dengan satu klik.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <form
+                        onSubmit={submitSaveView}
+                        className="flex flex-col gap-4"
+                    >
+                        <div className="grid gap-2">
+                            <Label htmlFor="saved-view-name">
+                                Nama tampilan
+                            </Label>
+                            <Input
+                                id="saved-view-name"
+                                value={viewFormData.name}
+                                onChange={(event) =>
+                                    setViewFormData('name', event.target.value)
+                                }
+                                placeholder="mis. Pekerjaan mendesak"
+                                autoFocus
+                                required
+                                aria-invalid={Boolean(viewErrors.name)}
+                            />
+                            <InputError message={viewErrors.name} />
+                        </div>
+
+                        <div className="rounded-lg border bg-muted/30 p-3">
+                            <p className="text-xs font-medium">
+                                Filter yang disimpan
+                            </p>
+                            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                                {savedViewSummary}
+                            </p>
+                        </div>
+
+                        <DialogFooter>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setSaveViewOpen(false)}
+                                disabled={savingView}
+                            >
+                                Batal
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={savingView}
+                                className="gap-2 bg-neutral-900 text-white shadow-sm transition-all hover:bg-neutral-800 active:scale-[0.98] dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100"
+                            >
+                                {savingView ? (
+                                    <Spinner className="size-4" />
+                                ) : (
+                                    <BookmarkPlus className="size-4" />
+                                )}
+                                Simpan tampilan
                             </Button>
                         </DialogFooter>
                     </form>

@@ -5,6 +5,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminPasswordController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\SavedViewController;
 use App\Http\Controllers\WorkItemController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -39,6 +40,8 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
     Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
 
     Route::get('/work-items', [WorkItemController::class, 'index'])->name('work-items.index');
+    Route::post('/work-items/views', [SavedViewController::class, 'store'])->name('work-items.views.store');
+    Route::delete('/work-items/views/{view}', [SavedViewController::class, 'destroy'])->name('work-items.views.destroy');
     Route::post('/work-items', [WorkItemController::class, 'store'])->name('work-items.store');
     Route::put('/work-items/{workItem}', [WorkItemController::class, 'update'])->name('work-items.update');
     Route::patch('/work-items/{workItem}/status', [WorkItemController::class, 'updateStatus'])->name('work-items.status');

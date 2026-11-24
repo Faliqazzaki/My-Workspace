@@ -254,13 +254,15 @@ app/
       AdminController.php          # dashboard
       AdminPasswordController.php  # ubah password admin
       NoteController.php           # CRUD catatan + pin
-      WorkItemController.php       # CRUD pekerjaan + status
+      SavedViewController.php      # simpan/hapus tampilan filter pekerjaan
+      WorkItemController.php       # CRUD pekerjaan + status + filter
       Settings/                    # sisa starter kit (belum dipakai admin)
     Middleware/
       EnsureAdminAuthenticated.php # alias admin.auth
       HandleInertiaRequests.php    # share admin, flash, auth, sidebar
   Models/
     Note.php
+    SavedView.php                  # preset filter pekerjaan
     WorkItem.php
     User.php                       # auth admin (username, is_admin)
 config/
@@ -274,6 +276,7 @@ database/
     2026_11_23_160000_create_note_work_item_table.php
     2026_11_23_170000_create_projects_table.php
     2026_11_23_180000_create_work_item_subtasks_table.php
+    2026_11_23_190000_create_saved_views_table.php
   seeders/AdminUserSeeder.php      # akun admin dari config
 resources/
   css/app.css                      # token tema + font
@@ -524,6 +527,8 @@ Prefix `/admin`, name prefix `admin.`, middleware `admin.auth`.
 | DELETE | `/admin/notes/{note}/work-items/{workItem}` | `admin.notes.work-items.detach` | lepas tautan pekerjaan |
 | DELETE | `/admin/notes/{note}` | `admin.notes.destroy` | hapus catatan |
 | GET | `/admin/work-items` | `admin.work-items.index` | daftar pekerjaan |
+| POST | `/admin/work-items/views` | `admin.work-items.views.store` | simpan tampilan filter |
+| DELETE | `/admin/work-items/views/{view}` | `admin.work-items.views.destroy` | hapus tampilan filter |
 | GET | `/admin/projects` | `admin.projects.index` | daftar proyek + progress |
 | POST | `/admin/projects` | `admin.projects.store` | simpan proyek |
 | PUT | `/admin/projects/{project}` | `admin.projects.update` | ubah proyek |

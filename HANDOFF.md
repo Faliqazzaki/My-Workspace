@@ -1,9 +1,8 @@
 # HANDOFF
-Terakhir: 23 Nov 2026
-Item: WORK-19 (saved views) — HAMPIR SELESAI
-File utama: SavedViewController, SavedView (model), migrasi saved_views,
+Terakhir: 24 Nov 2026
+Item: WORK-19 (saved views) — SELESAI
+File utama: SavedViewController, SavedView, migrasi saved_views,
   WorkItemController, work-items/index.jsx, routes/web.php, SavedViewTest
-Status: ter-stage di main, belum di-commit; scripts/check.sh hijau (pint, eslint, test, build)
-Belum selesai: verifikasi migrasi saved_views di PostgreSQL (migrate --force + uji di aplikasi),
-  centang WORK-19 di FEATURES.md, tambah Saved Views ke §5 dan §9 AGENT_CONTEXT, commit feat(work)
-Berikutnya: item pertama di "Antrean berikutnya" FEATURES.md
+Status: siap commit di main; scripts/check.sh hijau; migrasi saved_views
+  terverifikasi di PostgreSQL my_workspace
+Berikutnya: NOTE-12 (arsip catatan) atau WORK-20 (bulk action)

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Note;
 use App\Models\Project;
+use App\Models\SavedView;
 use App\Models\WorkItem;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -110,6 +111,9 @@ class WorkItemController extends Controller
                 ->orderByRaw('archived_at IS NOT NULL')
                 ->orderBy('name')
                 ->get(['id', 'name', 'color', 'archived_at']),
+            'savedViews' => SavedView::query()
+                ->orderBy('name')
+                ->get(['id', 'name', 'filters']),
             'notes' => Note::query()
                 ->orderByDesc('is_pinned')
                 ->latest('updated_at')
