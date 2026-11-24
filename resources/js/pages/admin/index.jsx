@@ -2,6 +2,7 @@ import { Link } from '@inertiajs/react';
 import {
     AlertTriangle,
     ArrowRight,
+    BarChart3,
     CalendarDays,
     CheckCircle2,
     ClipboardList,
@@ -10,6 +11,7 @@ import {
     Plus,
     Tag,
 } from 'lucide-react';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import AdminLayout from '@/layouts/admin-layout';
@@ -18,6 +20,20 @@ import { cn } from '@/lib/utils';
 import { priorityMeta, statusMeta } from '@/lib/work-item-meta';
 
 const statusOrder = ['backlog', 'todo', 'in_progress', 'done'];
+
+const shortDateFormatter = new Intl.DateTimeFormat('id-ID', {
+    day: 'numeric',
+    month: 'short',
+});
+
+const shortDate = (value) => {
+    const [year, month, day] = value.slice(0, 10).split('-').map(Number);
+
+    return shortDateFormatter.format(new Date(year, month - 1, day));
+};
+
+const activityBarHeight = (value, max) =>
+    value === 0 ? 0 : Math.max((value / max) * 100, 5);
 
 function StatCard({ label, value, hint, icon: Icon, tone }) {
     return (
@@ -52,7 +68,9 @@ export default function Admin({
     activeWorkItems = [],
     recentNotes = [],
     knowledge = {},
+    activity = {},
 }) {
+    const [activityRange, setActivityRange] = useState(7);
     const username = admin?.username ?? 'my-workspace';
     const hasNoteToday = Boolean(knowledge.has_note_today);
     const streak = Number(knowledge.streak ?? 0);
@@ -60,6 +78,21 @@ export default function Admin({
     const totalWorkItems = Number(stats.workItems ?? 0);
     const totalStatus = statusOrder.reduce(
         (total, status) => total + Number(statusCounts[status] ?? 0),
+        0,
+    );
+
+    const activityDays = activity.days ?? [];
+    const visibleActivity = activityDays.slice(-activityRange);
+    const activityMax = Math.max(
+        1,
+        ...visibleActivity.map((day) => Math.max(day.notes, day.completed)),
+    );
+    const rangeNotes = visibleActivity.reduce(
+        (total, day) => total + day.notes,
+        0,
+    );
+    const rangeCompleted = visibleActivity.reduce(
+        (total, day) => total + day.completed,
         0,
     );
 
@@ -195,6 +228,111 @@ export default function Admin({
                                 : 'Tulis catatan hari ini'}
                         </Link>
                     </Button>
+                </div>
+            </section>
+
+            <section className="mt-4 rounded-xl border bg-card shadow-sm">
+                <div className="flex flex-col gap-3 border-b px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                    <div>
+                        <h2 className="flex items-center gap-1.5 text-sm font-semibold">
+                            <BarChart3 className="size-4 text-indigo-500" />
+                            Grafik aktivitas
+                        </h2>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                            {rangeNotes} catatan · {rangeCompleted} pekerjaan
+                            selesai dalam {activityRange} hari terakhir
+                        </p>
+                    </div>
+
+                    <div
+                        className="inline-flex w-fit rounded-lg border bg-background p-0.5"
+                        role="group"
+                        aria-label="Rentang grafik aktivitas"
+                    >
+                        {[7, 30].map((value) => (
+                            <button
+                                key={value}
+                                type="button"
+                                aria-pressed={activityRange === value}
+                                onClick={() => setActivityRange(value)}
+                                className={cn(
+                                    'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                                    activityRange === value
+                                        ? 'bg-indigo-600 text-white shadow-xs'
+                                        : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                                )}
+                            >
+                                {value} hari
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="p-4 sm:p-5">
+                    <div className="mb-4 flex flex-wrap items-center gap-4 text-[11px] font-medium text-muted-foreground">
+                        <span className="flex items-center gap-1.5">
+                            <span className="size-2 rounded-full bg-sky-500" />
+                            Catatan
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                            <span className="size-2 rounded-full bg-emerald-500" />
+                            Pekerjaan selesai
+                        </span>
+                        {rangeNotes + rangeCompleted === 0 && (
+                            <span className="text-muted-foreground/80">
+                                Belum ada aktivitas pada rentang ini.
+                            </span>
+                        )}
+                    </div>
+
+                    <div className="overflow-x-auto pb-1">
+                        <div
+                            className={cn(
+                                'flex min-w-full items-end gap-1 sm:gap-1.5',
+                                activityRange === 30 && 'min-w-[560px]',
+                            )}
+                        >
+                            {visibleActivity.map((day, index) => {
+                                const showLabel =
+                                    activityRange === 7 ||
+                                    index % 5 === 0 ||
+                                    index === visibleActivity.length - 1;
+                                const label = `${formatDate(day.date)}: ${day.notes} catatan, ${day.completed} pekerjaan selesai`;
+
+                                return (
+                                    <div
+                                        key={day.date}
+                                        className="group flex min-w-0 flex-1 flex-col items-center gap-1"
+                                        title={label}
+                                        role="img"
+                                        aria-label={label}
+                                    >
+                                        <div className="flex h-28 w-full items-end justify-center gap-[2px]">
+                                            <span
+                                                aria-hidden="true"
+                                                className="w-1/2 max-w-1.5 rounded-t-sm bg-sky-500/80 transition-colors group-hover:bg-sky-500"
+                                                style={{
+                                                    height: `${activityBarHeight(day.notes, activityMax)}%`,
+                                                }}
+                                            />
+                                            <span
+                                                aria-hidden="true"
+                                                className="w-1/2 max-w-1.5 rounded-t-sm bg-emerald-500/80 transition-colors group-hover:bg-emerald-500"
+                                                style={{
+                                                    height: `${activityBarHeight(day.completed, activityMax)}%`,
+                                                }}
+                                            />
+                                        </div>
+                                        <span className="h-4 text-center text-[9px] leading-4 text-muted-foreground tabular-nums">
+                                            {showLabel
+                                                ? shortDate(day.date)
+                                                : ''}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
                 </div>
             </section>
 

@@ -1,9 +1,10 @@
 # HANDOFF
 Terakhir: 24 Nov 2026
-Item: WORK-20 (aksi massal pekerjaan) — SELESAI
-File utama: WorkItemController (bulkStatus/bulkDestroy), routes/web.php,
-  work-items/index.jsx, WorkItemTest
-Status: siap commit di main; bilah aksi massal di tampilan Daftar (pilih per
-  kartu / semua di halaman, ubah status, hapus dengan konfirmasi); maks 100 id;
-  completed_at mengikuti aturan status; test 124 lolos (924 assertion)
-Berikutnya: DASH-08 (grafik aktivitas) dari "Antrean berikutnya" FEATURES.md
+Item: DASH-08 (grafik aktivitas 7/30 hari) — SELESAI
+File utama: AdminController (activitySeries), admin/index.jsx,
+  AdminDashboardTest
+Status: siap commit di main; data 30 hari dihitung per tanggal Asia/Jakarta
+  (catatan dibuat, pekerjaan selesai), toggle 7/30 hari di klien, hari kosong
+  diisi nol; test 127 lolos (995 assertion)
+Berikutnya: UI-08 (command palette Ctrl/Cmd + K) dari "Antrean berikutnya"
+  FEATURES.md

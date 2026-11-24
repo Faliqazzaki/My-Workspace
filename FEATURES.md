@@ -77,7 +77,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 - [x] **DASH-05** Sapaan + tanggal panjang bahasa Indonesia
 - [x] **DASH-06** Empty state untuk pekerjaan aktif dan catatan
 - [x] **DASH-07** Widget kebiasaan "1 Hari 1 Pengetahuan" + streak
-- [ ] **DASH-08** Grafik aktivitas 7/30 hari (catatan & pekerjaan selesai)
+- [x] **DASH-08** Grafik aktivitas 7/30 hari (catatan & pekerjaan selesai)
 - [ ] **DASH-09** Widget 3 berita teknologi pilihan AI
 - [ ] **DASH-10** Ringkasan agenda: tenggat hari ini dan minggu ini
 - [ ] **DASH-11** Quick actions: catatan cepat, pekerjaan cepat
@@ -174,7 +174,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 
 ## 10. Kualitas & Observability
 
-- [x] **QA-01** 124 test Pest lolos (924 assertion)
+- [x] **QA-01** 127 test Pest lolos (995 assertion)
 - [x] **QA-02** Test fitur untuk auth, catatan (termasuk detail), pekerjaan, dashboard
 - [x] **QA-03** Format PHP dengan Pint
 - [x] **QA-04** Lint JS dengan ESLint + format Prettier
@@ -196,7 +196,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 | Fondasi | 7 | 10 |
 | Autentikasi | 8 | 12 |
 | UI | 7 | 12 |
-| Dashboard | 7 | 11 |
+| Dashboard | 8 | 11 |
 | Catatan | 12 | 16 |
 | Pekerjaan | 17 | 20 |
 | Pengetahuan & Produktivitas | 1 | 13 |
@@ -204,13 +204,12 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 | Multi-Agent | 0 | 10 |
 | Kualitas | 5 | 12 |
 
-**Total: 64 dari 129 item selesai.**
+**Total: 65 dari 129 item selesai.**
 
 ## Antrean berikutnya (urut)
 
-1. DASH-08 grafik aktivitas
-2. UI-08 command palette (Ctrl/Cmd + K)
-3. FND-08 CI
+1. UI-08 command palette (Ctrl/Cmd + K)
+2. FND-08 CI
 
 Ditunda (butuh biaya token AI): NEWS-*, AI-*, AGT-*
 

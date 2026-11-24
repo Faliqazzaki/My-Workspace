@@ -85,7 +85,7 @@ kebenaran**, lalu perbarui dokumen.
   Catatan (detail + Markdown + pratinjau + tautan ke pekerjaan), Pekerjaan
   (list + Kanban + kalender + proyek + subtask), Proyek/area
   (CRUD + arsip + progress).
-- Test: **124 test Pest lolos** (924 assertions), build Vite berhasil.
+- Test: **127 test Pest lolos** (995 assertions), build Vite berhasil.
 - Cara kerja: **satu increment kecil**, backend → frontend → test → quality gate
   → verifikasi PostgreSQL → update checklist.
 
@@ -169,7 +169,7 @@ timpa `HANDOFF.md`. Hapus data uji yang dibuat di PostgreSQL.
 | --- | --- |
 | Login admin | Selesai (database + halaman Keamanan) |
 | Shell admin | Selesai |
-| Dashboard | Selesai (data nyata + widget kebiasaan & streak) |
+| Dashboard | Selesai (data nyata + kebiasaan/streak + grafik aktivitas 7/30 hari) |
 | Catatan | Selesai (CRUD, detail, Markdown, tautan pekerjaan, arsip/restore, search, tag, pin) |
 | Pekerjaan | Selesai (CRUD, filter, status, tenggat, catatan, proyek, subtask, saved views, aksi massal) |
 | Markdown preview | Selesai (halaman detail + tab pratinjau editor) |
@@ -182,7 +182,7 @@ timpa `HANDOFF.md`. Hapus data uji yang dibuat di PostgreSQL.
 | Berita AI | Belum |
 | Multi-agent | Belum |
 
-Angka test terakhir: **124 passed, 924 assertions**.
+Angka test terakhir: **127 passed, 995 assertions**.
 
 ---
 
@@ -825,6 +825,12 @@ Gunakan urutan ini agar hasilnya konsisten:
 7. Widget **1 Hari 1 Pengetahuan**: status hari ini, jumlah catatan hari ini,
    streak beruntun, dan CTA ke halaman catatan.
 8. Klik **Lihat semua** → halaman terkait.
+9. Kartu **Grafik aktivitas** menampilkan 7 atau 30 hari terakhir (toggle).
+   Dua batang per hari: catatan dibuat dan pekerjaan selesai. Data dikirim
+   server untuk 30 hari (hari kosong diisi nol) dan dihitung per tanggal zona
+   waktu Asia/Jakarta: catatan dari `created_at` (tanpa yang terarsip),
+   pekerjaan dari `completed_at`. Ringkasan jumlah catatan/selesai pada rentang
+   tampil di header kartu.
 
 ### 14.5 Proyek
 

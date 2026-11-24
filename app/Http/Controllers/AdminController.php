@@ -52,6 +52,7 @@ class AdminController extends Controller
             'activeWorkItems' => $activeWorkItems,
             'recentNotes' => $recentNotes,
             'knowledge' => $this->knowledgeHabit(),
+            'activity' => $this->activitySeries(),
         ]);
     }
 
@@ -93,6 +94,63 @@ class AdminController extends Controller
             'notes_today' => $notesToday,
             'streak' => $streak,
             'timezone' => self::KNOWLEDGE_TIMEZONE,
+        ];
+    }
+
+    /**
+     * Aktivitas 30 hari terakhir (termasuk hari ini) dalam zona waktu
+     * Asia/Jakarta: jumlah catatan dibuat dan pekerjaan diselesaikan per hari.
+     * Hari tanpa aktivitas tetap dikirim dengan nilai nol agar grafik utuh.
+     *
+     * @return array{timezone: string, days: array<int, array{date: string, notes: int, completed: int}>}
+     */
+    private function activitySeries(): array
+    {
+        $today = Date::now(self::KNOWLEDGE_TIMEZONE)->startOfDay();
+        $start = $today->subDays(29);
+        $since = $start->utc()->toDateTimeString();
+
+        $days = [];
+
+        for ($offset = 0; $offset < 30; $offset++) {
+            $date = $start->addDays($offset)->toDateString();
+            $days[$date] = [
+                'date' => $date,
+                'notes' => 0,
+                'completed' => 0,
+            ];
+        }
+
+        Note::query()
+            ->where('created_at', '>=', $since)
+            ->pluck('created_at')
+            ->each(function ($createdAt) use (&$days): void {
+                $date = $createdAt
+                    ->timezone(self::KNOWLEDGE_TIMEZONE)
+                    ->toDateString();
+
+                if (isset($days[$date])) {
+                    $days[$date]['notes']++;
+                }
+            });
+
+        WorkItem::query()
+            ->whereNotNull('completed_at')
+            ->where('completed_at', '>=', $since)
+            ->pluck('completed_at')
+            ->each(function ($completedAt) use (&$days): void {
+                $date = $completedAt
+                    ->timezone(self::KNOWLEDGE_TIMEZONE)
+                    ->toDateString();
+
+                if (isset($days[$date])) {
+                    $days[$date]['completed']++;
+                }
+            });
+
+        return [
+            'timezone' => self::KNOWLEDGE_TIMEZONE,
+            'days' => array_values($days),
         ];
     }
 }

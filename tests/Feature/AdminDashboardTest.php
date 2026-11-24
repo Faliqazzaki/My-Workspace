@@ -26,6 +26,23 @@ function noteCreatedAtInJakarta(string $dateTime, string $title = 'Catatan'): No
     return $note->refresh();
 }
 
+function completedAtInJakarta(string $dateTime, string $title = 'Pekerjaan selesai'): WorkItem
+{
+    $timestamp = Date::parse($dateTime, 'Asia/Jakarta')->utc()->toDateTimeString();
+
+    $workItem = WorkItem::create([
+        'title' => $title,
+        'status' => 'done',
+        'priority' => 'medium',
+    ]);
+
+    DB::table('work_items')->where('id', $workItem->id)->update([
+        'completed_at' => $timestamp,
+    ]);
+
+    return $workItem->refresh();
+}
+
 it('mengalihkan tamu dari dashboard', function () {
     $this->get('/admin')->assertRedirect(route('home'));
 });
@@ -93,6 +110,10 @@ it('menampilkan dashboard kosong tanpa data', function () {
             ->where('stats.overdue', 0)
             ->has('activeWorkItems', 0)
             ->has('recentNotes', 0)
+            ->has('activity.days', 30)
+            ->where('activity.timezone', 'Asia/Jakarta')
+            ->where('activity.days.0.notes', 0)
+            ->where('activity.days.29.completed', 0)
             ->where('knowledge.has_note_today', false)
             ->where('knowledge.notes_today', 0)
             ->where('knowledge.streak', 0)
@@ -178,5 +199,66 @@ it('menghitung streak lintas akhir tahun', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->where('knowledge.has_note_today', true)
             ->where('knowledge.streak', 3)
+        );
+});
+
+it('mengirim grafik aktivitas 30 hari dengan hitungan per hari', function () {
+    Date::setTestNow(Date::parse('2026-11-23 09:00:00', 'Asia/Jakarta'));
+
+    noteCreatedAtInJakarta('2026-11-22 10:00:00', 'Catatan kemarin');
+    noteCreatedAtInJakarta('2026-11-23 08:00:00', 'Catatan hari ini');
+    completedAtInJakarta('2026-11-22 20:00:00', 'Selesai kemarin');
+    completedAtInJakarta('2026-11-23 07:00:00', 'Selesai hari ini');
+
+    $this->actingAs(adminUser())
+        ->get('/admin')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('activity.days', 30)
+            ->where('activity.timezone', 'Asia/Jakarta')
+            ->where('activity.days.0.date', '2026-10-25')
+            ->where('activity.days.28.date', '2026-11-22')
+            ->where('activity.days.28.notes', 1)
+            ->where('activity.days.28.completed', 1)
+            ->where('activity.days.29.date', '2026-11-23')
+            ->where('activity.days.29.notes', 1)
+            ->where('activity.days.29.completed', 1)
+        );
+});
+
+it('mengabaikan aktivitas di luar 30 hari terakhir', function () {
+    Date::setTestNow(Date::parse('2026-11-23 09:00:00', 'Asia/Jakarta'));
+
+    noteCreatedAtInJakarta('2026-10-24 12:00:00', 'Catatan lama');
+    completedAtInJakarta('2026-10-24 12:00:00', 'Selesai lama');
+
+    $this->actingAs(adminUser())
+        ->get('/admin')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('activity.days', 30)
+            ->where('activity.days.0.date', '2026-10-25')
+            ->where('activity.days', fn ($days) => collect($days)->sum('notes') === 0
+                && collect($days)->sum('completed') === 0)
+        );
+});
+
+it('menghitung aktivitas memakai zona waktu Asia/Jakarta', function () {
+    Date::setTestNow(Date::parse('2026-11-23 09:00:00', 'Asia/Jakarta'));
+
+    // 22 Nov 23:30 dan 23 Nov 00:30 di Jakarta; keduanya 22 Nov di UTC.
+    noteCreatedAtInJakarta('2026-11-22 23:30:00', 'Malam');
+    completedAtInJakarta('2026-11-23 00:30:00', 'Dini hari');
+
+    $this->actingAs(adminUser())
+        ->get('/admin')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('activity.days.28.date', '2026-11-22')
+            ->where('activity.days.28.notes', 1)
+            ->where('activity.days.28.completed', 0)
+            ->where('activity.days.29.date', '2026-11-23')
+            ->where('activity.days.29.notes', 0)
+            ->where('activity.days.29.completed', 1)
         );
 });
