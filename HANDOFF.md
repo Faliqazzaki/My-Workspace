@@ -1,9 +1,9 @@
 # HANDOFF
 Terakhir: 24 Nov 2026
-Item: WORK-21 (dialog detail pekerjaan) — SELESAI
-File utama: components/work-items/work-item-detail-dialog.jsx,
-  pages/admin/work-items/index.jsx, kanban-board.jsx, work-calendar.jsx
-Status: judul kartu Daftar/Papan, item kalender, dan tombol Detail membuka
-  dialog; deskripsi dirender Markdown, metadata/checklist/tag/catatan read-only;
-  Edit dari detail membuka form edit; check.sh hijau
+Item: NOTE-17 (dialog detail catatan) — SELESAI
+File utama: components/notes/note-detail-dialog.jsx,
+  pages/admin/notes/index.jsx
+Status: judul kartu / tombol Detail membuka dialog pratinjau Markdown;
+  metadata, tag, jumlah pekerjaan terkait; aksi buka halaman/edit; arsip
+  read-only; check.sh hijau
 Berikutnya: FND-08 (CI GitHub Actions) dari "Antrean berikutnya" FEATURES.md

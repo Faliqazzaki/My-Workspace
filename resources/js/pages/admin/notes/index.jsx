@@ -1,4 +1,4 @@
-import { Link, router, usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import {
     Archive,
     ArchiveRestore,
@@ -6,6 +6,7 @@ import {
     ChevronLeft,
     ChevronRight,
     ClipboardList,
+    Eye,
     NotebookPen,
     Pencil,
     Pin,
@@ -19,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
+import NoteDetailDialog from '@/components/notes/note-detail-dialog';
 import NoteEditorDialog from '@/components/notes/note-editor-dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -61,6 +63,7 @@ export default function NotesIndex({
     const [syncedQuery, setSyncedQuery] = useState(queryParam);
     const [editor, setEditor] = useState(null);
     const [deleting, setDeleting] = useState(null);
+    const [detail, setDetail] = useState(null);
     const [quickCreateHandled, setQuickCreateHandled] = useState(false);
     const isFirstRender = useRef(true);
     const { url } = usePage();
@@ -109,6 +112,18 @@ export default function NotesIndex({
     }
 
     const openEdit = (note) => setEditor({ note });
+
+    const openDetail = (note) => setDetail(note);
+
+    const editFromDetail = () => {
+        if (!detail) {
+            return;
+        }
+
+        const note = detail;
+        setDetail(null);
+        openEdit(note);
+    };
 
     const confirmDelete = () => {
         if (!deleting) {
@@ -465,13 +480,14 @@ export default function NotesIndex({
                             </div>
 
                             <h2 className="line-clamp-2 text-base font-semibold tracking-tight text-foreground transition-colors group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
-                                {archived ? (
-                                    note.title
-                                ) : (
-                                    <Link href={`/admin/notes/${note.id}`}>
-                                        {note.title}
-                                    </Link>
-                                )}
+                                <button
+                                    type="button"
+                                    onClick={() => openDetail(note)}
+                                    title="Lihat detail"
+                                    className="text-left"
+                                >
+                                    {note.title}
+                                </button>
                             </h2>
 
                             <p className="mt-2 line-clamp-4 text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground">
@@ -500,18 +516,32 @@ export default function NotesIndex({
 
                             <div className="mt-auto flex items-center justify-end gap-1 border-t border-border/50 pt-3">
                                 {archived ? (
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-8 gap-1.5 px-2.5 text-xs font-medium text-indigo-600 transition-colors hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/50"
-                                        aria-label="Pulihkan catatan"
-                                        title="Pulihkan dari arsip"
-                                        onClick={() => restoreNote(note)}
-                                    >
-                                        <ArchiveRestore className="size-3.5" />
-                                        <span>Pulihkan</span>
-                                    </Button>
+                                    <>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-8 gap-1.5 px-2.5 text-xs text-muted-foreground transition-colors hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950/50"
+                                            aria-label="Lihat detail catatan"
+                                            title="Detail"
+                                            onClick={() => openDetail(note)}
+                                        >
+                                            <Eye className="size-3.5" />
+                                            <span>Detail</span>
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-8 gap-1.5 px-2.5 text-xs font-medium text-indigo-600 transition-colors hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/50"
+                                            aria-label="Pulihkan catatan"
+                                            title="Pulihkan dari arsip"
+                                            onClick={() => restoreNote(note)}
+                                        >
+                                            <ArchiveRestore className="size-3.5" />
+                                            <span>Pulihkan</span>
+                                        </Button>
+                                    </>
                                 ) : (
                                     <>
                                         <Button
@@ -547,6 +577,18 @@ export default function NotesIndex({
                                                     <span>Sematkan</span>
                                                 </>
                                             )}
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-8 gap-1.5 px-2.5 text-xs text-muted-foreground transition-colors hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950/50"
+                                            aria-label="Lihat detail catatan"
+                                            title="Detail"
+                                            onClick={() => openDetail(note)}
+                                        >
+                                            <Eye className="size-3.5" />
+                                            <span>Detail</span>
                                         </Button>
                                         <Button
                                             type="button"
@@ -651,6 +693,12 @@ export default function NotesIndex({
                     note={editor.note}
                 />
             )}
+
+            <NoteDetailDialog
+                note={detail}
+                onClose={() => setDetail(null)}
+                onEdit={editFromDetail}
+            />
 
             {/* Dialog konfirmasi hapus */}
             <Dialog

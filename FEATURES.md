@@ -100,6 +100,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 - [ ] **NOTE-14** Template catatan (harian, belajar, snippet)
 - [ ] **NOTE-15** Full-text search PostgreSQL (tsvector) + fallback SQLite
 - [ ] **NOTE-16** Catatan publik / share link (opsional, read-only)
+- [x] **NOTE-17** Dialog detail catatan (pratinjau Markdown) dari daftar
 
 ## 6. Pekerjaan (Work Items)
 
@@ -198,14 +199,14 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 | Autentikasi | 8 | 12 |
 | UI | 8 | 12 |
 | Dashboard | 8 | 11 |
-| Catatan | 12 | 16 |
+| Catatan | 13 | 17 |
 | Pekerjaan | 18 | 20 |
 | Pengetahuan & Produktivitas | 1 | 13 |
 | Berita & AI | 0 | 13 |
 | Multi-Agent | 0 | 10 |
 | Kualitas | 5 | 12 |
 
-**Total: 67 dari 129 item selesai.**
+**Total: 68 dari 130 item selesai.**
 
 ## Antrean berikutnya (urut)
 

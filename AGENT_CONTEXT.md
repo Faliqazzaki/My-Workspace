@@ -7,8 +7,8 @@ Jika ada konflik antara dokumen dan kode, **kode yang berjalan adalah
 kebenaran**, lalu perbarui dokumen.
 
 > Terakhir diperbarui: 24 November 2026
-> Status: fondasi + Dashboard (termasuk kebiasaan mencatat) + Catatan (detail,
-> Markdown, tautan pekerjaan, arsip/restore) + Pekerjaan (list + detail +
+> Status: fondasi + Dashboard (termasuk kebiasaan mencatat) + Catatan (dialog
+> detail, Markdown, tautan pekerjaan, arsip/restore) + Pekerjaan (list + detail +
 > Kanban + kalender + proyek + subtask + saved views) + command palette
 > (Ctrl/Cmd + K) sudah berjalan.
 
@@ -83,10 +83,10 @@ kebenaran**, lalu perbarui dokumen.
 - Auth saat ini: database (`users.username`, password hash, flag `is_admin`),
   halaman **Keamanan** untuk ubah password.
 - Fitur selesai: login, shell admin (command palette Ctrl/Cmd + K), Dashboard
-  (statistik + kebiasaan mencatat), Catatan (detail + Markdown + pratinjau +
-  tautan ke pekerjaan), Pekerjaan (list + detail dialog + Markdown + Kanban +
-  kalender + proyek + subtask + saved views), Proyek/area (CRUD + arsip +
-  progress).
+  (statistik + kebiasaan mencatat), Catatan (dialog detail + Markdown +
+  pratinjau + tautan ke pekerjaan), Pekerjaan (list + detail dialog + Markdown +
+  Kanban + kalender + proyek + subtask + saved views), Proyek/area (CRUD +
+  arsip + progress).
 - Test: **127 test Pest lolos** (995 assertions), build Vite berhasil.
 - Cara kerja: **satu increment kecil**, backend → frontend → test → quality gate
   → verifikasi PostgreSQL → update checklist.
@@ -173,7 +173,7 @@ timpa `HANDOFF.md`. Hapus data uji yang dibuat di PostgreSQL.
 | Shell admin | Selesai |
 | Command palette | Selesai (Ctrl/Cmd + K, navigasi + quick create) |
 | Dashboard | Selesai (data nyata + kebiasaan/streak + grafik aktivitas 7/30 hari) |
-| Catatan | Selesai (CRUD, detail, Markdown, tautan pekerjaan, arsip/restore, search, tag, pin) |
+| Catatan | Selesai (CRUD, detail, dialog detail, Markdown, tautan pekerjaan, arsip/restore, search, tag, pin) |
 | Pekerjaan | Selesai (CRUD, filter, status, tenggat, catatan, proyek, subtask, saved views, aksi massal, detail dialog) |
 | Markdown preview | Selesai (halaman detail + tab pratinjau editor) |
 | Tautan catatan ↔ pekerjaan | Selesai (pivot `note_work_item`, dua arah) |
@@ -304,6 +304,7 @@ resources/
       command-palette.jsx          # palette Ctrl/Cmd+K (navigasi + quick create)
       markdown-content.jsx         # render Markdown aman (GFM + sanitize)
       notes/note-editor-dialog.jsx # dialog tambah/edit + pratinjau
+      notes/note-detail-dialog.jsx # pratinjau detail dari daftar
       work-items/kanban-board.jsx  # papan Kanban + drag & drop
       work-items/work-calendar.jsx # kalender tenggat bulanan
       work-items/work-item-detail-dialog.jsx # detail + Markdown
@@ -667,6 +668,9 @@ Saat menambah route baru: ikuti pola di atas, tambahkan test tamu → redirect.
 - Detail pekerjaan memakai `@/components/work-items/work-item-detail-dialog`:
   deskripsi dirender lewat `MarkdownContent`, metadata/subtask/tag/catatan
   bersifat read-only, dan tombol Edit membuka dialog edit yang sama.
+- Detail catatan dari daftar memakai `@/components/notes/note-detail-dialog`:
+  konten Markdown read-only, metadata/tag/jumlah pekerjaan, serta aksi buka
+  halaman dan edit; halaman detail `/admin/notes/{note}` tetap ada.
 - Command palette global di `@/components/command-palette` (Ctrl/Cmd + K):
   filter perintah, navigasi keyboard (↑/↓/Enter), dan aksi buat cepat yang
   membuka dialog lewat `?new=1` pada halaman catatan/pekerjaan.
@@ -781,8 +785,10 @@ Gunakan urutan ini agar hasilnya konsisten:
 4. Simpan → redirect + flash.
 5. Cari (debounce) / filter tag / halaman.
 6. Pin → catatan naik ke atas.
-7. Klik judul → halaman detail `/admin/notes/{note}`; konten dirender sebagai
-   Markdown (GFM, aman dari HTML mentah).
+7. Klik judul kartu atau tombol **Detail** → dialog pratinjau Markdown berisi
+   tanggal, tag, dan jumlah pekerjaan terkait. Tombol **Buka halaman** membuka
+   `/admin/notes/{note}`; konten dirender sebagai Markdown (GFM, aman dari HTML
+   mentah). Tombol **Edit catatan** di dialog membuka form edit.
 8. Di halaman detail: **Edit** (dialog dengan tab Tulis/Pratinjau) dan
    **Hapus** (memindahkan ke arsip). Setelah edit, kembali ke detail; setelah
    arsip, kembali ke daftar.
@@ -795,6 +801,8 @@ Gunakan urutan ini agar hasilnya konsisten:
     status dan tenggat; tombol **Lepas** menghapus tautan tanpa menghapus data.
     Tautan dibuat dari form pekerjaan dan tetap tersimpan saat catatan
     diarsipkan.
+12. Pada tab **Arsip**, tombol **Detail** tetap membuka pratinjau read-only
+    tanpa tombol edit atau buka halaman; pulihkan catatan dari kartu daftar.
 
 ### 14.3 Pekerjaan
 
