@@ -294,7 +294,7 @@ resources/
       admin/password.jsx           # keamanan / ubah password
       admin/notes/index.jsx        # daftar catatan
       admin/notes/show.jsx         # detail catatan + Markdown
-      admin/work-items/index.jsx   # pekerjaan
+      admin/work-items/index.jsx   # pekerjaan + filter + saved views
       admin/projects/index.jsx     # proyek + progress
       auth/admin-login.jsx         # login
     components/
@@ -549,6 +549,10 @@ Prefix `/admin`, name prefix `admin.`, middleware `admin.auth`.
 | PUT | `/admin/work-items/{workItem}` | `admin.work-items.update` | ubah pekerjaan |
 | PATCH | `/admin/work-items/{workItem}/status` | `admin.work-items.status` | ubah status |
 | DELETE | `/admin/work-items/{workItem}` | `admin.work-items.destroy` | hapus pekerjaan |
+
+Route tampilan tersimpan menerima `name` (unik, maks 50) dan `filters`
+opsional (`q`, `status`, `priority`, `project`, `view`). Filter kosong dibuang,
+`view=list` tidak disimpan, dan `destroy` memakai route model binding `{view}`.
 
 Route lain yang ada tetapi **tidak dipakai**: `GET /dashboard` (Fortify auth),
 `/settings/*`, `/login`, `/register`.
