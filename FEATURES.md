@@ -123,6 +123,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 - [ ] **WORK-18** Riwayat aktivitas pekerjaan
 - [x] **WORK-19** Saved views / filter tersimpan
 - [x] **WORK-20** Bulk action (ubah status/hapus beberapa item)
+- [x] **WORK-21** Dialog detail pekerjaan dengan deskripsi Markdown ter-render
 
 ## 7. Pengetahuan & Produktivitas
 
@@ -198,13 +199,13 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 | UI | 8 | 12 |
 | Dashboard | 8 | 11 |
 | Catatan | 12 | 16 |
-| Pekerjaan | 17 | 20 |
+| Pekerjaan | 18 | 20 |
 | Pengetahuan & Produktivitas | 1 | 13 |
 | Berita & AI | 0 | 13 |
 | Multi-Agent | 0 | 10 |
 | Kualitas | 5 | 12 |
 
-**Total: 66 dari 129 item selesai.**
+**Total: 67 dari 129 item selesai.**
 
 ## Antrean berikutnya (urut)
 

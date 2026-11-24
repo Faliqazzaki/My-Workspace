@@ -8,6 +8,7 @@ import {
     ChevronRight,
     ClipboardList,
     Columns3,
+    Eye,
     LayoutList,
     ListChecks,
     NotebookPen,
@@ -37,6 +38,7 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import KanbanBoard from '@/components/work-items/kanban-board';
 import WorkCalendar from '@/components/work-items/work-calendar';
+import WorkItemDetailDialog from '@/components/work-items/work-item-detail-dialog';
 import AdminLayout from '@/layouts/admin-layout';
 import { formatDate, isOverdue, toDateInput } from '@/lib/date';
 import { cn } from '@/lib/utils';
@@ -129,6 +131,7 @@ export default function WorkItemsIndex({
     const [syncedQuery, setSyncedQuery] = useState(queryParam);
     const [editorOpen, setEditorOpen] = useState(false);
     const [editing, setEditing] = useState(null);
+    const [detail, setDetail] = useState(null);
     const [tagInput, setTagInput] = useState('');
     const [subtaskInput, setSubtaskInput] = useState('');
     const [noteSearch, setNoteSearch] = useState('');
@@ -352,6 +355,18 @@ export default function WorkItemsIndex({
         setSubtaskInput('');
         setNoteSearch('');
         setEditorOpen(true);
+    };
+
+    const openDetail = (workItem) => setDetail(workItem);
+
+    const editFromDetail = () => {
+        if (!detail) {
+            return;
+        }
+
+        const workItem = detail;
+        setDetail(null);
+        openEdit(workItem);
     };
 
     const handleTagsChange = (value) => {
@@ -1043,13 +1058,14 @@ export default function WorkItemsIndex({
             )}
 
             {view === 'calendar' ? (
-                <WorkCalendar items={calendarItems} onEdit={openEdit} />
+                <WorkCalendar items={calendarItems} onOpen={openDetail} />
             ) : view === 'board' ? (
                 <div className="-mx-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:px-0">
                     <KanbanBoard
                         items={board}
                         statuses={statuses}
                         onStatusChange={moveStatus}
+                        onOpen={openDetail}
                     />
                 </div>
             ) : workItems.data.length === 0 ? (
@@ -1175,14 +1191,19 @@ export default function WorkItemsIndex({
                                         )}
                                     </div>
 
-                                    <h2
-                                        className={cn(
-                                            'mt-2 font-medium',
-                                            workItem.status === 'done' &&
-                                                'text-muted-foreground line-through',
-                                        )}
-                                    >
-                                        {workItem.title}
+                                    <h2 className="mt-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => openDetail(workItem)}
+                                            title="Lihat detail"
+                                            className={cn(
+                                                'text-left font-medium transition-colors hover:text-indigo-600 dark:hover:text-indigo-400',
+                                                workItem.status === 'done' &&
+                                                    'text-muted-foreground line-through',
+                                            )}
+                                        >
+                                            {workItem.title}
+                                        </button>
                                     </h2>
 
                                     {workItem.description && (
@@ -1247,6 +1268,19 @@ export default function WorkItemsIndex({
                                             </option>
                                         ))}
                                     </select>
+
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8.5 gap-1.5 px-2.5 text-xs text-muted-foreground transition-colors hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950/50"
+                                        aria-label="Lihat detail pekerjaan"
+                                        title="Detail"
+                                        onClick={() => openDetail(workItem)}
+                                    >
+                                        <Eye className="size-3.5" />
+                                        <span>Detail</span>
+                                    </Button>
 
                                     <Button
                                         type="button"
@@ -1672,6 +1706,12 @@ export default function WorkItemsIndex({
                     </form>
                 </DialogContent>
             </Dialog>
+
+            <WorkItemDetailDialog
+                workItem={detail}
+                onClose={() => setDetail(null)}
+                onEdit={editFromDetail}
+            />
 
             {/* Dialog simpan tampilan */}
             <Dialog open={saveViewOpen} onOpenChange={setSaveViewOpen}>

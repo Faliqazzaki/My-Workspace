@@ -8,9 +8,9 @@ kebenaran**, lalu perbarui dokumen.
 
 > Terakhir diperbarui: 24 November 2026
 > Status: fondasi + Dashboard (termasuk kebiasaan mencatat) + Catatan (detail,
-> Markdown, tautan pekerjaan, arsip/restore) + Pekerjaan (list + Kanban +
-> kalender + proyek + subtask + saved views) + command palette (Ctrl/Cmd + K)
-> sudah berjalan.
+> Markdown, tautan pekerjaan, arsip/restore) + Pekerjaan (list + detail +
+> Kanban + kalender + proyek + subtask + saved views) + command palette
+> (Ctrl/Cmd + K) sudah berjalan.
 
 ---
 
@@ -84,8 +84,9 @@ kebenaran**, lalu perbarui dokumen.
   halaman **Keamanan** untuk ubah password.
 - Fitur selesai: login, shell admin (command palette Ctrl/Cmd + K), Dashboard
   (statistik + kebiasaan mencatat), Catatan (detail + Markdown + pratinjau +
-  tautan ke pekerjaan), Pekerjaan (list + Kanban + kalender + proyek + subtask +
-  saved views), Proyek/area (CRUD + arsip + progress).
+  tautan ke pekerjaan), Pekerjaan (list + detail dialog + Markdown + Kanban +
+  kalender + proyek + subtask + saved views), Proyek/area (CRUD + arsip +
+  progress).
 - Test: **127 test Pest lolos** (995 assertions), build Vite berhasil.
 - Cara kerja: **satu increment kecil**, backend → frontend → test → quality gate
   → verifikasi PostgreSQL → update checklist.
@@ -173,7 +174,7 @@ timpa `HANDOFF.md`. Hapus data uji yang dibuat di PostgreSQL.
 | Command palette | Selesai (Ctrl/Cmd + K, navigasi + quick create) |
 | Dashboard | Selesai (data nyata + kebiasaan/streak + grafik aktivitas 7/30 hari) |
 | Catatan | Selesai (CRUD, detail, Markdown, tautan pekerjaan, arsip/restore, search, tag, pin) |
-| Pekerjaan | Selesai (CRUD, filter, status, tenggat, catatan, proyek, subtask, saved views, aksi massal) |
+| Pekerjaan | Selesai (CRUD, filter, status, tenggat, catatan, proyek, subtask, saved views, aksi massal, detail dialog) |
 | Markdown preview | Selesai (halaman detail + tab pratinjau editor) |
 | Tautan catatan ↔ pekerjaan | Selesai (pivot `note_work_item`, dua arah) |
 | Kanban | Selesai (toggle Daftar/Papan, drag & drop, select status) |
@@ -305,6 +306,7 @@ resources/
       notes/note-editor-dialog.jsx # dialog tambah/edit + pratinjau
       work-items/kanban-board.jsx  # papan Kanban + drag & drop
       work-items/work-calendar.jsx # kalender tenggat bulanan
+      work-items/work-item-detail-dialog.jsx # detail + Markdown
       ui/                          # shadcn
 routes/web.php                     # semua route admin
 tests/Feature/                     # test Pest
@@ -662,6 +664,9 @@ Saat menambah route baru: ikuti pola di atas, tambahkan test tamu → redirect.
 - Kartu list dengan badge, tenggat, tag, aksi edit/hapus.
 - Dialog tambah/edit dan dialog konfirmasi hapus.
 - Empty state dengan ikon, judul, deskripsi, dan CTA.
+- Detail pekerjaan memakai `@/components/work-items/work-item-detail-dialog`:
+  deskripsi dirender lewat `MarkdownContent`, metadata/subtask/tag/catatan
+  bersifat read-only, dan tombol Edit membuka dialog edit yang sama.
 - Command palette global di `@/components/command-palette` (Ctrl/Cmd + K):
   filter perintah, navigasi keyboard (↑/↓/Enter), dan aksi buat cepat yang
   membuka dialog lewat `?new=1` pada halaman catatan/pekerjaan.
@@ -817,7 +822,7 @@ Gunakan urutan ini agar hasilnya konsisten:
     Kanban menampilkan `x/y` ringkas.
 15. Toggle **Kalender** menampilkan bulan berjalan (mulai Senin). Navigasi
     bulan lewat panah / **Hari ini**; item bertenggat muncul di tanggalnya
-    (maks 3 + "+N lagi"). Klik item membuka dialog edit. Item tanpa tenggat
+    (maks 3 + "+N lagi"). Klik item membuka dialog detail. Item tanpa tenggat
     tidak tampil, dan filter status diabaikan seperti papan.
 16. Di tampilan **Daftar**, centang pekerjaan (atau **Pilih semua di halaman
     ini**) untuk memunculkan bilah aksi massal. Pilih status lalu **Terapkan**
@@ -826,6 +831,10 @@ Gunakan urutan ini agar hasilnya konsisten:
     otomatis dibersihkan saat filter, tampilan, atau halaman berubah, dan
     dibatasi maksimal 100 item per aksi. Aksi massal tidak tersedia di Papan
     dan Kalender.
+17. Klik judul kartu (Daftar/Papan), item kalender, atau tombol **Detail**
+    membuka dialog detail: status/prioritas, proyek, tenggat, deskripsi
+    Markdown ter-render, checklist, tag, dan catatan terkait. Tombol
+    **Edit pekerjaan** menutup detail dan membuka form edit.
 
 ### 14.4 Dashboard
 
@@ -1183,7 +1192,7 @@ Known issues:
    `tests/Pest.php`; helper baru harus unik.
 3. Tidak ada CI.
 4. Belum ada backup otomatis.
-5. Belum ada halaman detail pekerjaan; edit lewat dialog.
+5. Detail pekerjaan memakai dialog, belum ada halaman detail terpisah.
 6. `completed_at` dijaga controller, bukan constraint database.
 7. Urutan kartu Kanban mengikuti tenggat, belum bisa diatur manual.
 8. Streak dihitung di PHP dari seluruh `notes.created_at`; cukup untuk data

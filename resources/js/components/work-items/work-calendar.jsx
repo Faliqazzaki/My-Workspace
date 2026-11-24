@@ -30,7 +30,7 @@ const dateKey = (date) =>
 
 const dueKey = (value) => (value ? value.slice(0, 10) : '');
 
-export default function WorkCalendar({ items = [], onEdit }) {
+export default function WorkCalendar({ items = [], onOpen }) {
     const now = new Date();
     const [cursor, setCursor] = useState(
         () => new Date(now.getFullYear(), now.getMonth(), 1),
@@ -189,7 +189,7 @@ export default function WorkCalendar({ items = [], onEdit }) {
                                                 <button
                                                     key={item.id}
                                                     type="button"
-                                                    onClick={() => onEdit(item)}
+                                                    onClick={() => onOpen(item)}
                                                     title={item.title}
                                                     className={cn(
                                                         'flex w-full items-start gap-1.5 rounded-md px-1.5 py-1 text-left text-[11px] leading-snug transition-colors hover:bg-muted',

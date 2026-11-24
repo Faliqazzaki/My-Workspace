@@ -25,6 +25,7 @@ function BoardCard({
     workItem,
     statuses,
     onStatusChange,
+    onOpen,
     handleProps,
     interactive = true,
 }) {
@@ -65,7 +66,14 @@ function BoardCard({
                         'text-muted-foreground line-through',
                 )}
             >
-                {workItem.title}
+                <button
+                    type="button"
+                    onClick={() => onOpen?.(workItem)}
+                    title="Lihat detail"
+                    className="text-left transition-colors hover:text-indigo-600 dark:hover:text-indigo-400"
+                >
+                    {workItem.title}
+                </button>
             </h3>
 
             <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
@@ -149,7 +157,7 @@ function BoardCard({
     );
 }
 
-function DraggableCard({ workItem, statuses, onStatusChange }) {
+function DraggableCard({ workItem, statuses, onStatusChange, onOpen }) {
     const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
         id: workItem.id,
         data: { status: workItem.status },
@@ -164,13 +172,14 @@ function DraggableCard({ workItem, statuses, onStatusChange }) {
                 workItem={workItem}
                 statuses={statuses}
                 onStatusChange={onStatusChange}
+                onOpen={onOpen}
                 handleProps={{ ...listeners, ...attributes }}
             />
         </div>
     );
 }
 
-function KanbanColumn({ status, items, statuses, onStatusChange }) {
+function KanbanColumn({ status, items, statuses, onStatusChange, onOpen }) {
     const { setNodeRef, isOver } = useDroppable({ id: status });
 
     return (
@@ -211,6 +220,7 @@ function KanbanColumn({ status, items, statuses, onStatusChange }) {
                             workItem={workItem}
                             statuses={statuses}
                             onStatusChange={onStatusChange}
+                            onOpen={onOpen}
                         />
                     ))
                 )}
@@ -219,7 +229,12 @@ function KanbanColumn({ status, items, statuses, onStatusChange }) {
     );
 }
 
-export default function KanbanBoard({ items, statuses, onStatusChange }) {
+export default function KanbanBoard({
+    items,
+    statuses,
+    onStatusChange,
+    onOpen,
+}) {
     const [activeId, setActiveId] = useState(null);
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -267,6 +282,7 @@ export default function KanbanBoard({ items, statuses, onStatusChange }) {
                         statuses={statuses}
                         items={items.filter((item) => item.status === status)}
                         onStatusChange={onStatusChange}
+                        onOpen={onOpen}
                     />
                 ))}
             </div>
