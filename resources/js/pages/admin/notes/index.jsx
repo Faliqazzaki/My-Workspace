@@ -1,5 +1,7 @@
 import { Link, router } from '@inertiajs/react';
 import {
+    Archive,
+    ArchiveRestore,
     CalendarDays,
     ChevronLeft,
     ChevronRight,
@@ -47,7 +49,13 @@ const excerpt = (content = '') => {
     return clean.length > 180 ? `${clean.slice(0, 180)}…` : clean;
 };
 
-export default function NotesIndex({ notes, tags = [], filters = {} }) {
+export default function NotesIndex({
+    notes,
+    tags = [],
+    archivedCount = 0,
+    filters = {},
+}) {
+    const archived = Boolean(filters.archived);
     const queryParam = filters.q ?? '';
     const [search, setSearch] = useState(queryParam);
     const [syncedQuery, setSyncedQuery] = useState(queryParam);
@@ -76,13 +84,14 @@ export default function NotesIndex({ notes, tags = [], filters = {} }) {
                 {
                     q: search || undefined,
                     tag: filters.tag || undefined,
+                    archived: archived ? 1 : undefined,
                 },
                 { preserveScroll: true, preserveState: true, replace: true },
             );
         }, 300);
 
         return () => clearTimeout(timer);
-    }, [search, queryParam, filters.tag]);
+    }, [search, queryParam, filters.tag, archived]);
 
     const openCreate = () => setEditor({ note: null });
 
@@ -119,6 +128,7 @@ export default function NotesIndex({ notes, tags = [], filters = {} }) {
             {
                 q: search || undefined,
                 tag: filters.tag || undefined,
+                archived: archived ? 1 : undefined,
             },
             { preserveScroll: true, preserveState: true, replace: true },
         );
@@ -133,6 +143,7 @@ export default function NotesIndex({ notes, tags = [], filters = {} }) {
             '/admin/notes',
             {
                 tag: filters.tag || undefined,
+                archived: archived ? 1 : undefined,
             },
             { preserveScroll: true, preserveState: true, replace: true },
         );
@@ -144,6 +155,7 @@ export default function NotesIndex({ notes, tags = [], filters = {} }) {
             {
                 q: search || undefined,
                 tag: filters.tag === tag ? undefined : tag,
+                archived: archived ? 1 : undefined,
             },
             { preserveScroll: true, preserveState: true, replace: true },
         );
@@ -153,8 +165,28 @@ export default function NotesIndex({ notes, tags = [], filters = {} }) {
         setSearch('');
         router.get(
             '/admin/notes',
-            {},
+            { archived: archived ? 1 : undefined },
             { preserveScroll: true, preserveState: true, replace: true },
+        );
+    };
+
+    const switchArchive = (nextArchived) => {
+        if (nextArchived === archived) {
+            return;
+        }
+
+        setSearch('');
+        router.get('/admin/notes', nextArchived ? { archived: 1 } : {}, {
+            preserveScroll: true,
+            preserveState: true,
+        });
+    };
+
+    const restoreNote = (note) => {
+        router.patch(
+            `/admin/notes/${note.id}/restore`,
+            {},
+            { preserveScroll: true },
         );
     };
 
@@ -166,25 +198,77 @@ export default function NotesIndex({ notes, tags = [], filters = {} }) {
             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h1 className="flex items-center gap-2.5 text-2xl font-bold tracking-tight">
-                        <span>Catatan</span>
+                        <span>{archived ? 'Arsip catatan' : 'Catatan'}</span>
                         <span className="rounded-full bg-indigo-500/10 px-2.5 py-0.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400">
                             {notes.total ?? 0}
                         </span>
                     </h1>
                     <p className="mt-1 text-sm text-muted-foreground">
-                        Simpan pengetahuan, ide, dan kebutuhanmu di satu tempat
-                        yang mudah diakses.
+                        {archived
+                            ? 'Catatan yang diarsipkan tetap tersimpan dan bisa dipulihkan kapan saja.'
+                            : 'Simpan pengetahuan, ide, dan kebutuhanmu di satu tempat yang mudah diakses.'}
                     </p>
                 </div>
 
-                <Button
-                    type="button"
-                    onClick={openCreate}
-                    className="h-10 gap-2 bg-neutral-900 px-4 text-white shadow-sm transition-all hover:bg-neutral-800 active:scale-[0.98] dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100"
-                >
-                    <Plus className="size-4" />
-                    <span>Catatan baru</span>
-                </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                    <div
+                        className="inline-flex rounded-lg border bg-card p-0.5"
+                        role="group"
+                        aria-label="Mode catatan"
+                    >
+                        <button
+                            type="button"
+                            aria-pressed={!archived}
+                            onClick={() => switchArchive(false)}
+                            className={cn(
+                                'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                                !archived
+                                    ? 'bg-background text-foreground shadow-xs'
+                                    : 'text-muted-foreground hover:text-foreground',
+                            )}
+                        >
+                            <NotebookPen className="size-3.5" />
+                            Aktif
+                        </button>
+                        <button
+                            type="button"
+                            aria-pressed={archived}
+                            onClick={() => switchArchive(true)}
+                            className={cn(
+                                'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                                archived
+                                    ? 'bg-background text-foreground shadow-xs'
+                                    : 'text-muted-foreground hover:text-foreground',
+                            )}
+                        >
+                            <Archive className="size-3.5" />
+                            Arsip
+                            {archivedCount > 0 && (
+                                <span
+                                    className={cn(
+                                        'rounded-full px-1.5 py-0.5 text-[10px] font-semibold',
+                                        archived
+                                            ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
+                                            : 'bg-muted text-muted-foreground',
+                                    )}
+                                >
+                                    {archivedCount}
+                                </span>
+                            )}
+                        </button>
+                    </div>
+
+                    {!archived && (
+                        <Button
+                            type="button"
+                            onClick={openCreate}
+                            className="h-10 gap-2 bg-neutral-900 px-4 text-white shadow-sm transition-all hover:bg-neutral-800 active:scale-[0.98] dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100"
+                        >
+                            <Plus className="size-4" />
+                            <span>Catatan baru</span>
+                        </Button>
+                    )}
+                </div>
             </div>
 
             {/* Filter & Search Bar */}
@@ -274,17 +358,27 @@ export default function NotesIndex({ notes, tags = [], filters = {} }) {
             {notes.data.length === 0 ? (
                 <div className="flex min-h-[44vh] flex-col items-center justify-center rounded-2xl border border-dashed bg-card/50 p-10 text-center">
                     <span className="flex size-14 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-500">
-                        <NotebookPen className="size-7" />
+                        {archived ? (
+                            <Archive className="size-7" />
+                        ) : (
+                            <NotebookPen className="size-7" />
+                        )}
                     </span>
                     <h2 className="mt-5 text-lg font-semibold tracking-tight">
                         {hasFilters
-                            ? 'Tidak ada catatan yang cocok'
-                            : 'Belum ada catatan'}
+                            ? archived
+                                ? 'Tidak ada arsip yang cocok'
+                                : 'Tidak ada catatan yang cocok'
+                            : archived
+                              ? 'Arsip kosong'
+                              : 'Belum ada catatan'}
                     </h2>
                     <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
                         {hasFilters
                             ? 'Coba kata kunci atau tag lain, atau klik reset untuk melihat semua catatan.'
-                            : 'Mulai dari satu catatan kecil. Pengetahuan yang dicatat hari ini akan berguna nanti.'}
+                            : archived
+                              ? 'Catatan yang kamu arsipkan akan muncul di sini dan bisa dipulihkan kapan saja.'
+                              : 'Mulai dari satu catatan kecil. Pengetahuan yang dicatat hari ini akan berguna nanti.'}
                     </p>
                     {hasFilters ? (
                         <Button
@@ -295,6 +389,16 @@ export default function NotesIndex({ notes, tags = [], filters = {} }) {
                         >
                             <RotateCcw className="size-3.5" />
                             <span>Reset filter</span>
+                        </Button>
+                    ) : archived ? (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="mt-5 gap-1.5"
+                            onClick={() => switchArchive(false)}
+                        >
+                            <ArchiveRestore className="size-3.5" />
+                            <span>Kembali ke catatan</span>
                         </Button>
                     ) : (
                         <Button
@@ -320,7 +424,12 @@ export default function NotesIndex({ notes, tags = [], filters = {} }) {
                             )}
                         >
                             <div className="mb-2.5 flex items-center justify-between gap-2">
-                                {note.is_pinned ? (
+                                {archived ? (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-300">
+                                        <Archive className="size-3" />
+                                        Diarsipkan
+                                    </span>
+                                ) : note.is_pinned ? (
                                     <span className="inline-flex items-center gap-1 rounded-full bg-indigo-500/10 px-2 py-0.5 text-[11px] font-medium text-indigo-600 dark:text-indigo-400">
                                         <Pin className="size-3 fill-current" />
                                         Disematkan
@@ -334,14 +443,22 @@ export default function NotesIndex({ notes, tags = [], filters = {} }) {
 
                                 <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
                                     <CalendarDays className="size-3" />
-                                    {formatDate(note.updated_at)}
+                                    {formatDate(
+                                        archived
+                                            ? note.deleted_at
+                                            : note.updated_at,
+                                    )}
                                 </span>
                             </div>
 
                             <h2 className="line-clamp-2 text-base font-semibold tracking-tight text-foreground transition-colors group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
-                                <Link href={`/admin/notes/${note.id}`}>
-                                    {note.title}
-                                </Link>
+                                {archived ? (
+                                    note.title
+                                ) : (
+                                    <Link href={`/admin/notes/${note.id}`}>
+                                        {note.title}
+                                    </Link>
+                                )}
                             </h2>
 
                             <p className="mt-2 line-clamp-4 text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground">
@@ -369,64 +486,81 @@ export default function NotesIndex({ notes, tags = [], filters = {} }) {
                             )}
 
                             <div className="mt-auto flex items-center justify-end gap-1 border-t border-border/50 pt-3">
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    className={cn(
-                                        'h-8 gap-1.5 px-2.5 text-xs font-medium transition-colors',
-                                        note.is_pinned
-                                            ? 'text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/50'
-                                            : 'text-muted-foreground hover:text-foreground',
-                                    )}
-                                    aria-label={
-                                        note.is_pinned
-                                            ? 'Lepas sematan'
-                                            : 'Sematkan catatan'
-                                    }
-                                    title={
-                                        note.is_pinned
-                                            ? 'Lepas sematan'
-                                            : 'Sematkan catatan'
-                                    }
-                                    onClick={() => togglePin(note)}
-                                >
-                                    {note.is_pinned ? (
-                                        <>
-                                            <PinOff className="size-3.5" />
-                                            <span>Lepas</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Pin className="size-3.5" />
-                                            <span>Sematkan</span>
-                                        </>
-                                    )}
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-8 gap-1.5 px-2.5 text-xs text-muted-foreground transition-colors hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950/50"
-                                    aria-label="Edit catatan"
-                                    title="Edit"
-                                    onClick={() => openEdit(note)}
-                                >
-                                    <Pencil className="size-3.5" />
-                                    <span>Edit</span>
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-8 gap-1.5 px-2.5 text-xs text-muted-foreground transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/50"
-                                    aria-label="Hapus catatan"
-                                    title="Hapus"
-                                    onClick={() => setDeleting(note)}
-                                >
-                                    <Trash2 className="size-3.5" />
-                                    <span>Hapus</span>
-                                </Button>
+                                {archived ? (
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 gap-1.5 px-2.5 text-xs font-medium text-indigo-600 transition-colors hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/50"
+                                        aria-label="Pulihkan catatan"
+                                        title="Pulihkan dari arsip"
+                                        onClick={() => restoreNote(note)}
+                                    >
+                                        <ArchiveRestore className="size-3.5" />
+                                        <span>Pulihkan</span>
+                                    </Button>
+                                ) : (
+                                    <>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            className={cn(
+                                                'h-8 gap-1.5 px-2.5 text-xs font-medium transition-colors',
+                                                note.is_pinned
+                                                    ? 'text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/50'
+                                                    : 'text-muted-foreground hover:text-foreground',
+                                            )}
+                                            aria-label={
+                                                note.is_pinned
+                                                    ? 'Lepas sematan'
+                                                    : 'Sematkan catatan'
+                                            }
+                                            title={
+                                                note.is_pinned
+                                                    ? 'Lepas sematan'
+                                                    : 'Sematkan catatan'
+                                            }
+                                            onClick={() => togglePin(note)}
+                                        >
+                                            {note.is_pinned ? (
+                                                <>
+                                                    <PinOff className="size-3.5" />
+                                                    <span>Lepas</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Pin className="size-3.5" />
+                                                    <span>Sematkan</span>
+                                                </>
+                                            )}
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-8 gap-1.5 px-2.5 text-xs text-muted-foreground transition-colors hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950/50"
+                                            aria-label="Edit catatan"
+                                            title="Edit"
+                                            onClick={() => openEdit(note)}
+                                        >
+                                            <Pencil className="size-3.5" />
+                                            <span>Edit</span>
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-8 gap-1.5 px-2.5 text-xs text-muted-foreground transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/50"
+                                            aria-label="Hapus catatan"
+                                            title="Hapus"
+                                            onClick={() => setDeleting(note)}
+                                        >
+                                            <Trash2 className="size-3.5" />
+                                            <span>Hapus</span>
+                                        </Button>
+                                    </>
+                                )}
                             </div>
                         </article>
                     ))}
@@ -516,10 +650,10 @@ export default function NotesIndex({ notes, tags = [], filters = {} }) {
             >
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Hapus catatan?</DialogTitle>
+                        <DialogTitle>Arsipkan catatan?</DialogTitle>
                         <DialogDescription>
-                            “{deleting?.title}” akan dihapus permanen. Tindakan
-                            ini tidak bisa dibatalkan.
+                            “{deleting?.title}” akan dipindahkan ke arsip. Kamu
+                            bisa memulihkannya kapan saja dari tab Arsip.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
@@ -535,8 +669,8 @@ export default function NotesIndex({ notes, tags = [], filters = {} }) {
                             variant="destructive"
                             onClick={confirmDelete}
                         >
-                            <Trash2 className="size-4" />
-                            Hapus
+                            <Archive className="size-4" />
+                            Arsipkan
                         </Button>
                     </DialogFooter>
                 </DialogContent>

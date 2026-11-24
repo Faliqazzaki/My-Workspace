@@ -15,8 +15,10 @@ class NoteController extends Controller
     {
         $search = trim($request->string('q')->toString());
         $activeTag = trim($request->string('tag')->toString());
+        $archived = $request->boolean('archived');
+        $baseQuery = $archived ? Note::onlyTrashed() : Note::query();
 
-        $notes = Note::query()
+        $notes = $baseQuery
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($query) use ($search) {
                     $query
@@ -31,7 +33,7 @@ class NoteController extends Controller
             ->paginate(12)
             ->withQueryString();
 
-        $tags = Note::query()
+        $tags = ($archived ? Note::onlyTrashed() : Note::query())
             ->get(['tags'])
             ->pluck('tags')
             ->flatten()
@@ -43,9 +45,11 @@ class NoteController extends Controller
         return Inertia::render('admin/notes/index', [
             'notes' => $notes,
             'tags' => $tags,
+            'archivedCount' => Note::onlyTrashed()->count(),
             'filters' => [
                 'q' => $search,
                 'tag' => $activeTag,
+                'archived' => $archived,
             ],
         ]);
     }
@@ -92,7 +96,16 @@ class NoteController extends Controller
 
         return redirect()
             ->route('admin.notes.index')
-            ->with('success', 'Catatan berhasil dihapus.');
+            ->with('success', 'Catatan dipindahkan ke arsip.');
+    }
+
+    public function restore(Note $note): RedirectResponse
+    {
+        $note->restore();
+
+        return redirect()
+            ->route('admin.notes.index', ['archived' => 1])
+            ->with('success', 'Catatan dipulihkan dari arsip.');
     }
 
     public function togglePin(Note $note): RedirectResponse

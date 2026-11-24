@@ -76,18 +76,21 @@ it('memperbarui catatan', function () {
         ->tags->toBe(['baru']);
 });
 
-it('menghapus catatan', function () {
+it('mengarsipkan catatan tanpa menghapus permanen', function () {
     $note = Note::create([
-        'title' => 'Akan dihapus',
+        'title' => 'Akan diarsipkan',
         'content' => 'Isi.',
         'tags' => [],
     ]);
 
     $this->actingAs(adminUser())
         ->delete("/admin/notes/{$note->id}")
-        ->assertRedirect(route('admin.notes.index'));
+        ->assertRedirect(route('admin.notes.index'))
+        ->assertSessionHas('success');
 
-    expect(Note::count())->toBe(0);
+    expect(Note::count())->toBe(0)
+        ->and(Note::withTrashed()->count())->toBe(1)
+        ->and(Note::withTrashed()->first()->trashed())->toBeTrue();
 });
 
 it('menyematkan dan melepas sematan catatan', function () {
@@ -250,7 +253,7 @@ it('mengalihkan tamu saat melepas tautan pekerjaan', function () {
     expect($note->workItems()->count())->toBe(1);
 });
 
-it('menghapus tautan saat catatan dihapus', function () {
+it('menyembunyikan tautan saat catatan diarsipkan lalu memulihkannya', function () {
     $note = Note::create([
         'title' => 'Catatan',
         'content' => 'Isi.',
@@ -266,6 +269,108 @@ it('menghapus tautan saat catatan dihapus', function () {
     $note->workItems()->attach($workItem);
     $note->delete();
 
-    expect(DB::table('note_work_item')->count())->toBe(0)
+    expect(DB::table('note_work_item')->count())->toBe(1)
+        ->and($workItem->notes()->count())->toBe(0)
         ->and(WorkItem::count())->toBe(1);
+
+    $note->restore();
+
+    expect($workItem->notes()->count())->toBe(1);
+});
+
+it('menampilkan arsip catatan secara terpisah', function () {
+    Note::create([
+        'title' => 'Catatan aktif',
+        'content' => 'Isi aktif.',
+        'tags' => [],
+    ]);
+
+    $archived = Note::create([
+        'title' => 'Catatan arsip',
+        'content' => 'Isi arsip.',
+        'tags' => [],
+    ]);
+
+    $archived->delete();
+
+    $this->actingAs(adminUser())
+        ->get('/admin/notes')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('admin/notes/index')
+            ->has('notes.data', 1)
+            ->where('notes.data.0.title', 'Catatan aktif')
+            ->where('archivedCount', 1)
+            ->where('filters.archived', false)
+        );
+
+    $this->actingAs(adminUser())
+        ->get('/admin/notes?archived=1')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('notes.data', 1)
+            ->where('notes.data.0.title', 'Catatan arsip')
+            ->where('archivedCount', 1)
+            ->where('filters.archived', true)
+        );
+});
+
+it('mencari catatan di dalam arsip', function () {
+    $first = Note::create([
+        'title' => 'Arsip PostgreSQL',
+        'content' => 'Isi.',
+        'tags' => [],
+    ]);
+
+    $second = Note::create([
+        'title' => 'Arsip Laravel',
+        'content' => 'Isi.',
+        'tags' => [],
+    ]);
+
+    $first->delete();
+    $second->delete();
+
+    $this->actingAs(adminUser())
+        ->get('/admin/notes?archived=1&q=postgres')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.archived', true)
+            ->where('filters.q', 'postgres')
+            ->has('notes.data', 1)
+            ->where('notes.data.0.title', 'Arsip PostgreSQL')
+        );
+});
+
+it('memulihkan catatan dari arsip', function () {
+    $note = Note::create([
+        'title' => 'Bisa dipulihkan',
+        'content' => 'Isi.',
+        'tags' => [],
+    ]);
+
+    $note->delete();
+
+    $this->actingAs(adminUser())
+        ->patch("/admin/notes/{$note->id}/restore")
+        ->assertRedirect(route('admin.notes.index', ['archived' => 1]))
+        ->assertSessionHas('success');
+
+    expect(Note::count())->toBe(1)
+        ->and(Note::withTrashed()->first()->deleted_at)->toBeNull();
+});
+
+it('mengalihkan tamu dari pemulihan catatan', function () {
+    $note = Note::create([
+        'title' => 'Catatan',
+        'content' => 'Isi.',
+        'tags' => [],
+    ]);
+
+    $note->delete();
+
+    $this->patch("/admin/notes/{$note->id}/restore")
+        ->assertRedirect(route('home'));
+
+    expect(Note::count())->toBe(0);
 });

@@ -6,9 +6,10 @@ bagian `FEATURES.md` yang relevan; bagian lain dibaca hanya jika dibutuhkan.
 Jika ada konflik antara dokumen dan kode, **kode yang berjalan adalah
 kebenaran**, lalu perbarui dokumen.
 
-> Terakhir diperbarui: 23 November 2026
+> Terakhir diperbarui: 24 November 2026
 > Status: fondasi + Dashboard (termasuk kebiasaan mencatat) + Catatan (detail,
-> Markdown, tautan pekerjaan) + Pekerjaan (list + Kanban) sudah berjalan.
+> Markdown, tautan pekerjaan, arsip/restore) + Pekerjaan (list + Kanban +
+> kalender + proyek + subtask + saved views) sudah berjalan.
 
 ---
 
@@ -84,7 +85,7 @@ kebenaran**, lalu perbarui dokumen.
   Catatan (detail + Markdown + pratinjau + tautan ke pekerjaan), Pekerjaan
   (list + Kanban + kalender + proyek + subtask), Proyek/area
   (CRUD + arsip + progress).
-- Test: **108 test Pest lolos** (778 assertions), build Vite berhasil.
+- Test: **118 test Pest lolos** (884 assertions), build Vite berhasil.
 - Cara kerja: **satu increment kecil**, backend → frontend → test → quality gate
   → verifikasi PostgreSQL → update checklist.
 
@@ -169,7 +170,7 @@ timpa `HANDOFF.md`. Hapus data uji yang dibuat di PostgreSQL.
 | Login admin | Selesai (database + halaman Keamanan) |
 | Shell admin | Selesai |
 | Dashboard | Selesai (data nyata + widget kebiasaan & streak) |
-| Catatan | Selesai (CRUD, detail, Markdown, tautan pekerjaan, search, tag, pin) |
+| Catatan | Selesai (CRUD, detail, Markdown, tautan pekerjaan, arsip/restore, search, tag, pin) |
 | Pekerjaan | Selesai (CRUD, filter, status, tenggat, catatan, proyek, subtask) |
 | Markdown preview | Selesai (halaman detail + tab pratinjau editor) |
 | Tautan catatan ↔ pekerjaan | Selesai (pivot `note_work_item`, dua arah) |
@@ -181,7 +182,7 @@ timpa `HANDOFF.md`. Hapus data uji yang dibuat di PostgreSQL.
 | Berita AI | Belum |
 | Multi-agent | Belum |
 
-Angka test terakhir: **108 passed, 778 assertions**.
+Angka test terakhir: **118 passed, 884 assertions**.
 
 ---
 
@@ -277,6 +278,7 @@ database/
     2026_11_23_170000_create_projects_table.php
     2026_11_23_180000_create_work_item_subtasks_table.php
     2026_11_23_190000_create_saved_views_table.php
+    2026_11_24_000000_add_deleted_at_to_notes_table.php
   seeders/AdminUserSeeder.php      # akun admin dari config
 resources/
   css/app.css                      # token tema + font
@@ -401,12 +403,18 @@ php artisan db:seed --class=AdminUserSeeder
 | `content` | text | wajib, Markdown |
 | `tags` | jsonb | default `[]`, maks 10, tiap tag maks 30 |
 | `is_pinned` | boolean | default false |
+| `deleted_at` | timestamp nullable | soft delete (arsip) |
 | `created_at`, `updated_at` | timestamp | |
 
 Index: `(is_pinned, updated_at)`.
 
 **Invarian:** tag di-trim, dibuang yang kosong, di-`unique`, di-`values`.
 Urutan tag dipertahankan.
+
+**Arsip:** `Note` memakai `SoftDeletes`. Query default (daftar, dashboard,
+picker pekerjaan, relasi `workItems`) otomatis mengecualikan catatan terarsip.
+Baris pivot `note_work_item` **tetap disimpan** saat arsip, sehingga tautan
+kembali saat catatan dipulihkan; `forceDelete()` tetap cascade ke pivot.
 
 ### 8.2 `work_items`
 
@@ -524,6 +532,7 @@ Prefix `/admin`, name prefix `admin.`, middleware `admin.auth`.
 | POST | `/admin/notes` | `admin.notes.store` | simpan catatan |
 | PUT | `/admin/notes/{note}` | `admin.notes.update` | ubah catatan |
 | PATCH | `/admin/notes/{note}/pin` | `admin.notes.pin` | toggle pin |
+| PATCH | `/admin/notes/{note}/restore` | `admin.notes.restore` | pulihkan dari arsip (`withTrashed`) |
 | DELETE | `/admin/notes/{note}/work-items/{workItem}` | `admin.notes.work-items.detach` | lepas tautan pekerjaan |
 | DELETE | `/admin/notes/{note}` | `admin.notes.destroy` | hapus catatan |
 | GET | `/admin/work-items` | `admin.work-items.index` | daftar pekerjaan |
@@ -755,11 +764,17 @@ Gunakan urutan ini agar hasilnya konsisten:
 7. Klik judul → halaman detail `/admin/notes/{note}`; konten dirender sebagai
    Markdown (GFM, aman dari HTML mentah).
 8. Di halaman detail: **Edit** (dialog dengan tab Tulis/Pratinjau) dan
-   **Hapus**. Setelah edit, kembali ke detail; setelah hapus, kembali ke daftar.
+   **Hapus** (memindahkan ke arsip). Setelah edit, kembali ke detail; setelah
+   arsip, kembali ke daftar.
 9. Edit / hapus juga bisa langsung dari kartu di daftar.
-10. Bagian **Pekerjaan terkait** menampilkan pekerjaan yang tertaut beserta
+10. Toggle **Aktif / Arsip** di header. Tab Arsip menampilkan catatan
+    terarsip + jumlahnya, mendukung pencarian/filter tag, dan tombol
+    **Pulihkan** per kartu. Catatan terarsip tidak muncul di daftar aktif,
+    dashboard, maupun picker pekerjaan sampai dipulihkan.
+11. Bagian **Pekerjaan terkait** menampilkan pekerjaan yang tertaut beserta
     status dan tenggat; tombol **Lepas** menghapus tautan tanpa menghapus data.
-    Tautan dibuat dari form pekerjaan.
+    Tautan dibuat dari form pekerjaan dan tetap tersimpan saat catatan
+    diarsipkan.
 
 ### 14.3 Pekerjaan
 

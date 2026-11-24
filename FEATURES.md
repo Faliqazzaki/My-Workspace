@@ -95,7 +95,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 - [x] **NOTE-09** Render Markdown yang aman (GFM, code block, tabel)
 - [x] **NOTE-10** Preview Markdown saat menulis
 - [x] **NOTE-11** Tautan catatan ↔ pekerjaan (many-to-many)
-- [ ] **NOTE-12** Arsip / soft delete + restore
+- [x] **NOTE-12** Arsip / soft delete + restore
 - [ ] **NOTE-13** Auto-save draft ke localStorage
 - [ ] **NOTE-14** Template catatan (harian, belajar, snippet)
 - [ ] **NOTE-15** Full-text search PostgreSQL (tsvector) + fallback SQLite
@@ -174,7 +174,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 
 ## 10. Kualitas & Observability
 
-- [x] **QA-01** 114 test Pest lolos (819 assertion)
+- [x] **QA-01** 118 test Pest lolos (884 assertion)
 - [x] **QA-02** Test fitur untuk auth, catatan (termasuk detail), pekerjaan, dashboard
 - [x] **QA-03** Format PHP dengan Pint
 - [x] **QA-04** Lint JS dengan ESLint + format Prettier
@@ -197,22 +197,21 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 | Autentikasi | 8 | 12 |
 | UI | 7 | 12 |
 | Dashboard | 7 | 11 |
-| Catatan | 11 | 16 |
+| Catatan | 12 | 16 |
 | Pekerjaan | 16 | 20 |
 | Pengetahuan & Produktivitas | 1 | 13 |
 | Berita & AI | 0 | 13 |
 | Multi-Agent | 0 | 10 |
 | Kualitas | 5 | 12 |
 
-**Total: 62 dari 129 item selesai.**
+**Total: 63 dari 129 item selesai.**
 
 ## Antrean berikutnya (urut)
 
-1. NOTE-12 arsip catatan
-2. WORK-20 bulk action
-3. DASH-08 grafik aktivitas
-4. UI-08 command palette (Ctrl/Cmd + K)
-5. FND-08 CI
+1. WORK-20 bulk action
+2. DASH-08 grafik aktivitas
+3. UI-08 command palette (Ctrl/Cmd + K)
+4. FND-08 CI
 
 Ditunda (butuh biaya token AI): NEWS-*, AI-*, AGT-*
 
