@@ -16,7 +16,7 @@ import { useCallback, useEffect, useState } from 'react';
 import CommandPalette from '@/components/command-palette';
 import KeyboardShortcuts from '@/components/keyboard-shortcuts';
 import ThemeToggle from '@/components/theme-toggle';
-import { ToastProvider } from '@/components/toast';
+import { FlashToasts } from '@/components/toast';
 import { Button } from '@/components/ui/button';
 import WorkspaceLogo from '@/components/workspace-logo';
 import { cn } from '@/lib/utils';
@@ -85,7 +85,8 @@ export default function AdminLayout({ title = 'Beranda', children }) {
     };
 
     return (
-        <ToastProvider>
+        <>
+            <FlashToasts />
             <Head title={title} />
 
             <div className="flex h-dvh overflow-hidden bg-muted/30 text-foreground">
@@ -257,6 +258,6 @@ export default function AdminLayout({ title = 'Beranda', children }) {
                 onOpenChange={setShortcutsOpen}
                 onOpenPalette={openPalette}
             />
-        </ToastProvider>
+        </>
     );
 }

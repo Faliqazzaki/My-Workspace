@@ -699,7 +699,8 @@ Saat menambah route baru: ikuti pola di atas, tambahkan test tamu → redirect.
   baru, dan `g` lalu `h/n/w/p` untuk Beranda/Catatan/Pekerjaan/Proyek.
   Shortcut diabaikan saat fokus di input/textarea/select/contenteditable atau
   saat ada dialog terbuka. `Ctrl/Cmd + K` ditangani layout.
-- Toast global di `@/components/toast`: `ToastProvider` membungkus layout admin,
+- Toast global di `@/components/toast`: `ToastProvider` membungkus `<App>` di level
+  atas (`app.jsx`), jembatan flash→toast di layout admin via `FlashToasts`,
   `useToast()` memberi `success`/`error`/`info`, flash Laravel otomatis menjadi
   toast (maks 4, auto-dismiss 5 detik, tombol tutup, `aria-live`). Dipakai juga
   untuk kegagalan aksi tanpa flash, mis. ubah status di Kanban.

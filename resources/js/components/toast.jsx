@@ -70,7 +70,6 @@ export function ToastProvider({ children }) {
     return (
         <ToastContext.Provider value={{ toast, dismiss }}>
             {children}
-            <FlashToasts />
             <ToastViewport toasts={toasts} onDismiss={dismiss} />
         </ToastContext.Provider>
     );
@@ -86,7 +85,7 @@ export function useToast() {
     return context.toast;
 }
 
-function FlashToasts() {
+export function FlashToasts() {
     const { flash } = usePage().props;
     const { toast } = useContext(ToastContext);
     const lastFlash = useRef(null);

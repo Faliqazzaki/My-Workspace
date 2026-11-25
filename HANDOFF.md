@@ -1,11 +1,10 @@
 # HANDOFF
 Terakhir: 25 Nov 2026
-Item: DASH-10 (ringkasan agenda) — SELESAI
-File utama: app/Http/Controllers/AdminController.php,
-  resources/js/pages/admin/index.jsx,
-  tests/Feature/AdminDashboardTest.php
-Status: Kartu ringkasan agenda menampilkan pekerjaan belum selesai (status != 'done')
-  dengan tenggat hari ini dan minggu ini (Senin-Minggu) zona waktu Asia/Jakarta;
-  tiap baris memuat status, prioritas, judul tertaut ke pekerjaan, dan tenggat;
-  empty state untuk kedua kolom; test Carbon batas hari & minggu lulus; check.sh hijau.
+Item: UI-11 bugfix (ToastProvider root & FlashToasts) — SELESAI
+File utama: resources/js/app.jsx,
+  resources/js/components/toast.jsx,
+  resources/js/layouts/admin-layout.jsx
+Status: ToastProvider dipindahkan ke app.jsx membungkus <App> agar useToast()
+  dapat dipanggil di komponen halaman (/admin/work-items); jembatan flash→toast
+  dipertahankan di AdminLayout lewat FlashToasts; check.sh hijau.
 Berikutnya: AUTH-09 (remember me & masa berlaku session) dari antrean FEATURES.md
