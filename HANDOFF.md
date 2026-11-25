@@ -1,9 +1,9 @@
 # HANDOFF
-Terakhir: 24 Nov 2026
-Item: NOTE-17 (dialog detail catatan) — SELESAI
-File utama: components/notes/note-detail-dialog.jsx,
-  pages/admin/notes/index.jsx
-Status: judul kartu / tombol Detail membuka dialog pratinjau Markdown;
-  metadata, tag, jumlah pekerjaan terkait; aksi buka halaman/edit; arsip
-  read-only; check.sh hijau
-Berikutnya: FND-08 (CI GitHub Actions) dari "Antrean berikutnya" FEATURES.md
+Terakhir: 25 Nov 2026
+Item: FND-08 (CI GitHub Actions) — SELESAI
+File utama: .github/workflows/ci.yml (baru; lint.yml & tests.yml dihapus),
+  scripts/check.sh, .prettierignore, bootstrap/providers.php
+Status: CI push/PR ke main menjalankan check.sh: Pint --test, ESLint, Prettier
+  check, Pest (SQLite in-memory), build; starter kit di-ignore dari Prettier;
+  check.sh hijau
+Berikutnya: antrean kosong; pilih item berikutnya dari FEATURES.md

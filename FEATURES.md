@@ -34,7 +34,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 - [x] **FND-05** Database test SQLite in-memory lewat `phpunit.xml`
 - [x] **FND-06** Pint, ESLint, Prettier, dan `npm run build` sebagai quality gate
 - [x] **FND-07** Struktur test Pest + `RefreshDatabase`
-- [ ] **FND-08** CI GitHub Actions: Pint, ESLint, Prettier check, Pest, build
+- [x] **FND-08** CI GitHub Actions: Pint, ESLint, Prettier check, Pest, build
 - [ ] **FND-09** Script deploy / dokumentasi deployment
 - [ ] **FND-10** Backup database terjadwal + dokumentasi restore
 
@@ -195,7 +195,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 
 | Area | Selesai | Total |
 | --- | ---: | ---: |
-| Fondasi | 7 | 10 |
+| Fondasi | 8 | 10 |
 | Autentikasi | 8 | 12 |
 | UI | 8 | 12 |
 | Dashboard | 8 | 11 |
@@ -206,11 +206,11 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 | Multi-Agent | 0 | 10 |
 | Kualitas | 5 | 12 |
 
-**Total: 68 dari 130 item selesai.**
+**Total: 69 dari 130 item selesai.**
 
 ## Antrean berikutnya (urut)
 
-1. FND-08 CI
+Tidak ada item di antrean saat ini. Pilih item berikutnya dari daftar di atas.
 
 Ditunda (butuh biaya token AI): NEWS-*, AI-*, AGT-*
 

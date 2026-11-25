@@ -13,8 +13,9 @@ run() {
   fi
 }
 
-run pint   vendor/bin/pint --dirty --test
+run pint   vendor/bin/pint --test
 run eslint npx eslint resources/js --quiet
+run format npm run format:check
 run test   php artisan test --compact
 run build  npm run build
 

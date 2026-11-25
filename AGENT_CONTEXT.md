@@ -145,7 +145,7 @@ Jalankan berurutan:
 vendor/bin/pint --dirty
 npx prettier --write <file-yang-diubah>
 
-# 2. Quality gate (Pint check, ESLint, seluruh test, build). Diam jika lulus.
+# 2. Quality gate (Pint check, ESLint, Prettier check, seluruh test, build). Diam jika lulus.
 bash scripts/check.sh
 ```
 
@@ -172,6 +172,7 @@ timpa `HANDOFF.md`. Hapus data uji yang dibuat di PostgreSQL.
 | Login admin | Selesai (database + halaman Keamanan) |
 | Shell admin | Selesai |
 | Command palette | Selesai (Ctrl/Cmd + K, navigasi + quick create) |
+| CI | Selesai (GitHub Actions: Pint, ESLint, Prettier, Pest, build) |
 | Dashboard | Selesai (data nyata + kebiasaan/streak + grafik aktivitas 7/30 hari) |
 | Catatan | Selesai (CRUD, detail, dialog detail, Markdown, tautan pekerjaan, arsip/restore, search, tag, pin) |
 | Pekerjaan | Selesai (CRUD, filter, status, tenggat, catatan, proyek, subtask, saved views, aksi massal, detail dialog) |
@@ -310,6 +311,7 @@ resources/
       work-items/work-item-detail-dialog.jsx # detail + Markdown
       ui/                          # shadcn
 routes/web.php                     # semua route admin
+.github/workflows/ci.yml           # quality gate CI (push/PR main)
 tests/Feature/                     # test Pest
 tests/Pest.php                     # helper adminUser()
 FEATURES.md                        # checklist fitur
@@ -726,7 +728,7 @@ $admin = adminUser([
 
 ### Quality gate
 
-Jalankan `bash scripts/check.sh` (Pint check, ESLint, seluruh test, build).
+Jalankan `bash scripts/check.sh` (Pint check, ESLint, Prettier check, seluruh test, build).
 Format dulu dengan `vendor/bin/pint --dirty` dan `npx prettier --write <file>`.
 
 Jangan mencentang item di `FEATURES.md` sebelum semua langkah menampilkan ✓.
@@ -1198,14 +1200,13 @@ Known issues:
    masih aktif tetapi tidak memberi akses `/admin` karena cek `is_admin`.
 2. Helper test global bisa bentrok nama. Gunakan `adminUser()` dari
    `tests/Pest.php`; helper baru harus unik.
-3. Tidak ada CI.
-4. Belum ada backup otomatis.
-5. Detail pekerjaan memakai dialog, belum ada halaman detail terpisah.
-6. `completed_at` dijaga controller, bukan constraint database.
-7. Urutan kartu Kanban mengikuti tenggat, belum bisa diatur manual.
-8. Streak dihitung di PHP dari seluruh `notes.created_at`; cukup untuk data
+3. Belum ada backup otomatis.
+4. Detail pekerjaan memakai dialog, belum ada halaman detail terpisah.
+5. `completed_at` dijaga controller, bukan constraint database.
+6. Urutan kartu Kanban mengikuti tenggat, belum bisa diatur manual.
+7. Streak dihitung di PHP dari seluruh `notes.created_at`; cukup untuk data
    personal, perlu query agregat jika jumlah catatan sangat besar.
-9. Kalender memuat semua item bertenggat tanpa pagination; perlu dibatasi per
+8. Kalender memuat semua item bertenggat tanpa pagination; perlu dibatasi per
    rentang bulan jika jumlah item sudah sangat besar.
 
 ---
