@@ -1,6 +1,6 @@
 import { useForm } from '@inertiajs/react';
 import { Eye, PenLine, Save } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import InputError from '@/components/input-error';
 import MarkdownContent from '@/components/markdown-content';
@@ -25,24 +25,180 @@ const parseTags = (value) => {
         .filter(Boolean);
 };
 
+const DRAFT_PREFIX = 'my-workspace:note-draft';
+
+const draftStorageKey = (note) =>
+    `${DRAFT_PREFIX}:${note?.id != null ? note.id : 'new'}`;
+
+const readDraft = (key) => {
+    if (typeof window === 'undefined') {
+        return null;
+    }
+
+    try {
+        const raw = window.localStorage.getItem(key);
+
+        if (!raw) {
+            return null;
+        }
+
+        const draft = JSON.parse(raw);
+
+        if (!draft || typeof draft !== 'object') {
+            return null;
+        }
+
+        return {
+            title: typeof draft.title === 'string' ? draft.title : '',
+            content: typeof draft.content === 'string' ? draft.content : '',
+            tags: typeof draft.tags === 'string' ? draft.tags : '',
+        };
+    } catch {
+        return null;
+    }
+};
+
+const writeDraft = (key, draft) => {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    try {
+        window.localStorage.setItem(key, JSON.stringify(draft));
+    } catch {
+        // localStorage bisa penuh atau diblokir; editor tetap harus berjalan.
+    }
+};
+
+const removeDraft = (key) => {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    try {
+        window.localStorage.removeItem(key);
+    } catch {
+        // Abaikan kegagalan menghapus draft.
+    }
+};
+
+const storeDraft = (key, values, baseline) => {
+    const empty =
+        values.title.trim() === '' &&
+        values.content.trim() === '' &&
+        values.tags.trim() === '';
+    const unchanged =
+        values.title === baseline.title &&
+        values.content === baseline.content &&
+        values.tags === baseline.tags;
+
+    if (empty || unchanged) {
+        removeDraft(key);
+        return;
+    }
+
+    writeDraft(key, {
+        ...values,
+        savedAt: new Date().toISOString(),
+    });
+};
+
 const modes = [
     { value: 'write', label: 'Tulis', icon: PenLine },
     { value: 'preview', label: 'Pratinjau', icon: Eye },
 ];
 
 export default function NoteEditorDialog({ open, onOpenChange, note = null }) {
+    const storageKey = draftStorageKey(note);
+    const [initialDraft] = useState(() => {
+        const draft = open ? readDraft(storageKey) : null;
+
+        if (!draft) {
+            return null;
+        }
+
+        const empty =
+            draft.title.trim() === '' &&
+            draft.content.trim() === '' &&
+            draft.tags.trim() === '';
+
+        return empty ? null : draft;
+    });
+    const baselineTitle = note?.title ?? '';
+    const baselineContent = note?.content ?? '';
+    const baselineTags = (note?.tags ?? []).join(', ');
     const [mode, setMode] = useState('write');
-    const [tagInput, setTagInput] = useState((note?.tags ?? []).join(', '));
+    const [tagInput, setTagInput] = useState(
+        initialDraft ? initialDraft.tags : baselineTags,
+    );
     const { data, setData, post, put, processing, errors } = useForm({
-        title: note?.title ?? '',
-        content: note?.content ?? '',
-        tags: note?.tags ?? [],
+        title: initialDraft ? initialDraft.title : baselineTitle,
+        content: initialDraft ? initialDraft.content : baselineContent,
+        tags: initialDraft ? parseTags(initialDraft.tags) : (note?.tags ?? []),
         is_pinned: Boolean(note?.is_pinned),
     });
+
+    useEffect(() => {
+        if (!open) {
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            storeDraft(
+                storageKey,
+                {
+                    title: data.title,
+                    content: data.content,
+                    tags: tagInput,
+                },
+                {
+                    title: baselineTitle,
+                    content: baselineContent,
+                    tags: baselineTags,
+                },
+            );
+        }, 400);
+
+        return () => clearTimeout(timer);
+    }, [
+        open,
+        storageKey,
+        data.title,
+        data.content,
+        tagInput,
+        baselineTitle,
+        baselineContent,
+        baselineTags,
+    ]);
 
     const handleTagsChange = (value) => {
         setTagInput(value);
         setData('tags', parseTags(value));
+    };
+
+    const handleOpenChange = (next) => {
+        if (!next) {
+            storeDraft(
+                storageKey,
+                {
+                    title: data.title,
+                    content: data.content,
+                    tags: tagInput,
+                },
+                {
+                    title: baselineTitle,
+                    content: baselineContent,
+                    tags: baselineTags,
+                },
+            );
+        }
+
+        onOpenChange(next);
+    };
+
+    const cancel = () => {
+        removeDraft(storageKey);
+        onOpenChange(false);
     };
 
     const submit = (event) => {
@@ -50,7 +206,10 @@ export default function NoteEditorDialog({ open, onOpenChange, note = null }) {
 
         const options = {
             preserveScroll: true,
-            onSuccess: () => onOpenChange(false),
+            onSuccess: () => {
+                removeDraft(storageKey);
+                onOpenChange(false);
+            },
         };
 
         if (note) {
@@ -61,7 +220,7 @@ export default function NoteEditorDialog({ open, onOpenChange, note = null }) {
     };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
                 <DialogHeader>
                     <DialogTitle>
@@ -187,7 +346,7 @@ export default function NoteEditorDialog({ open, onOpenChange, note = null }) {
                         <Button
                             type="button"
                             variant="outline"
-                            onClick={() => onOpenChange(false)}
+                            onClick={cancel}
                         >
                             Batal
                         </Button>

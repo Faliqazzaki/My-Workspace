@@ -96,7 +96,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 - [x] **NOTE-10** Preview Markdown saat menulis
 - [x] **NOTE-11** Tautan catatan ↔ pekerjaan (many-to-many)
 - [x] **NOTE-12** Arsip / soft delete + restore
-- [ ] **NOTE-13** Auto-save draft ke localStorage
+- [x] **NOTE-13** Auto-save draft ke localStorage
 - [ ] **NOTE-14** Template catatan (harian, belajar, snippet)
 - [ ] **NOTE-15** Full-text search PostgreSQL (tsvector) + fallback SQLite
 - [ ] **NOTE-16** Catatan publik / share link (opsional, read-only)
@@ -199,33 +199,32 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 | Autentikasi | 8 | 12 |
 | UI | 8 | 12 |
 | Dashboard | 8 | 11 |
-| Catatan | 13 | 17 |
+| Catatan | 14 | 17 |
 | Pekerjaan | 18 | 20 |
 | Pengetahuan & Produktivitas | 2 | 13 |
 | Berita & AI | 0 | 13 |
 | Multi-Agent | 0 | 10 |
 | Kualitas | 5 | 12 |
 
-**Total: 70 dari 130 item selesai.**
+**Total: 71 dari 130 item selesai.**
 
 ## Antrean berikutnya (urut, lokal dulu)
 
 Fitur yang bisa dikerjakan tanpa layanan eksternal/AI:
 
-1. NOTE-13 Auto-save draft ke localStorage
-2. UI-09 Keyboard shortcuts untuk aksi utama
-3. UI-11 Toast global (bukan hanya banner flash)
-4. DASH-10 Ringkasan agenda: tenggat hari ini & minggu ini
-5. AUTH-09 Remember me + masa berlaku session
-6. WORK-18 Riwayat aktivitas pekerjaan
-7. PROD-08 Export/import JSON & Markdown
-8. PROD-05 Notifikasi in-app untuk tenggat
-9. PROD-07 PWA + mode offline baca
-10. WORK-17 Lampiran file pada pekerjaan
-11. KNOW-02 Statistik pengetahuan: catatan/minggu, tag teratas
-12. QA-06 Test browser end-to-end (Playwright)
-13. QA-10 Query performance review + index tambahan
-14. QA-12 Dokumentasi arsitektur & ADR
+1. UI-09 Keyboard shortcuts untuk aksi utama
+2. UI-11 Toast global (bukan hanya banner flash)
+3. DASH-10 Ringkasan agenda: tenggat hari ini & minggu ini
+4. AUTH-09 Remember me + masa berlaku session
+5. WORK-18 Riwayat aktivitas pekerjaan
+6. PROD-08 Export/import JSON & Markdown
+7. PROD-05 Notifikasi in-app untuk tenggat
+8. PROD-07 PWA + mode offline baca
+9. WORK-17 Lampiran file pada pekerjaan
+10. KNOW-02 Statistik pengetahuan: catatan/minggu, tag teratas
+11. QA-06 Test browser end-to-end (Playwright)
+12. QA-10 Query performance review + index tambahan
+13. QA-12 Dokumentasi arsitektur & ADR
 
 Ditunda (butuh layanan eksternal/biaya token): NEWS-*, AI-*, AGT-*, PROD-06.
 

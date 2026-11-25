@@ -8,9 +8,10 @@ kebenaran**, lalu perbarui dokumen.
 
 > Terakhir diperbarui: 25 November 2026
 > Status: fondasi + Dashboard (termasuk kebiasaan mencatat) + Catatan (dialog
-> detail, Markdown, tautan pekerjaan, arsip/restore) + Pekerjaan (list + detail +
-> Kanban + kalender + proyek + subtask + saved views) + command palette
-> (Ctrl/Cmd + K) dengan pencarian global catatan/pekerjaan sudah berjalan.
+> detail, Markdown, tautan pekerjaan, arsip/restore, auto-save draft) + Pekerjaan
+> (list + detail + Kanban + kalender + proyek + subtask + saved views) + command
+> palette (Ctrl/Cmd + K) dengan pencarian global catatan/pekerjaan sudah
+> berjalan.
 
 ---
 
@@ -84,10 +85,10 @@ kebenaran**, lalu perbarui dokumen.
   halaman **Keamanan** untuk ubah password.
 - Fitur selesai: login, shell admin (command palette Ctrl/Cmd + K), Dashboard
   (statistik + kebiasaan mencatat), Catatan (dialog detail + Markdown +
-  pratinjau + tautan ke pekerjaan), Pekerjaan (list + detail dialog + Markdown +
-  Kanban + kalender + proyek + subtask + saved views), Proyek/area (CRUD +
-  arsip + progress).
-- Test: **127 test Pest lolos** (995 assertions), build Vite berhasil.
+  pratinjau + autosave draft + tautan ke pekerjaan), Pekerjaan (list + detail
+  dialog + Markdown + Kanban + kalender + proyek + subtask + saved views),
+  Proyek/area (CRUD + arsip + progress).
+- Test: **133 test Pest lolos** (1016 assertions), build Vite berhasil.
 - Cara kerja: **satu increment kecil**, backend → frontend → test → quality gate
   → verifikasi PostgreSQL → update checklist.
 
@@ -174,7 +175,7 @@ timpa `HANDOFF.md`. Hapus data uji yang dibuat di PostgreSQL.
 | Command palette | Selesai (Ctrl/Cmd + K, navigasi, quick create, pencarian global) |
 | CI | Selesai (GitHub Actions: Pint, ESLint, Prettier, Pest, build) |
 | Dashboard | Selesai (data nyata + kebiasaan/streak + grafik aktivitas 7/30 hari) |
-| Catatan | Selesai (CRUD, detail, dialog detail, Markdown, tautan pekerjaan, arsip/restore, search, tag, pin) |
+| Catatan | Selesai (CRUD, detail, dialog detail, Markdown, auto-save draft, tautan pekerjaan, arsip/restore, search, tag, pin) |
 | Pekerjaan | Selesai (CRUD, filter, status, tenggat, catatan, proyek, subtask, saved views, aksi massal, detail dialog) |
 | Markdown preview | Selesai (halaman detail + tab pratinjau editor) |
 | Tautan catatan ↔ pekerjaan | Selesai (pivot `note_work_item`, dua arah) |
@@ -305,7 +306,7 @@ resources/
     components/
       command-palette.jsx          # palette Ctrl/Cmd+K (navigasi + quick create + pencarian global)
       markdown-content.jsx         # render Markdown aman (GFM + sanitize)
-      notes/note-editor-dialog.jsx # dialog tambah/edit + pratinjau
+      notes/note-editor-dialog.jsx # dialog tambah/edit + pratinjau + auto-save draft
       notes/note-detail-dialog.jsx # pratinjau detail dari daftar
       work-items/kanban-board.jsx  # papan Kanban + drag & drop
       work-items/work-calendar.jsx # kalender tenggat bulanan
@@ -657,6 +658,10 @@ Saat menambah route baru: ikuti pola di atas, tambahkan test tamu → redirect.
   `.markdown-body` pada `resources/css/app.css`.
 - Editor catatan memakai `@/components/notes/note-editor-dialog` dengan tab
   **Tulis / Pratinjau**. Jangan menulis ulang dialog editor di halaman lain.
+  Dialog menyimpan draft (judul, isi, tag) ke `localStorage` dengan debounce
+  400ms; draft dipulihkan saat dialog dibuka lagi, lalu dihapus setelah simpan
+  sukses atau tombol **Batal**. Tutup lewat Esc/overlay tetap menyimpan draft.
+  Semua akses `localStorage` dibungkus `try/catch`.
 - Kanban memakai `@/components/work-items/kanban-board` (`@dnd-kit/core`).
   Kolom adalah droppable (`status`), kartu draggable. Perubahan status
   di-optimistic-update di state lokal lalu `PATCH`; rollback lewat `onError`.
@@ -814,6 +819,10 @@ Gunakan urutan ini agar hasilnya konsisten:
     diarsipkan.
 12. Pada tab **Arsip**, tombol **Detail** tetap membuka pratinjau read-only
     tanpa tombol edit atau buka halaman; pulihkan catatan dari kartu daftar.
+13. Draft editor (judul, isi, tag) tersimpan otomatis ke `localStorage` per
+    catatan (atau `new`) setelah 400ms tanpa mengetik. Draft dipulihkan saat
+    dialog dibuka lagi, dan dihapus setelah simpan sukses atau tombol
+    **Batal**. Menutup lewat Esc/overlay menyimpan draft terakhir.
 
 ### 14.3 Pekerjaan
 
