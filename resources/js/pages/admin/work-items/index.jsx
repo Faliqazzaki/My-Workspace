@@ -24,6 +24,7 @@ import {
 import { useEffect, useRef, useState } from 'react';
 
 import InputError from '@/components/input-error';
+import { useToast } from '@/components/toast';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -124,6 +125,7 @@ export default function WorkItemsIndex({
     const view = ['board', 'calendar'].includes(filters.view)
         ? filters.view
         : 'list';
+    const toast = useToast();
     const [board, setBoard] = useState(boardItems);
     const [syncedBoard, setSyncedBoard] = useState(boardSignature(boardItems));
     const [syncedSelectionKey, setSyncedSelectionKey] = useState(null);
@@ -470,7 +472,12 @@ export default function WorkItemsIndex({
             {
                 preserveScroll: true,
                 preserveState: true,
-                onError: () => setBoard(previous),
+                onError: () => {
+                    setBoard(previous);
+                    toast.error(
+                        'Status pekerjaan gagal diperbarui. Silakan coba lagi.',
+                    );
+                },
             },
         );
     };

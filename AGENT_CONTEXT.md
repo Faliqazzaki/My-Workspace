@@ -11,7 +11,7 @@ kebenaran**, lalu perbarui dokumen.
 > detail, Markdown, tautan pekerjaan, arsip/restore, auto-save draft) + Pekerjaan
 > (list + detail + Kanban + kalender + proyek + subtask + saved views) + command
 > palette (Ctrl/Cmd + K) dengan pencarian global catatan/pekerjaan + shortcut
-> keyboard untuk aksi utama sudah berjalan.
+> keyboard untuk aksi utama + toast global sudah berjalan.
 
 ---
 
@@ -173,6 +173,7 @@ timpa `HANDOFF.md`. Hapus data uji yang dibuat di PostgreSQL.
 | Login admin | Selesai (database + halaman Keamanan) |
 | Shell admin | Selesai |
 | Keyboard shortcuts | Selesai (`?` bantuan, `n`/`w` buat, `g`+`h/n/w/p` navigasi, `/` cari) |
+| Toast global | Selesai (`ToastProvider`, flash sukses/error/info, auto-dismiss) |
 | Command palette | Selesai (Ctrl/Cmd + K, navigasi, quick create, pencarian global) |
 | CI | Selesai (GitHub Actions: Pint, ESLint, Prettier, Pest, build) |
 | Dashboard | Selesai (data nyata + kebiasaan/streak + grafik aktivitas 7/30 hari) |
@@ -308,6 +309,7 @@ resources/
       command-palette.jsx          # palette Ctrl/Cmd+K (navigasi + quick create + pencarian global)
       keyboard-shortcuts.jsx       # shortcut global + dialog bantuan (?)
       markdown-content.jsx         # render Markdown aman (GFM + sanitize)
+      toast.jsx                    # toast global + jembatan flash Laravel
       notes/note-editor-dialog.jsx # dialog tambah/edit + pratinjau + auto-save draft
       notes/note-detail-dialog.jsx # pratinjau detail dari daftar
       work-items/kanban-board.jsx  # papan Kanban + drag & drop
@@ -346,7 +348,7 @@ Browser
 - Shared props dari `HandleInertiaRequests`:
   - `admin` → `{ username }` atau `null`
   - `auth.user` → user Fortify (tidak dipakai admin)
-  - `flash.success`
+  - `flash.success`, `flash.error`, `flash.info` (dirender sebagai toast)
   - `sidebarOpen`, `name`
 
 ---
@@ -697,7 +699,10 @@ Saat menambah route baru: ikuti pola di atas, tambahkan test tamu → redirect.
   baru, dan `g` lalu `h/n/w/p` untuk Beranda/Catatan/Pekerjaan/Proyek.
   Shortcut diabaikan saat fokus di input/textarea/select/contenteditable atau
   saat ada dialog terbuka. `Ctrl/Cmd + K` ditangani layout.
-- Flash sukses ditampilkan layout di atas konten.
+- Toast global di `@/components/toast`: `ToastProvider` membungkus layout admin,
+  `useToast()` memberi `success`/`error`/`info`, flash Laravel otomatis menjadi
+  toast (maks 4, auto-dismiss 5 detik, tombol tutup, `aria-live`). Dipakai juga
+  untuk kegagalan aksi tanpa flash, mis. ubah status di Kanban.
 
 ---
 

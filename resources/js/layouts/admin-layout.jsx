@@ -16,6 +16,7 @@ import { useCallback, useEffect, useState } from 'react';
 import CommandPalette from '@/components/command-palette';
 import KeyboardShortcuts from '@/components/keyboard-shortcuts';
 import ThemeToggle from '@/components/theme-toggle';
+import { ToastProvider } from '@/components/toast';
 import { Button } from '@/components/ui/button';
 import WorkspaceLogo from '@/components/workspace-logo';
 import { cn } from '@/lib/utils';
@@ -30,7 +31,7 @@ const navigation = [
 
 export default function AdminLayout({ title = 'Beranda', children }) {
     const { url, props } = usePage();
-    const { admin, flash } = props;
+    const { admin } = props;
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [paletteOpen, setPaletteOpen] = useState(false);
     const [shortcutsOpen, setShortcutsOpen] = useState(false);
@@ -84,7 +85,7 @@ export default function AdminLayout({ title = 'Beranda', children }) {
     };
 
     return (
-        <>
+        <ToastProvider>
             <Head title={title} />
 
             <div className="flex h-dvh overflow-hidden bg-muted/30 text-foreground">
@@ -244,12 +245,6 @@ export default function AdminLayout({ title = 'Beranda', children }) {
                         </div>
                     </header>
 
-                    {flash?.success && (
-                        <div className="border-b border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-700 sm:px-6 dark:text-emerald-300">
-                            {flash.success}
-                        </div>
-                    )}
-
                     <main className="flex-1 overflow-y-auto p-4 sm:p-6">
                         {children}
                     </main>
@@ -262,6 +257,6 @@ export default function AdminLayout({ title = 'Beranda', children }) {
                 onOpenChange={setShortcutsOpen}
                 onOpenPalette={openPalette}
             />
-        </>
+        </ToastProvider>
     );
 }

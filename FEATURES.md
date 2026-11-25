@@ -65,7 +65,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 - [x] **UI-08** Command palette / quick capture (`Ctrl/Cmd + K`)
 - [x] **UI-09** Keyboard shortcuts untuk aksi utama
 - [ ] **UI-10** Audit aksesibilitas (fokus, label, kontras, navigasi keyboard)
-- [ ] **UI-11** Toast global (bukan hanya banner flash)
+- [x] **UI-11** Toast global (bukan hanya banner flash)
 - [ ] **UI-12** Halaman 404/500 yang ramah
 
 ## 4. Dashboard
@@ -197,7 +197,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 | --- | ---: | ---: |
 | Fondasi | 8 | 10 |
 | Autentikasi | 8 | 12 |
-| UI | 9 | 12 |
+| UI | 10 | 12 |
 | Dashboard | 8 | 11 |
 | Catatan | 14 | 17 |
 | Pekerjaan | 18 | 20 |
@@ -206,24 +206,23 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 | Multi-Agent | 0 | 10 |
 | Kualitas | 5 | 12 |
 
-**Total: 72 dari 130 item selesai.**
+**Total: 73 dari 130 item selesai.**
 
 ## Antrean berikutnya (urut, lokal dulu)
 
 Fitur yang bisa dikerjakan tanpa layanan eksternal/AI:
 
-1. UI-11 Toast global (bukan hanya banner flash)
-2. DASH-10 Ringkasan agenda: tenggat hari ini & minggu ini
-3. AUTH-09 Remember me + masa berlaku session
-4. WORK-18 Riwayat aktivitas pekerjaan
-5. PROD-08 Export/import JSON & Markdown
-6. PROD-05 Notifikasi in-app untuk tenggat
-7. PROD-07 PWA + mode offline baca
-8. WORK-17 Lampiran file pada pekerjaan
-9. KNOW-02 Statistik pengetahuan: catatan/minggu, tag teratas
-10. QA-06 Test browser end-to-end (Playwright)
-11. QA-10 Query performance review + index tambahan
-12. QA-12 Dokumentasi arsitektur & ADR
+1. DASH-10 Ringkasan agenda: tenggat hari ini & minggu ini
+2. AUTH-09 Remember me + masa berlaku session
+3. WORK-18 Riwayat aktivitas pekerjaan
+4. PROD-08 Export/import JSON & Markdown
+5. PROD-05 Notifikasi in-app untuk tenggat
+6. PROD-07 PWA + mode offline baca
+7. WORK-17 Lampiran file pada pekerjaan
+8. KNOW-02 Statistik pengetahuan: catatan/minggu, tag teratas
+9. QA-06 Test browser end-to-end (Playwright)
+10. QA-10 Query performance review + index tambahan
+11. QA-12 Dokumentasi arsitektur & ADR
 
 Ditunda (butuh layanan eksternal/biaya token): NEWS-*, AI-*, AGT-*, PROD-06.
 

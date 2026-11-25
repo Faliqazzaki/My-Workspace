@@ -1,9 +1,12 @@
 # HANDOFF
 Terakhir: 25 Nov 2026
-Item: UI-09 (keyboard shortcuts aksi utama) — SELESAI
-File utama: resources/js/components/keyboard-shortcuts.jsx,
-  resources/js/layouts/admin-layout.jsx
-Status: `/` buka command palette, `?` dialog bantuan, `n` catatan baru,
-  `w` pekerjaan baru, `g` lalu `h/n/w/p` navigasi; shortcut diabaikan saat
-  mengetik atau ada dialog terbuka; tombol bantuan di topbar; check.sh hijau
-Berikutnya: UI-11 (toast global) dari "Antrean berikutnya" FEATURES.md
+Item: UI-11 (toast global) — SELESAI
+File utama: resources/js/components/toast.jsx,
+  resources/js/layouts/admin-layout.jsx,
+  app/Http/Middleware/HandleInertiaRequests.php,
+  resources/js/pages/admin/work-items/index.jsx
+Status: ToastProvider membungkus layout admin; useToast() menyediakan
+  success/error/info; flash Laravel (success/error/info) otomatis tampil
+  sebagai toast; maks 4 toast, auto-dismiss 5 detik, tombol tutup, aria-live;
+  kegagalan ubah status Kanban memakai toast; check.sh hijau
+Berikutnya: DASH-10 (ringkasan agenda) dari "Antrean berikutnya" FEATURES.md
