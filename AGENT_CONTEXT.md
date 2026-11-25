@@ -10,8 +10,8 @@ kebenaran**, lalu perbarui dokumen.
 > Status: fondasi + Dashboard (termasuk kebiasaan mencatat) + Catatan (dialog
 > detail, Markdown, tautan pekerjaan, arsip/restore, auto-save draft) + Pekerjaan
 > (list + detail + Kanban + kalender + proyek + subtask + saved views) + command
-> palette (Ctrl/Cmd + K) dengan pencarian global catatan/pekerjaan sudah
-> berjalan.
+> palette (Ctrl/Cmd + K) dengan pencarian global catatan/pekerjaan + shortcut
+> keyboard untuk aksi utama sudah berjalan.
 
 ---
 
@@ -83,11 +83,11 @@ kebenaran**, lalu perbarui dokumen.
   tombol **solid tanpa gradient**, mendukung dark mode.
 - Auth saat ini: database (`users.username`, password hash, flag `is_admin`),
   halaman **Keamanan** untuk ubah password.
-- Fitur selesai: login, shell admin (command palette Ctrl/Cmd + K), Dashboard
-  (statistik + kebiasaan mencatat), Catatan (dialog detail + Markdown +
-  pratinjau + autosave draft + tautan ke pekerjaan), Pekerjaan (list + detail
-  dialog + Markdown + Kanban + kalender + proyek + subtask + saved views),
-  Proyek/area (CRUD + arsip + progress).
+- Fitur selesai: login, shell admin (command palette Ctrl/Cmd + K + shortcut
+  keyboard), Dashboard (statistik + kebiasaan mencatat), Catatan (dialog detail
+  + Markdown + pratinjau + autosave draft + tautan ke pekerjaan), Pekerjaan
+  (list + detail dialog + Markdown + Kanban + kalender + proyek + subtask +
+  saved views), Proyek/area (CRUD + arsip + progress).
 - Test: **133 test Pest lolos** (1016 assertions), build Vite berhasil.
 - Cara kerja: **satu increment kecil**, backend → frontend → test → quality gate
   → verifikasi PostgreSQL → update checklist.
@@ -172,6 +172,7 @@ timpa `HANDOFF.md`. Hapus data uji yang dibuat di PostgreSQL.
 | --- | --- |
 | Login admin | Selesai (database + halaman Keamanan) |
 | Shell admin | Selesai |
+| Keyboard shortcuts | Selesai (`?` bantuan, `n`/`w` buat, `g`+`h/n/w/p` navigasi, `/` cari) |
 | Command palette | Selesai (Ctrl/Cmd + K, navigasi, quick create, pencarian global) |
 | CI | Selesai (GitHub Actions: Pint, ESLint, Prettier, Pest, build) |
 | Dashboard | Selesai (data nyata + kebiasaan/streak + grafik aktivitas 7/30 hari) |
@@ -305,6 +306,7 @@ resources/
       auth/admin-login.jsx         # login
     components/
       command-palette.jsx          # palette Ctrl/Cmd+K (navigasi + quick create + pencarian global)
+      keyboard-shortcuts.jsx       # shortcut global + dialog bantuan (?)
       markdown-content.jsx         # render Markdown aman (GFM + sanitize)
       notes/note-editor-dialog.jsx # dialog tambah/edit + pratinjau + auto-save draft
       notes/note-detail-dialog.jsx # pratinjau detail dari daftar
@@ -690,6 +692,11 @@ Saat menambah route baru: ikuti pola di atas, tambahkan test tamu → redirect.
   (↑/↓/Enter), dan aksi buat cepat yang membuka dialog lewat `?new=1` pada
   halaman catatan/pekerjaan. Hasil catatan membuka `/admin/notes/{note}`;
   hasil pekerjaan membuka daftar terfilter `?q=`.
+- Shortcut global di `@/components/keyboard-shortcuts` (dirender layout):
+  `/` buka palette, `?` buka dialog bantuan, `n` catatan baru, `w` pekerjaan
+  baru, dan `g` lalu `h/n/w/p` untuk Beranda/Catatan/Pekerjaan/Proyek.
+  Shortcut diabaikan saat fokus di input/textarea/select/contenteditable atau
+  saat ada dialog terbuka. `Ctrl/Cmd + K` ditangani layout.
 - Flash sukses ditampilkan layout di atas konten.
 
 ---
@@ -796,7 +803,7 @@ Gunakan urutan ini agar hasilnya konsisten:
 ### 14.2 Catatan
 
 1. Sidebar **Catatan** → `/admin/notes`.
-2. Klik **Catatan baru** → dialog.
+2. Klik **Catatan baru** (atau tekan `n` dari halaman mana pun) → dialog.
 3. Isi judul, konten Markdown, tag (dipisah koma), pin.
 4. Simpan → redirect + flash.
 5. Cari (debounce) / filter tag / halaman.
@@ -827,7 +834,7 @@ Gunakan urutan ini agar hasilnya konsisten:
 ### 14.3 Pekerjaan
 
 1. Sidebar **Pekerjaan** → `/admin/work-items`.
-2. Klik **Pekerjaan baru** → dialog.
+2. Klik **Pekerjaan baru** (atau tekan `w` dari halaman mana pun) → dialog.
 3. Isi judul, deskripsi, proyek (opsional), status, prioritas, tenggat, tag,
    dan subtask (checklist).
 4. Simpan → redirect + flash.

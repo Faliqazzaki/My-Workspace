@@ -3,6 +3,7 @@ import {
     ClipboardList,
     FolderKanban,
     Home,
+    Keyboard,
     LogOut,
     Menu,
     NotebookPen,
@@ -10,9 +11,10 @@ import {
     ShieldCheck,
     X,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import CommandPalette from '@/components/command-palette';
+import KeyboardShortcuts from '@/components/keyboard-shortcuts';
 import ThemeToggle from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import WorkspaceLogo from '@/components/workspace-logo';
@@ -31,6 +33,9 @@ export default function AdminLayout({ title = 'Beranda', children }) {
     const { admin, flash } = props;
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [paletteOpen, setPaletteOpen] = useState(false);
+    const [shortcutsOpen, setShortcutsOpen] = useState(false);
+
+    const openPalette = useCallback(() => setPaletteOpen(true), []);
 
     const username = admin?.username ?? 'my-workspace';
     const shortcutLabel =
@@ -46,7 +51,18 @@ export default function AdminLayout({ title = 'Beranda', children }) {
                 event.key.toLowerCase() === 'k'
             ) {
                 event.preventDefault();
-                setPaletteOpen((current) => !current);
+                setPaletteOpen((current) => {
+                    if (
+                        !current &&
+                        document.querySelector(
+                            '[role="dialog"][data-state="open"]',
+                        )
+                    ) {
+                        return current;
+                    }
+
+                    return !current;
+                });
             }
         };
 
@@ -203,6 +219,17 @@ export default function AdminLayout({ title = 'Beranda', children }) {
                             >
                                 <Search className="size-4" />
                             </Button>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setShortcutsOpen(true)}
+                                className="hidden sm:inline-flex"
+                                aria-label="Bantuan shortcut keyboard"
+                                title="Shortcut keyboard (?)"
+                            >
+                                <Keyboard className="size-4" />
+                            </Button>
                             <ThemeToggle />
                             <Button
                                 type="button"
@@ -230,6 +257,11 @@ export default function AdminLayout({ title = 'Beranda', children }) {
             </div>
 
             <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
+            <KeyboardShortcuts
+                open={shortcutsOpen}
+                onOpenChange={setShortcutsOpen}
+                onOpenPalette={openPalette}
+            />
         </>
     );
 }

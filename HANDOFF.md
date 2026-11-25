@@ -1,11 +1,9 @@
 # HANDOFF
 Terakhir: 25 Nov 2026
-Item: NOTE-13 (auto-save draft catatan) — SELESAI
-File utama: resources/js/components/notes/note-editor-dialog.jsx,
-  AGENT_CONTEXT.md, FEATURES.md
-Status: draft judul/isi/tag tersimpan ke localStorage per catatan (atau `new`)
-  dengan debounce 400ms, dipulihkan saat dialog dibuka lagi, dihapus setelah
-  simpan sukses atau tombol Batal; Esc/overlay tetap menyimpan draft; akses
-  localStorage dibungkus try/catch; check.sh hijau
-Berikutnya: UI-09 (keyboard shortcuts untuk aksi utama) dari "Antrean berikutnya"
-  FEATURES.md
+Item: UI-09 (keyboard shortcuts aksi utama) — SELESAI
+File utama: resources/js/components/keyboard-shortcuts.jsx,
+  resources/js/layouts/admin-layout.jsx
+Status: `/` buka command palette, `?` dialog bantuan, `n` catatan baru,
+  `w` pekerjaan baru, `g` lalu `h/n/w/p` navigasi; shortcut diabaikan saat
+  mengetik atau ada dialog terbuka; tombol bantuan di topbar; check.sh hijau
+Berikutnya: UI-11 (toast global) dari "Antrean berikutnya" FEATURES.md
