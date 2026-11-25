@@ -6,11 +6,11 @@ bagian `FEATURES.md` yang relevan; bagian lain dibaca hanya jika dibutuhkan.
 Jika ada konflik antara dokumen dan kode, **kode yang berjalan adalah
 kebenaran**, lalu perbarui dokumen.
 
-> Terakhir diperbarui: 24 November 2026
+> Terakhir diperbarui: 25 November 2026
 > Status: fondasi + Dashboard (termasuk kebiasaan mencatat) + Catatan (dialog
 > detail, Markdown, tautan pekerjaan, arsip/restore) + Pekerjaan (list + detail +
 > Kanban + kalender + proyek + subtask + saved views) + command palette
-> (Ctrl/Cmd + K) sudah berjalan.
+> (Ctrl/Cmd + K) dengan pencarian global catatan/pekerjaan sudah berjalan.
 
 ---
 
@@ -171,7 +171,7 @@ timpa `HANDOFF.md`. Hapus data uji yang dibuat di PostgreSQL.
 | --- | --- |
 | Login admin | Selesai (database + halaman Keamanan) |
 | Shell admin | Selesai |
-| Command palette | Selesai (Ctrl/Cmd + K, navigasi + quick create) |
+| Command palette | Selesai (Ctrl/Cmd + K, navigasi, quick create, pencarian global) |
 | CI | Selesai (GitHub Actions: Pint, ESLint, Prettier, Pest, build) |
 | Dashboard | Selesai (data nyata + kebiasaan/streak + grafik aktivitas 7/30 hari) |
 | Catatan | Selesai (CRUD, detail, dialog detail, Markdown, tautan pekerjaan, arsip/restore, search, tag, pin) |
@@ -186,7 +186,7 @@ timpa `HANDOFF.md`. Hapus data uji yang dibuat di PostgreSQL.
 | Berita AI | Belum |
 | Multi-agent | Belum |
 
-Angka test terakhir: **127 passed, 995 assertions**.
+Angka test terakhir: **133 passed, 1016 assertions**.
 
 ---
 
@@ -259,6 +259,7 @@ app/
       AdminController.php          # dashboard
       AdminPasswordController.php  # ubah password admin
       NoteController.php           # CRUD catatan + pin
+      SearchController.php         # pencarian global catatan + pekerjaan
       SavedViewController.php      # simpan/hapus tampilan filter pekerjaan
       WorkItemController.php       # CRUD pekerjaan + status + filter
       Settings/                    # sisa starter kit (belum dipakai admin)
@@ -302,7 +303,7 @@ resources/
       admin/projects/index.jsx     # proyek + progress
       auth/admin-login.jsx         # login
     components/
-      command-palette.jsx          # palette Ctrl/Cmd+K (navigasi + quick create)
+      command-palette.jsx          # palette Ctrl/Cmd+K (navigasi + quick create + pencarian global)
       markdown-content.jsx         # render Markdown aman (GFM + sanitize)
       notes/note-editor-dialog.jsx # dialog tambah/edit + pratinjau
       notes/note-detail-dialog.jsx # pratinjau detail dari daftar
@@ -533,6 +534,7 @@ Prefix `/admin`, name prefix `admin.`, middleware `admin.auth`.
 | POST | `/masuk` | `admin.login` | login (throttle 10,1) |
 | POST | `/keluar` | `admin.logout` | logout |
 | GET | `/admin` | `admin.index` | dashboard |
+| GET | `/admin/search` | `admin.search` | pencarian global catatan + pekerjaan (JSON) |
 | GET | `/admin/password` | `admin.password.edit` | halaman keamanan |
 | PUT | `/admin/password` | `admin.password.update` | ubah password |
 | GET | `/admin/notes` | `admin.notes.index` | daftar catatan |
@@ -564,6 +566,10 @@ opsional (`q`, `status`, `priority`, `project`, `view`). Filter kosong dibuang,
 
 `?new=1` pada `/admin/notes` dan `/admin/work-items` hanya sinyal klien untuk
 membuka dialog tambah dari command palette; tidak mengubah query filter.
+
+`GET /admin/search?q=` mengembalikan JSON `{ notes: [...], workItems: [...] }`
+(maks 5 per model, catatan terarsip tidak ikut). Query kosong menghasilkan dua
+array kosong. Endpoint ini dipakai command palette, bukan halaman Inertia.
 
 Route lain yang ada tetapi **tidak dipakai**: `GET /dashboard` (Fortify auth),
 `/settings/*`, `/login`, `/register`.
@@ -674,8 +680,11 @@ Saat menambah route baru: ikuti pola di atas, tambahkan test tamu → redirect.
   konten Markdown read-only, metadata/tag/jumlah pekerjaan, serta aksi buka
   halaman dan edit; halaman detail `/admin/notes/{note}` tetap ada.
 - Command palette global di `@/components/command-palette` (Ctrl/Cmd + K):
-  filter perintah, navigasi keyboard (↑/↓/Enter), dan aksi buat cepat yang
-  membuka dialog lewat `?new=1` pada halaman catatan/pekerjaan.
+  filter perintah, pencarian global catatan/pekerjaan (debounce 250ms,
+  `GET /admin/search?q=`, hasil dikelompokkan per model), navigasi keyboard
+  (↑/↓/Enter), dan aksi buat cepat yang membuka dialog lewat `?new=1` pada
+  halaman catatan/pekerjaan. Hasil catatan membuka `/admin/notes/{note}`;
+  hasil pekerjaan membuka daftar terfilter `?q=`.
 - Flash sukses ditampilkan layout di atas konten.
 
 ---
@@ -1048,6 +1057,13 @@ Tampilkan hasil terkelompok + shortcut buka.
 
 **Acceptance:** debounce, keyboard navigation, hasil kosong yang jelas, test
 search lintas model.
+
+**Status PROD-04:** selesai. `SearchController@index` memakai `whereLike`
+case-insensitive untuk judul/isi catatan dan judul/deskripsi pekerjaan, maks 5
+hasil per model. Command palette men-debounce 250ms, menampilkan grup
+**Catatan** dan **Pekerjaan**, serta empty state yang menyebut kata kunci.
+Test: tamu redirect, query kosong, pencarian lintas model + isi/deskripsi,
+arsip dikecualikan, dan batas hasil (`tests/Feature/SearchTest.php`).
 
 ---
 

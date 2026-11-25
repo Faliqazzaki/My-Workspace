@@ -1,9 +1,12 @@
 # HANDOFF
 Terakhir: 25 Nov 2026
-Item: FND-08 (CI GitHub Actions) — SELESAI
-File utama: .github/workflows/ci.yml (baru; lint.yml & tests.yml dihapus),
-  scripts/check.sh, .prettierignore, bootstrap/providers.php
-Status: CI push/PR ke main menjalankan check.sh: Pint --test, ESLint, Prettier
-  check, Pest (SQLite in-memory), build; starter kit di-ignore dari Prettier;
-  check.sh hijau
-Berikutnya: antrean kosong; pilih item berikutnya dari FEATURES.md
+Item: PROD-04 (pencarian global catatan & pekerjaan) — SELESAI
+File utama: app/Http/Controllers/SearchController.php, routes/web.php,
+  resources/js/components/command-palette.jsx,
+  tests/Feature/SearchTest.php
+Status: GET /admin/search?q= mengembalikan { notes, workItems } (maks 5 per
+  model, catatan arsip dikecualikan, whereLike case-insensitive); command
+  palette men-debounce 250ms, menampilkan grup Catatan/Pekerjaan, navigasi
+  keyboard, dan empty state; check.sh hijau
+Berikutnya: NOTE-13 (auto-save draft ke localStorage) dari "Antrean berikutnya"
+  FEATURES.md

@@ -11,7 +11,7 @@ import {
     Search,
     ShieldCheck,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import {
     Dialog,
@@ -19,7 +19,9 @@ import {
     DialogDescription,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { formatDate } from '@/lib/date';
 import { cn } from '@/lib/utils';
+import { priorityMeta, statusMeta } from '@/lib/work-item-meta';
 
 const commands = [
     {
@@ -87,29 +89,118 @@ const commands = [
     },
 ];
 
+const emptyResults = { notes: [], workItems: [] };
+
+const workItemHint = (item) => {
+    const parts = [
+        statusMeta[item.status]?.label,
+        priorityMeta[item.priority]?.label,
+        item.due_date ? `Tenggat ${formatDate(item.due_date)}` : null,
+    ].filter(Boolean);
+
+    return parts.join(' · ') || item.excerpt || 'Pekerjaan';
+};
+
 export default function CommandPalette({ open, onOpenChange }) {
     const [query, setQuery] = useState('');
     const [activeIndex, setActiveIndex] = useState(0);
+    const [results, setResults] = useState(emptyResults);
+    const [searching, setSearching] = useState(false);
 
-    const filtered = useMemo(() => {
-        const term = query.trim().toLowerCase();
+    const term = query.trim();
+    const searchTerm = term.length >= 2 ? term : '';
 
-        if (!term) {
-            return commands;
+    useEffect(() => {
+        if (!searchTerm) {
+            return;
         }
 
-        return commands.filter((command) =>
-            `${command.label} ${command.hint} ${command.keywords}`
-                .toLowerCase()
-                .includes(term),
-        );
-    }, [query]);
+        const controller = new AbortController();
+        const timer = setTimeout(async () => {
+            try {
+                const response = await fetch(
+                    `/admin/search?q=${encodeURIComponent(searchTerm)}`,
+                    {
+                        headers: {
+                            Accept: 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        signal: controller.signal,
+                    },
+                );
 
-    const safeIndex = Math.min(activeIndex, Math.max(filtered.length - 1, 0));
+                if (!response.ok) {
+                    throw new Error('Pencarian gagal.');
+                }
+
+                const data = await response.json();
+
+                setResults({
+                    notes: Array.isArray(data.notes) ? data.notes : [],
+                    workItems: Array.isArray(data.workItems)
+                        ? data.workItems
+                        : [],
+                });
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    setResults(emptyResults);
+                }
+            } finally {
+                if (!controller.signal.aborted) {
+                    setSearching(false);
+                }
+            }
+        }, 250);
+
+        return () => {
+            clearTimeout(timer);
+            controller.abort();
+        };
+    }, [searchTerm]);
+
+    const items = useMemo(() => {
+        const normalized = query.trim().toLowerCase();
+
+        const commandItems = normalized
+            ? commands.filter((command) =>
+                  `${command.label} ${command.hint} ${command.keywords}`
+                      .toLowerCase()
+                      .includes(normalized),
+              )
+            : commands;
+
+        const noteItems = searchTerm
+            ? results.notes.map((note) => ({
+                  id: `note-${note.id}`,
+                  group: 'Catatan',
+                  label: note.title,
+                  hint: note.excerpt || 'Catatan',
+                  href: `/admin/notes/${note.id}`,
+                  icon: NotebookPen,
+              }))
+            : [];
+
+        const workItemResults = searchTerm
+            ? results.workItems.map((item) => ({
+                  id: `work-item-${item.id}`,
+                  group: 'Pekerjaan',
+                  label: item.title,
+                  hint: workItemHint(item),
+                  href: `/admin/work-items?q=${encodeURIComponent(item.title)}`,
+                  icon: ClipboardList,
+              }))
+            : [];
+
+        return [...commandItems, ...noteItems, ...workItemResults];
+    }, [query, results, searchTerm]);
+
+    const safeIndex = Math.min(activeIndex, Math.max(items.length - 1, 0));
 
     const reset = () => {
         setQuery('');
         setActiveIndex(0);
+        setResults(emptyResults);
+        setSearching(false);
     };
 
     const handleOpenChange = (next) => {
@@ -129,7 +220,7 @@ export default function CommandPalette({ open, onOpenChange }) {
         if (event.key === 'ArrowDown') {
             event.preventDefault();
             setActiveIndex((index) =>
-                filtered.length ? (index + 1) % filtered.length : 0,
+                items.length ? (index + 1) % items.length : 0,
             );
 
             return;
@@ -138,17 +229,15 @@ export default function CommandPalette({ open, onOpenChange }) {
         if (event.key === 'ArrowUp') {
             event.preventDefault();
             setActiveIndex((index) =>
-                filtered.length
-                    ? (index - 1 + filtered.length) % filtered.length
-                    : 0,
+                items.length ? (index - 1 + items.length) % items.length : 0,
             );
 
             return;
         }
 
-        if (event.key === 'Enter' && filtered[safeIndex]) {
+        if (event.key === 'Enter' && items[safeIndex]) {
             event.preventDefault();
-            runCommand(filtered[safeIndex]);
+            runCommand(items[safeIndex]);
         }
     };
 
@@ -157,7 +246,7 @@ export default function CommandPalette({ open, onOpenChange }) {
             <DialogContent className="top-[12%] translate-y-0 gap-0 overflow-hidden p-0 sm:max-w-lg">
                 <DialogTitle className="sr-only">Command palette</DialogTitle>
                 <DialogDescription className="sr-only">
-                    Cari halaman atau jalankan aksi cepat.
+                    Cari halaman, catatan, atau pekerjaan.
                 </DialogDescription>
 
                 <div className="flex items-center gap-2 border-b px-4">
@@ -165,22 +254,30 @@ export default function CommandPalette({ open, onOpenChange }) {
                     <input
                         type="text"
                         role="combobox"
-                        aria-label="Cari perintah"
+                        aria-label="Cari halaman, catatan, atau pekerjaan"
                         aria-autocomplete="list"
                         aria-expanded="true"
                         aria-controls="command-palette-list"
                         aria-activedescendant={
-                            filtered[safeIndex]
-                                ? `command-${filtered[safeIndex].id}`
+                            items[safeIndex]
+                                ? `command-${items[safeIndex].id}`
                                 : undefined
                         }
                         value={query}
                         onChange={(event) => {
-                            setQuery(event.target.value);
+                            const value = event.target.value;
+                            const nextTerm = value.trim();
+
+                            setQuery(value);
                             setActiveIndex(0);
+                            setSearching(nextTerm.length >= 2);
+
+                            if (nextTerm.length < 2) {
+                                setResults(emptyResults);
+                            }
                         }}
                         onKeyDown={handleKeyDown}
-                        placeholder="Cari halaman atau perintah..."
+                        placeholder="Cari halaman, catatan, atau pekerjaan..."
                         className="h-12 w-full bg-transparent pr-10 text-sm outline-none placeholder:text-muted-foreground"
                     />
                 </div>
@@ -188,36 +285,44 @@ export default function CommandPalette({ open, onOpenChange }) {
                 <div
                     id="command-palette-list"
                     role="listbox"
-                    aria-label="Daftar perintah"
+                    aria-label="Daftar hasil"
                     className="max-h-[340px] overflow-y-auto p-2"
                 >
-                    {filtered.length === 0 ? (
+                    {searching && (
+                        <p className="px-3 pt-2 pb-1 text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
+                            Mencari...
+                        </p>
+                    )}
+
+                    {items.length === 0 && !searching ? (
                         <p className="px-3 py-8 text-center text-sm text-muted-foreground">
-                            Tidak ada perintah yang cocok.
+                            {searchTerm
+                                ? `Tidak ada hasil untuk “${searchTerm}”.`
+                                : 'Tidak ada perintah yang cocok.'}
                         </p>
                     ) : (
-                        filtered.map((command, index) => {
-                            const Icon = command.icon;
+                        items.map((item, index) => {
+                            const Icon = item.icon;
                             const showGroup =
                                 index === 0 ||
-                                filtered[index - 1].group !== command.group;
+                                items[index - 1].group !== item.group;
 
                             return (
-                                <div key={command.id}>
+                                <div key={item.id}>
                                     {showGroup && (
                                         <p className="px-3 pt-2 pb-1 text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
-                                            {command.group}
+                                            {item.group}
                                         </p>
                                     )}
                                     <button
                                         type="button"
-                                        id={`command-${command.id}`}
+                                        id={`command-${item.id}`}
                                         role="option"
                                         aria-selected={index === safeIndex}
                                         onMouseEnter={() =>
                                             setActiveIndex(index)
                                         }
-                                        onClick={() => runCommand(command)}
+                                        onClick={() => runCommand(item)}
                                         className={cn(
                                             'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors',
                                             index === safeIndex
@@ -227,11 +332,11 @@ export default function CommandPalette({ open, onOpenChange }) {
                                     >
                                         <Icon className="size-4 shrink-0" />
                                         <span className="flex-1">
-                                            <span className="block font-medium">
-                                                {command.label}
+                                            <span className="block truncate font-medium">
+                                                {item.label}
                                             </span>
-                                            <span className="block text-xs text-muted-foreground">
-                                                {command.hint}
+                                            <span className="block truncate text-xs text-muted-foreground">
+                                                {item.hint}
                                             </span>
                                         </span>
                                     </button>

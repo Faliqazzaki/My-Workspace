@@ -135,7 +135,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 - [ ] **PROD-01** Quick capture global
 - [ ] **PROD-02** Bookmark / reading list
 - [ ] **PROD-03** Snippet / developer notes
-- [ ] **PROD-04** Pencarian global lintas catatan & pekerjaan
+- [x] **PROD-04** Pencarian global lintas catatan & pekerjaan
 - [ ] **PROD-05** Notifikasi in-app untuk tenggat
 - [ ] **PROD-06** Pengingat email / web push
 - [ ] **PROD-07** PWA + mode offline baca
@@ -201,18 +201,33 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 | Dashboard | 8 | 11 |
 | Catatan | 13 | 17 |
 | Pekerjaan | 18 | 20 |
-| Pengetahuan & Produktivitas | 1 | 13 |
+| Pengetahuan & Produktivitas | 2 | 13 |
 | Berita & AI | 0 | 13 |
 | Multi-Agent | 0 | 10 |
 | Kualitas | 5 | 12 |
 
-**Total: 69 dari 130 item selesai.**
+**Total: 70 dari 130 item selesai.**
 
-## Antrean berikutnya (urut)
+## Antrean berikutnya (urut, lokal dulu)
 
-Tidak ada item di antrean saat ini. Pilih item berikutnya dari daftar di atas.
+Fitur yang bisa dikerjakan tanpa layanan eksternal/AI:
 
-Ditunda (butuh biaya token AI): NEWS-*, AI-*, AGT-*
+1. NOTE-13 Auto-save draft ke localStorage
+2. UI-09 Keyboard shortcuts untuk aksi utama
+3. UI-11 Toast global (bukan hanya banner flash)
+4. DASH-10 Ringkasan agenda: tenggat hari ini & minggu ini
+5. AUTH-09 Remember me + masa berlaku session
+6. WORK-18 Riwayat aktivitas pekerjaan
+7. PROD-08 Export/import JSON & Markdown
+8. PROD-05 Notifikasi in-app untuk tenggat
+9. PROD-07 PWA + mode offline baca
+10. WORK-17 Lampiran file pada pekerjaan
+11. KNOW-02 Statistik pengetahuan: catatan/minggu, tag teratas
+12. QA-06 Test browser end-to-end (Playwright)
+13. QA-10 Query performance review + index tambahan
+14. QA-12 Dokumentasi arsitektur & ADR
+
+Ditunda (butuh layanan eksternal/biaya token): NEWS-*, AI-*, AGT-*, PROD-06.
 
 ## Non-goals saat ini
 
