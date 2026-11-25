@@ -115,3 +115,66 @@ it('menolak konfirmasi password yang tidak cocok', function () {
 
     expect(Hash::check('admin123', $admin->fresh()->password))->toBeTrue();
 });
+
+it('mengizinkan admin masuk tanpa remember dan tidak mengisi remember_token', function () {
+    $admin = adminUser([
+        'username' => 'my-workspace',
+        'password' => 'admin123',
+        'remember_token' => null,
+    ]);
+
+    $response = $this->post('/masuk', [
+        'username' => 'my-workspace',
+        'password' => 'admin123',
+        'remember' => false,
+    ]);
+
+    $response->assertRedirect(route('admin.index'));
+    $this->assertAuthenticatedAs($admin);
+    expect($admin->fresh()->remember_token)->toBeNull();
+    $response->assertCookieMissing(Auth::guard()->getRecallerName());
+});
+
+it('mengizinkan admin masuk dengan remember dan mengisi remember_token', function () {
+    $admin = adminUser([
+        'username' => 'my-workspace',
+        'password' => 'admin123',
+        'remember_token' => null,
+    ]);
+
+    $response = $this->post('/masuk', [
+        'username' => 'my-workspace',
+        'password' => 'admin123',
+        'remember' => true,
+    ]);
+
+    $response->assertRedirect(route('admin.index'));
+    $this->assertAuthenticatedAs($admin);
+    expect($admin->fresh()->remember_token)->not->toBeNull();
+    $response->assertCookie(Auth::guard()->getRecallerName());
+});
+
+it('menghapus remember_token saat admin keluar', function () {
+    $admin = adminUser([
+        'username' => 'my-workspace',
+        'password' => 'admin123',
+        'remember_token' => null,
+    ]);
+
+    $this->post('/masuk', [
+        'username' => 'my-workspace',
+        'password' => 'admin123',
+        'remember' => true,
+    ]);
+
+    expect($admin->fresh()->remember_token)->not->toBeNull();
+
+    $response = $this->actingAs($admin->fresh())
+        ->post('/keluar');
+
+    $response->assertRedirect(route('home'));
+    $this->assertGuest();
+    expect($admin->fresh()->remember_token)->toBeNull();
+
+    $this->get('/admin')->assertRedirect(route('home'));
+});

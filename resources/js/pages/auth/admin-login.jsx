@@ -14,6 +14,7 @@ import { useState } from 'react';
 import InputError from '@/components/input-error';
 import ThemeToggle from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
@@ -40,6 +41,7 @@ export default function AdminLogin() {
     const { data, setData, post, processing, errors } = useForm({
         username: '',
         password: '',
+        remember: false,
     });
 
     const submit = (event) => {
@@ -213,6 +215,23 @@ export default function AdminLogin() {
                                         </button>
                                     </div>
                                     <InputError message={errors.password} />
+                                </div>
+
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id="remember"
+                                        name="remember"
+                                        checked={data.remember}
+                                        onCheckedChange={(checked) =>
+                                            setData('remember', Boolean(checked))
+                                        }
+                                    />
+                                    <Label
+                                        htmlFor="remember"
+                                        className="cursor-pointer text-sm font-normal text-muted-foreground select-none hover:text-foreground"
+                                    >
+                                        Ingat saya
+                                    </Label>
                                 </div>
 
                                 <Button

@@ -357,14 +357,17 @@ Browser
 
 ### Yang berjalan sekarang
 
-- `GET /` → halaman login (`auth/admin-login`).
+- `GET /` → halaman login (`auth/admin-login`) dengan checkbox "Ingat saya".
 - `POST /masuk` → `Auth::attempt` dengan:
   - `username`
   - `password`
   - `is_admin => true`
+  - parameter `$remember` (boolean) dari checkbox "Ingat saya"
+- Masa berlaku session standar: `SESSION_LIFETIME=120` (120 menit / 2 jam tanpa aktivitas, dikonfigurasi lewat `.env` dan `config/session.php`).
+- Jika "Ingat saya" dicentang: Laravel menerbitkan remember cookie dan mengisi `remember_token` pada user di database.
 - Hanya user dengan `is_admin = true` yang bisa masuk ke `/admin`.
 - Session memakai guard Laravel standar (`web`).
-- `POST /keluar` → `Auth::logout()`, invalidate session, regenerate token.
+- `POST /keluar` → `Auth::logout()`, membersihkan `remember_token` menjadi null, invalidate session, regenerate token.
 - Middleware `admin.auth` (`EnsureAdminAuthenticated`) mengecek
   `Auth::check()` **dan** `user->is_admin`; tamu diarahkan ke `route('home')`.
 - Login memakai throttle `10,1`.
@@ -385,10 +388,10 @@ php artisan db:seed --class=AdminUserSeeder
 
 - `AUTH-07` — kredensial hardcoded diganti tabel `users` + hash.
 - `AUTH-08` — halaman ubah password.
+- `AUTH-09` — remember me + masa berlaku session yang jelas.
 
 ### Berikutnya
 
-- `AUTH-09` — remember me + masa berlaku session.
 - `AUTH-10` — audit log login.
 - `AUTH-11` — hapus/integrasikan route Fortify dan settings yang tidak dipakai.
 - `AUTH-12` — 2FA untuk admin.
@@ -793,11 +796,16 @@ Gunakan urutan ini agar hasilnya konsisten:
 ### 14.1 Login
 
 1. Buka `/`.
-2. Isi username & password akun admin.
-3. `Auth::attempt` memvalidasi username, password, dan `is_admin = true`.
-4. Jika valid → session dibuat → redirect `/admin`.
+2. Isi username & password akun admin. Checkbox **Ingat saya** dapat dicentang
+   agar sesi tetap diingat (remember me).
+3. `Auth::attempt` memvalidasi username, password, `is_admin = true`, dan
+   parameter `$remember`.
+4. Jika valid → session dibuat (dan remember cookie/token dibuat jika dipilih)
+   → redirect `/admin`.
 5. Jika salah → error `Username atau password salah.`
 6. Jika sudah login sebagai admin dan membuka `/` → redirect `/admin`.
+7. Saat logout via `/keluar`: session di-invalidate, CSRF token di-regenerate,
+   dan `remember_token` di database dibersihkan (set null).
 
 ### 14.1a Ubah password
 

@@ -26,13 +26,16 @@ class AdminAuthController extends Controller
         $credentials = $request->validate([
             'username' => ['required', 'string'],
             'password' => ['required', 'string'],
+            'remember' => ['nullable', 'boolean'],
         ]);
+
+        $remember = $request->boolean('remember');
 
         $isValid = Auth::attempt([
             'username' => $credentials['username'],
             'password' => $credentials['password'],
             'is_admin' => true,
-        ]);
+        ], $remember);
 
         if (! $isValid) {
             return back()
@@ -49,7 +52,13 @@ class AdminAuthController extends Controller
 
     public function logout(Request $request): RedirectResponse
     {
+        $user = $request->user();
+
         Auth::logout();
+
+        if ($user) {
+            $user->forceFill(['remember_token' => null])->save();
+        }
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

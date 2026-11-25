@@ -48,7 +48,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 - [x] **AUTH-06** Redirect tamu ke halaman login
 - [x] **AUTH-07** Ganti kredensial hardcoded dengan tabel `users` + password hash
 - [x] **AUTH-08** Ubah password dari halaman **Keamanan**
-- [ ] **AUTH-09** Remember me + masa berlaku session yang jelas
+- [x] **AUTH-09** Remember me + masa berlaku session yang jelas
 - [ ] **AUTH-10** Audit log login (waktu, IP, user agent)
 - [ ] **AUTH-11** Hapus atau integrasikan route Fortify yang tidak terpakai
 - [ ] **AUTH-12** Pertimbangkan 2FA untuk akun admin
@@ -196,7 +196,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 | Area | Selesai | Total |
 | --- | ---: | ---: |
 | Fondasi | 8 | 10 |
-| Autentikasi | 8 | 12 |
+| Autentikasi | 9 | 12 |
 | UI | 10 | 12 |
 | Dashboard | 9 | 11 |
 | Catatan | 14 | 17 |
@@ -206,18 +206,17 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 | Multi-Agent | 0 | 10 |
 | Kualitas | 5 | 12 |
 
-**Total: 74 dari 130 item selesai.**
+**Total: 75 dari 130 item selesai.**
 
 ## Antrean berikutnya (urut, lokal dulu)
 
 Fitur yang bisa dikerjakan tanpa layanan eksternal/AI:
 
-1. AUTH-09 Remember me + masa berlaku session
-2. WORK-18 Riwayat aktivitas pekerjaan
-3. PROD-08 Export/import JSON & Markdown
-5. PROD-05 Notifikasi in-app untuk tenggat
-6. PROD-07 PWA + mode offline baca
-7. WORK-17 Lampiran file pada pekerjaan
+1. WORK-18 Riwayat aktivitas pekerjaan
+2. PROD-08 Export/import JSON & Markdown
+3. PROD-05 Notifikasi in-app untuk tenggat
+4. PROD-07 PWA + mode offline baca
+5. WORK-17 Lampiran file pada pekerjaan
 8. KNOW-02 Statistik pengetahuan: catatan/minggu, tag teratas
 9. QA-06 Test browser end-to-end (Playwright)
 10. QA-10 Query performance review + index tambahan
