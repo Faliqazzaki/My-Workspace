@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Note;
 use App\Models\WorkItem;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Inertia\Inertia;
@@ -53,7 +54,55 @@ class AdminController extends Controller
             'recentNotes' => $recentNotes,
             'knowledge' => $this->knowledgeHabit(),
             'activity' => $this->activitySeries(),
+            'agenda' => $this->agendaSummary(),
         ]);
+    }
+
+    /**
+     * Ringkasan agenda: pekerjaan belum selesai (status != 'done')
+     * dengan tenggat hari ini dan minggu ini (Senin sampai Minggu),
+     * dihitung dalam zona waktu Asia/Jakarta.
+     *
+     * @return array{
+     *     today: Collection<int, WorkItem>,
+     *     this_week: Collection<int, WorkItem>,
+     *     today_date: string,
+     *     start_of_week: string,
+     *     end_of_week: string,
+     *     timezone: string,
+     * }
+     */
+    private function agendaSummary(): array
+    {
+        $now = Date::now(self::KNOWLEDGE_TIMEZONE);
+        $todayDate = $now->toDateString();
+        $startOfWeek = $now->copy()->startOfWeek()->toDateString();
+        $endOfWeek = $now->copy()->endOfWeek()->toDateString();
+
+        $todayItems = WorkItem::query()
+            ->where('status', '!=', 'done')
+            ->whereDate('due_date', $todayDate)
+            ->orderByRaw("CASE priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 WHEN 'low' THEN 4 ELSE 5 END")
+            ->latest('created_at')
+            ->get();
+
+        $thisWeekItems = WorkItem::query()
+            ->where('status', '!=', 'done')
+            ->whereDate('due_date', '>=', $startOfWeek)
+            ->whereDate('due_date', '<=', $endOfWeek)
+            ->orderBy('due_date')
+            ->orderByRaw("CASE priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 WHEN 'low' THEN 4 ELSE 5 END")
+            ->latest('created_at')
+            ->get();
+
+        return [
+            'today' => $todayItems,
+            'this_week' => $thisWeekItems,
+            'today_date' => $todayDate,
+            'start_of_week' => $startOfWeek,
+            'end_of_week' => $endOfWeek,
+            'timezone' => self::KNOWLEDGE_TIMEZONE,
+        ];
     }
 
     /**

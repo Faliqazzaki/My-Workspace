@@ -3,6 +3,8 @@ import {
     AlertTriangle,
     ArrowRight,
     BarChart3,
+    CalendarCheck,
+    CalendarClock,
     CalendarDays,
     CheckCircle2,
     ClipboardList,
@@ -69,6 +71,7 @@ export default function Admin({
     recentNotes = [],
     knowledge = {},
     activity = {},
+    agenda = {},
 }) {
     const [activityRange, setActivityRange] = useState(7);
     const username = admin?.username ?? 'my-workspace';
@@ -80,6 +83,8 @@ export default function Admin({
         (total, status) => total + Number(statusCounts[status] ?? 0),
         0,
     );
+    const agendaToday = agenda.today ?? [];
+    const agendaThisWeek = agenda.this_week ?? [];
 
     const activityDays = activity.days ?? [];
     const visibleActivity = activityDays.slice(-activityRange);
@@ -332,6 +337,256 @@ export default function Admin({
                                 );
                             })}
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            <section className="mt-4 rounded-xl border bg-card shadow-sm">
+                <div className="flex flex-col gap-3 border-b px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                    <div>
+                        <h2 className="flex items-center gap-1.5 text-sm font-semibold">
+                            <CalendarClock className="size-4 text-indigo-500" />
+                            Ringkasan agenda
+                        </h2>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                            Pekerjaan belum selesai dengan tenggat hari ini dan
+                            minggu ini (Senin–Minggu)
+                        </p>
+                    </div>
+
+                    <Link
+                        href="/admin/work-items"
+                        className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                    >
+                        Lihat semua pekerjaan
+                        <ArrowRight className="size-3.5" />
+                    </Link>
+                </div>
+
+                <div className="grid divide-y md:grid-cols-2 md:divide-x md:divide-y-0">
+                    <div className="p-4 sm:p-5">
+                        <div className="mb-3 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <span className="flex size-7 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-300">
+                                    <CalendarClock className="size-4" />
+                                </span>
+                                <div>
+                                    <h3 className="text-sm font-semibold">
+                                        Tenggat hari ini
+                                    </h3>
+                                    <p className="text-[11px] text-muted-foreground">
+                                        Jatuh tempo pada{' '}
+                                        {formatDate(agenda.today_date)}
+                                    </p>
+                                </div>
+                            </div>
+                            <span className="rounded-full bg-indigo-500/10 px-2 py-0.5 text-xs font-medium text-indigo-600 dark:text-indigo-300">
+                                {agendaToday.length}
+                            </span>
+                        </div>
+
+                        {agendaToday.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-8 text-center">
+                                <span className="flex size-9 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                                    <CalendarCheck className="size-4" />
+                                </span>
+                                <p className="mt-2 text-xs font-medium">
+                                    Tidak ada tenggat hari ini
+                                </p>
+                                <p className="mt-0.5 max-w-xs text-[11px] text-muted-foreground">
+                                    Semua pekerjaan hari ini bebas tenggat atau
+                                    sudah selesai.
+                                </p>
+                            </div>
+                        ) : (
+                            <ul className="divide-y rounded-lg border">
+                                {agendaToday.map((item) => {
+                                    const overdue = isOverdue(
+                                        item.due_date,
+                                        item.status,
+                                    );
+
+                                    return (
+                                        <li
+                                            key={item.id}
+                                            className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between"
+                                        >
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex flex-wrap items-center gap-1.5">
+                                                    <span
+                                                        className={cn(
+                                                            'rounded-full px-2 py-0.5 text-[10px] font-medium ring-1 ring-inset',
+                                                            statusMeta[
+                                                                item.status
+                                                            ]?.badge,
+                                                        )}
+                                                    >
+                                                        {statusMeta[item.status]
+                                                            ?.label ??
+                                                            item.status}
+                                                    </span>
+                                                    <span
+                                                        className={cn(
+                                                            'rounded-full px-2 py-0.5 text-[10px] font-medium ring-1 ring-inset',
+                                                            priorityMeta[
+                                                                item.priority
+                                                            ]?.badge,
+                                                        )}
+                                                    >
+                                                        {priorityMeta[
+                                                            item.priority
+                                                        ]?.label ??
+                                                            item.priority}
+                                                    </span>
+                                                </div>
+                                                <Link
+                                                    href="/admin/work-items"
+                                                    className="mt-1 block truncate text-xs font-medium hover:text-indigo-600 dark:hover:text-indigo-400"
+                                                    title={item.title}
+                                                >
+                                                    {item.title}
+                                                </Link>
+                                            </div>
+                                            <div className="flex shrink-0 items-center gap-2">
+                                                <span
+                                                    className={cn(
+                                                        'flex items-center gap-1 text-[11px]',
+                                                        overdue
+                                                            ? 'font-medium text-red-600 dark:text-red-400'
+                                                            : 'text-muted-foreground',
+                                                    )}
+                                                >
+                                                    <CalendarDays className="size-3" />
+                                                    {formatDate(item.due_date)}
+                                                    {overdue && ' · terlambat'}
+                                                </span>
+                                                <Link
+                                                    href="/admin/work-items"
+                                                    className="text-muted-foreground hover:text-indigo-600 dark:hover:text-indigo-400"
+                                                    title="Buka daftar pekerjaan"
+                                                    aria-label={`Buka daftar pekerjaan untuk ${item.title}`}
+                                                >
+                                                    <ArrowRight className="size-3.5" />
+                                                </Link>
+                                            </div>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        )}
+                    </div>
+
+                    <div className="p-4 sm:p-5">
+                        <div className="mb-3 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <span className="flex size-7 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-300">
+                                    <CalendarDays className="size-4" />
+                                </span>
+                                <div>
+                                    <h3 className="text-sm font-semibold">
+                                        Tenggat minggu ini
+                                    </h3>
+                                    <p className="text-[11px] text-muted-foreground">
+                                        Senin–Minggu (
+                                        {formatDate(agenda.start_of_week)} –{' '}
+                                        {formatDate(agenda.end_of_week)})
+                                    </p>
+                                </div>
+                            </div>
+                            <span className="rounded-full bg-sky-500/10 px-2 py-0.5 text-xs font-medium text-sky-600 dark:text-sky-300">
+                                {agendaThisWeek.length}
+                            </span>
+                        </div>
+
+                        {agendaThisWeek.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-8 text-center">
+                                <span className="flex size-9 items-center justify-center rounded-full bg-sky-500/10 text-sky-600 dark:text-sky-400">
+                                    <CalendarDays className="size-4" />
+                                </span>
+                                <p className="mt-2 text-xs font-medium">
+                                    Tidak ada tenggat minggu ini
+                                </p>
+                                <p className="mt-0.5 max-w-xs text-[11px] text-muted-foreground">
+                                    Tidak ada pekerjaan belum selesai yang jatuh
+                                    tempo minggu ini.
+                                </p>
+                            </div>
+                        ) : (
+                            <ul className="divide-y rounded-lg border">
+                                {agendaThisWeek.map((item) => {
+                                    const overdue = isOverdue(
+                                        item.due_date,
+                                        item.status,
+                                    );
+
+                                    return (
+                                        <li
+                                            key={item.id}
+                                            className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between"
+                                        >
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex flex-wrap items-center gap-1.5">
+                                                    <span
+                                                        className={cn(
+                                                            'rounded-full px-2 py-0.5 text-[10px] font-medium ring-1 ring-inset',
+                                                            statusMeta[
+                                                                item.status
+                                                            ]?.badge,
+                                                        )}
+                                                    >
+                                                        {statusMeta[item.status]
+                                                            ?.label ??
+                                                            item.status}
+                                                    </span>
+                                                    <span
+                                                        className={cn(
+                                                            'rounded-full px-2 py-0.5 text-[10px] font-medium ring-1 ring-inset',
+                                                            priorityMeta[
+                                                                item.priority
+                                                            ]?.badge,
+                                                        )}
+                                                    >
+                                                        {priorityMeta[
+                                                            item.priority
+                                                        ]?.label ??
+                                                            item.priority}
+                                                    </span>
+                                                </div>
+                                                <Link
+                                                    href="/admin/work-items"
+                                                    className="mt-1 block truncate text-xs font-medium hover:text-indigo-600 dark:hover:text-indigo-400"
+                                                    title={item.title}
+                                                >
+                                                    {item.title}
+                                                </Link>
+                                            </div>
+                                            <div className="flex shrink-0 items-center gap-2">
+                                                <span
+                                                    className={cn(
+                                                        'flex items-center gap-1 text-[11px]',
+                                                        overdue
+                                                            ? 'font-medium text-red-600 dark:text-red-400'
+                                                            : 'text-muted-foreground',
+                                                    )}
+                                                >
+                                                    <CalendarDays className="size-3" />
+                                                    {formatDate(item.due_date)}
+                                                    {overdue && ' · terlambat'}
+                                                </span>
+                                                <Link
+                                                    href="/admin/work-items"
+                                                    className="text-muted-foreground hover:text-indigo-600 dark:hover:text-indigo-400"
+                                                    title="Buka daftar pekerjaan"
+                                                    aria-label={`Buka daftar pekerjaan untuk ${item.title}`}
+                                                >
+                                                    <ArrowRight className="size-3.5" />
+                                                </Link>
+                                            </div>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        )}
                     </div>
                 </div>
             </section>

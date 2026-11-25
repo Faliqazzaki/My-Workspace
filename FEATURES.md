@@ -79,7 +79,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 - [x] **DASH-07** Widget kebiasaan "1 Hari 1 Pengetahuan" + streak
 - [x] **DASH-08** Grafik aktivitas 7/30 hari (catatan & pekerjaan selesai)
 - [ ] **DASH-09** Widget 3 berita teknologi pilihan AI
-- [ ] **DASH-10** Ringkasan agenda: tenggat hari ini dan minggu ini
+- [x] **DASH-10** Ringkasan agenda: tenggat hari ini dan minggu ini
 - [ ] **DASH-11** Quick actions: catatan cepat, pekerjaan cepat
 
 ## 5. Catatan (Notes)
@@ -198,7 +198,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 | Fondasi | 8 | 10 |
 | Autentikasi | 8 | 12 |
 | UI | 10 | 12 |
-| Dashboard | 8 | 11 |
+| Dashboard | 9 | 11 |
 | Catatan | 14 | 17 |
 | Pekerjaan | 18 | 20 |
 | Pengetahuan & Produktivitas | 2 | 13 |
@@ -206,16 +206,15 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 | Multi-Agent | 0 | 10 |
 | Kualitas | 5 | 12 |
 
-**Total: 73 dari 130 item selesai.**
+**Total: 74 dari 130 item selesai.**
 
 ## Antrean berikutnya (urut, lokal dulu)
 
 Fitur yang bisa dikerjakan tanpa layanan eksternal/AI:
 
-1. DASH-10 Ringkasan agenda: tenggat hari ini & minggu ini
-2. AUTH-09 Remember me + masa berlaku session
-3. WORK-18 Riwayat aktivitas pekerjaan
-4. PROD-08 Export/import JSON & Markdown
+1. AUTH-09 Remember me + masa berlaku session
+2. WORK-18 Riwayat aktivitas pekerjaan
+3. PROD-08 Export/import JSON & Markdown
 5. PROD-05 Notifikasi in-app untuk tenggat
 6. PROD-07 PWA + mode offline baca
 7. WORK-17 Lampiran file pada pekerjaan

@@ -893,6 +893,13 @@ Gunakan urutan ini agar hasilnya konsisten:
    waktu Asia/Jakarta: catatan dari `created_at` (tanpa yang terarsip),
    pekerjaan dari `completed_at`. Ringkasan jumlah catatan/selesai pada rentang
    tampil di header kartu.
+10. Kartu **Ringkasan agenda** menampilkan pekerjaan belum selesai (`status != 'done'`)
+    dengan tenggat hari ini dan minggu ini (Senin sampai Minggu) dalam zona
+    waktu Asia/Jakarta. Kolom kiri memuat tenggat hari ini, kolom kanan memuat
+    tenggat minggu ini lengkap dengan rentang tanggal Senin–Minggu. Tiap baris
+    menampilkan judul (tautan ke daftar pekerjaan), badge prioritas, badge status,
+    dan tanggal tenggat (disertai indikator jika terlambat). Kedua kolom memiliki
+    empty state informatif jika tidak ada tenggat pada periode tersebut.
 
 ### 14.5 Proyek
 

@@ -1,12 +1,11 @@
 # HANDOFF
 Terakhir: 25 Nov 2026
-Item: UI-11 (toast global) — SELESAI
-File utama: resources/js/components/toast.jsx,
-  resources/js/layouts/admin-layout.jsx,
-  app/Http/Middleware/HandleInertiaRequests.php,
-  resources/js/pages/admin/work-items/index.jsx
-Status: ToastProvider membungkus layout admin; useToast() menyediakan
-  success/error/info; flash Laravel (success/error/info) otomatis tampil
-  sebagai toast; maks 4 toast, auto-dismiss 5 detik, tombol tutup, aria-live;
-  kegagalan ubah status Kanban memakai toast; check.sh hijau
-Berikutnya: DASH-10 (ringkasan agenda) dari "Antrean berikutnya" FEATURES.md
+Item: DASH-10 (ringkasan agenda) — SELESAI
+File utama: app/Http/Controllers/AdminController.php,
+  resources/js/pages/admin/index.jsx,
+  tests/Feature/AdminDashboardTest.php
+Status: Kartu ringkasan agenda menampilkan pekerjaan belum selesai (status != 'done')
+  dengan tenggat hari ini dan minggu ini (Senin-Minggu) zona waktu Asia/Jakarta;
+  tiap baris memuat status, prioritas, judul tertaut ke pekerjaan, dan tenggat;
+  empty state untuk kedua kolom; test Carbon batas hari & minggu lulus; check.sh hijau.
+Berikutnya: AUTH-09 (remember me & masa berlaku session) dari antrean FEATURES.md

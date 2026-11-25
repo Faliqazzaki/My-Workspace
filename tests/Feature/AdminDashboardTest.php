@@ -2,6 +2,7 @@
 
 use App\Models\Note;
 use App\Models\WorkItem;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -118,6 +119,9 @@ it('menampilkan dashboard kosong tanpa data', function () {
             ->where('knowledge.notes_today', 0)
             ->where('knowledge.streak', 0)
             ->where('knowledge.timezone', 'Asia/Jakarta')
+            ->has('agenda.today', 0)
+            ->has('agenda.this_week', 0)
+            ->where('agenda.timezone', 'Asia/Jakarta')
         );
 });
 
@@ -260,5 +264,164 @@ it('menghitung aktivitas memakai zona waktu Asia/Jakarta', function () {
             ->where('activity.days.29.date', '2026-11-23')
             ->where('activity.days.29.notes', 0)
             ->where('activity.days.29.completed', 1)
+        );
+});
+
+it('menampilkan agenda tenggat hari ini dan minggu ini untuk pekerjaan belum selesai', function () {
+    Carbon::setTestNow(Carbon::parse('2026-11-25 10:00:00', 'Asia/Jakarta')); // Rabu
+
+    // Senin minggu ini (23 Nov)
+    WorkItem::create([
+        'title' => 'Tugas awal minggu',
+        'status' => 'todo',
+        'priority' => 'high',
+        'due_date' => '2026-11-23',
+    ]);
+
+    // Hari ini (Rabu 25 Nov)
+    WorkItem::create([
+        'title' => 'Tugas hari ini urgent',
+        'status' => 'in_progress',
+        'priority' => 'urgent',
+        'due_date' => '2026-11-25',
+    ]);
+
+    WorkItem::create([
+        'title' => 'Tugas hari ini medium',
+        'status' => 'todo',
+        'priority' => 'medium',
+        'due_date' => '2026-11-25',
+    ]);
+
+    // Minggu minggu ini (29 Nov)
+    WorkItem::create([
+        'title' => 'Tugas akhir minggu',
+        'status' => 'backlog',
+        'priority' => 'low',
+        'due_date' => '2026-11-29',
+    ]);
+
+    // Sudah selesai (tidak boleh muncul di agenda walau hari ini)
+    WorkItem::create([
+        'title' => 'Tugas selesai hari ini',
+        'status' => 'done',
+        'priority' => 'high',
+        'due_date' => '2026-11-25',
+    ]);
+
+    // Di luar minggu ini (Minggu lalu, 22 Nov)
+    WorkItem::create([
+        'title' => 'Tugas minggu lalu',
+        'status' => 'todo',
+        'priority' => 'medium',
+        'due_date' => '2026-11-22',
+    ]);
+
+    // Di luar minggu ini (Senin depan, 30 Nov)
+    WorkItem::create([
+        'title' => 'Tugas minggu depan',
+        'status' => 'todo',
+        'priority' => 'medium',
+        'due_date' => '2026-11-30',
+    ]);
+
+    // Tanpa tenggat
+    WorkItem::create([
+        'title' => 'Tugas tanpa tenggat',
+        'status' => 'in_progress',
+        'priority' => 'high',
+        'due_date' => null,
+    ]);
+
+    $this->actingAs(adminUser())
+        ->get('/admin')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('agenda.today', 2)
+            ->where('agenda.today.0.title', 'Tugas hari ini urgent')
+            ->where('agenda.today.0.priority', 'urgent')
+            ->where('agenda.today.0.status', 'in_progress')
+            ->where('agenda.today.0.due_date', '2026-11-25T00:00:00.000000Z')
+            ->where('agenda.today.1.title', 'Tugas hari ini medium')
+            ->has('agenda.this_week', 4)
+            ->where('agenda.this_week.0.title', 'Tugas awal minggu')
+            ->where('agenda.this_week.1.title', 'Tugas hari ini urgent')
+            ->where('agenda.this_week.2.title', 'Tugas hari ini medium')
+            ->where('agenda.this_week.3.title', 'Tugas akhir minggu')
+            ->where('agenda.today_date', '2026-11-25')
+            ->where('agenda.start_of_week', '2026-11-23')
+            ->where('agenda.end_of_week', '2026-11-29')
+            ->where('agenda.timezone', 'Asia/Jakarta')
+        );
+});
+
+it('menghitung batas hari dan minggu agenda memakai zona waktu Asia/Jakarta', function () {
+    // 25 Nov 2026 17:30:00 UTC = 26 Nov 2026 00:30:00 di Asia/Jakarta (Kamis)
+    Carbon::setTestNow(Carbon::parse('2026-11-25 17:30:00', 'UTC'));
+
+    WorkItem::create([
+        'title' => 'Tugas kemarin di Jakarta',
+        'status' => 'todo',
+        'priority' => 'medium',
+        'due_date' => '2026-11-25',
+    ]);
+
+    WorkItem::create([
+        'title' => 'Tugas hari ini di Jakarta',
+        'status' => 'todo',
+        'priority' => 'urgent',
+        'due_date' => '2026-11-26',
+    ]);
+
+    $this->actingAs(adminUser())
+        ->get('/admin')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('agenda.today_date', '2026-11-26')
+            ->where('agenda.start_of_week', '2026-11-23')
+            ->where('agenda.end_of_week', '2026-11-29')
+            ->has('agenda.today', 1)
+            ->where('agenda.today.0.title', 'Tugas hari ini di Jakarta')
+            ->has('agenda.this_week', 2)
+        );
+});
+
+it('menghitung batas minggu dari Senin sampai Minggu', function () {
+    // Minggu malam 29 Nov 2026 23:00:00 di Jakarta
+    Carbon::setTestNow(Carbon::parse('2026-11-29 23:00:00', 'Asia/Jakarta'));
+
+    WorkItem::create([
+        'title' => 'Tugas Senin awal minggu',
+        'status' => 'todo',
+        'priority' => 'medium',
+        'due_date' => '2026-11-23',
+    ]);
+
+    WorkItem::create([
+        'title' => 'Tugas Minggu akhir minggu',
+        'status' => 'todo',
+        'priority' => 'high',
+        'due_date' => '2026-11-29',
+    ]);
+
+    WorkItem::create([
+        'title' => 'Tugas Senin minggu depan',
+        'status' => 'todo',
+        'priority' => 'medium',
+        'due_date' => '2026-11-30',
+    ]);
+
+    $this->actingAs(adminUser())
+        ->get('/admin')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('agenda.today_date', '2026-11-29')
+            ->where('agenda.start_of_week', '2026-11-23')
+            ->where('agenda.end_of_week', '2026-11-29')
+            ->has('agenda.today', 1)
+            ->where('agenda.today.0.title', 'Tugas Minggu akhir minggu')
+            ->has('agenda.this_week', 2)
+            ->where('agenda.this_week.0.title', 'Tugas Senin awal minggu')
+            ->where('agenda.this_week.1.title', 'Tugas Minggu akhir minggu')
         );
 });
