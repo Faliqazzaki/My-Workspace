@@ -6,13 +6,13 @@ bagian `FEATURES.md` yang relevan; bagian lain dibaca hanya jika dibutuhkan.
 Jika ada konflik antara dokumen dan kode, **kode yang berjalan adalah
 kebenaran**, lalu perbarui dokumen.
 
-> Terakhir diperbarui: 25 November 2026
+> Terakhir diperbarui: 27 November 2026
 > Status: fondasi + Dashboard (termasuk kebiasaan mencatat) + Catatan (dialog
 > detail, Markdown, tautan pekerjaan, arsip/restore, auto-save draft) + Pekerjaan
 > (list + detail + Kanban + kalender + proyek + subtask + saved views) + command
 > palette (Ctrl/Cmd + K) dengan pencarian global catatan/pekerjaan + shortcut
-> keyboard untuk aksi utama + toast global + riwayat aktivitas pekerjaan sudah
-> berjalan.
+> keyboard untuk aksi utama + toast global + riwayat aktivitas pekerjaan +
+> export/import data sudah berjalan.
 
 ---
 
@@ -88,8 +88,9 @@ kebenaran**, lalu perbarui dokumen.
   keyboard), Dashboard (statistik + kebiasaan mencatat), Catatan (dialog detail
   + Markdown + pratinjau + autosave draft + tautan ke pekerjaan), Pekerjaan
   (list + detail dialog + Markdown + Kanban + kalender + proyek + subtask +
-  saved views + riwayat aktivitas), Proyek/area (CRUD + arsip + progress).
-- Test: **148 test Pest lolos** (1174 assertions), build Vite berhasil.
+  saved views + riwayat aktivitas), Proyek/area (CRUD + arsip + progress),
+  Data (export/import JSON + Markdown).
+- Test: **156 test Pest lolos** (1264 assertions), build Vite berhasil.
 - Cara kerja: **satu increment kecil**, backend → frontend → test → quality gate
   → verifikasi PostgreSQL → update checklist.
 
@@ -185,6 +186,7 @@ timpa `HANDOFF.md`. Hapus data uji yang dibuat di PostgreSQL.
 | Kanban | Selesai (toggle Daftar/Papan, drag & drop, select status) |
 | Kebiasaan mencatat | Selesai (streak harian, zona waktu Asia/Jakarta) |
 | Proyek / area | Selesai (CRUD, arsip, filter, progress `done/total`) |
+| Data | Selesai (export JSON + Markdown ZIP, import dengan pratinjau & skip duplikat) |
 | Subtask | Selesai (checklist di form, progress `x/y` di kartu) |
 | Kalender | Selesai (tampilan bulan, navigasi, klik untuk edit) |
 | Berita AI | Belum |
@@ -261,6 +263,7 @@ app/
     Controllers/
       AdminAuthController.php      # login/logout admin
       AdminController.php          # dashboard
+      AdminDataController.php      # export/import JSON + Markdown
       AdminPasswordController.php  # ubah password admin
       NoteController.php           # CRUD catatan + pin
       SearchController.php         # pencarian global catatan + pekerjaan
@@ -302,6 +305,7 @@ resources/
       utils.js                     # cn()
     pages/
       admin/index.jsx              # dashboard
+      admin/data.jsx               # export/import data
       admin/password.jsx           # keamanan / ubah password
       admin/notes/index.jsx        # daftar catatan
       admin/notes/show.jsx         # detail catatan + Markdown
@@ -572,6 +576,11 @@ Prefix `/admin`, name prefix `admin.`, middleware `admin.auth`.
 | GET | `/admin/search` | `admin.search` | pencarian global catatan + pekerjaan (JSON) |
 | GET | `/admin/password` | `admin.password.edit` | halaman keamanan |
 | PUT | `/admin/password` | `admin.password.update` | ubah password |
+| GET | `/admin/data` | `admin.data.index` | halaman export/import |
+| GET | `/admin/data/export/json` | `admin.data.export.json` | unduh JSON (opsional `?archived=1`) |
+| GET | `/admin/data/export/markdown` | `admin.data.export.markdown` | unduh ZIP Markdown |
+| POST | `/admin/data/import/preview` | `admin.data.import.preview` | validasi + ringkasan import |
+| POST | `/admin/data/import` | `admin.data.import` | import data (tanpa menimpa) |
 | GET | `/admin/notes` | `admin.notes.index` | daftar catatan |
 | GET | `/admin/notes/{note}` | `admin.notes.show` | detail catatan |
 | POST | `/admin/notes` | `admin.notes.store` | simpan catatan |
@@ -952,6 +961,28 @@ Gunakan urutan ini agar hasilnya konsisten:
    membatalkan arsip.
 5. **Hapus** meminta konfirmasi; pekerjaan di dalamnya tidak dihapus, hanya
    kehilangan label proyek.
+
+### 14.6 Data & cadangan
+
+1. Sidebar **Data** → `/admin/data`.
+2. **Export JSON** mengunduh `my-workspace-YYYYMMDD-HHMMSS.json` berisi
+   `format`, `version`, `exported_at`, `projects`, `notes`, dan `work_items`.
+   Catatan membawa tag, pin, dan status arsip; pekerjaan membawa status,
+   prioritas, tenggat, tag, `completed_at`, subtask, dan `project_key`.
+3. Centang **Sertakan catatan terarsip** untuk ikut mengekspor catatan
+   `deleted_at`; default hanya catatan aktif. Export tidak pernah memuat user,
+   password, email, atau token.
+4. **Unduh Markdown** membuat ZIP berisi satu file `.md` per catatan aktif
+   (`# Judul`, metadata tag/pin, lalu isi Markdown).
+5. **Import** menerima file JSON hasil export (maks 2 MB, ekstensi `.json`,
+   `format`/`version` cocok, maks 500 proyek / 2000 catatan / 2000 pekerjaan,
+   total maks 5000 item). **Pratinjau** memvalidasi dan menampilkan jumlah item
+   baru vs dilewati sebelum menyimpan; **Simpan sekarang** baru menulis data.
+6. Import tidak menimpa data. Proyek dilewati jika namanya sudah ada
+   (case-insensitive); catatan dilewati jika `title` + `content` sama; pekerjaan
+   dilewati jika `title` + tenggat + nama proyek sama. Proyek baru dibuat lebih
+   dulu agar `project_key` pekerjaan tetap terpetakan. Semua penulisan import
+   berjalan dalam satu transaksi.
 
 ---
 

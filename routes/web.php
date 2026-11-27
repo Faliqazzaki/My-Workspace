@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AdminDataController;
 use App\Http\Controllers\AdminPasswordController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\ProjectController;
@@ -27,6 +28,12 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
 
     Route::get('/password', [AdminPasswordController::class, 'edit'])->name('password.edit');
     Route::put('/password', [AdminPasswordController::class, 'update'])->name('password.update');
+
+    Route::get('/data', [AdminDataController::class, 'index'])->name('data.index');
+    Route::get('/data/export/json', [AdminDataController::class, 'exportJson'])->name('data.export.json');
+    Route::get('/data/export/markdown', [AdminDataController::class, 'exportMarkdown'])->name('data.export.markdown');
+    Route::post('/data/import/preview', [AdminDataController::class, 'importPreview'])->name('data.import.preview');
+    Route::post('/data/import', [AdminDataController::class, 'import'])->name('data.import');
 
     Route::get('/notes', [NoteController::class, 'index'])->name('notes.index');
     Route::get('/notes/{note}', [NoteController::class, 'show'])->name('notes.show');

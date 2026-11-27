@@ -1,6 +1,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     ClipboardList,
+    Database,
     FolderKanban,
     Home,
     Keyboard,
@@ -26,6 +27,7 @@ const navigation = [
     { label: 'Catatan', href: '/admin/notes', icon: NotebookPen },
     { label: 'Pekerjaan', href: '/admin/work-items', icon: ClipboardList },
     { label: 'Proyek', href: '/admin/projects', icon: FolderKanban },
+    { label: 'Data', href: '/admin/data', icon: Database },
     { label: 'Keamanan', href: '/admin/password', icon: ShieldCheck },
 ];
 

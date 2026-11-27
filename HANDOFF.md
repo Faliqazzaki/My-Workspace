@@ -1,12 +1,12 @@
 # HANDOFF
 Terakhir: 27 Nov 2026
-Item: WORK-18 (riwayat aktivitas pekerjaan) — SELESAI
-File utama: app/Models/WorkItemActivity.php,
-  database/migrations/2026_11_25_200000_create_work_item_activities_table.php,
-  app/Http/Controllers/WorkItemController.php,
-  resources/js/components/work-items/work-item-detail-dialog.jsx,
-  tests/Feature/WorkItemActivityTest.php
-Status: Aktivitas dibuat/status/prioritas/tenggat/proyek/judul dicatat; endpoint
-  JSON maks 20 entri; dialog detail menampilkan Riwayat; cascade saat hapus;
-  migrasi jsonb sudah dijalankan & diverifikasi di PostgreSQL; check.sh hijau
-Berikutnya: PROD-08 (export/import JSON & Markdown) dari antrean FEATURES.md
+Item: PROD-08 (export/import JSON & Markdown) — SELESAI
+File utama: app/Http/Controllers/AdminDataController.php,
+  resources/js/pages/admin/data.jsx,
+  routes/web.php, resources/views/app.blade.php,
+  tests/Feature/AdminDataTest.php
+Status: Halaman /admin/data (menu Data) untuk export JSON (opsional catatan
+  terarsip), export Markdown ZIP, dan import JSON dua tahap (pratinjau +
+  konfirmasi) dengan validasi skema/ukuran dan skip duplikat; tanpa data user;
+  check.sh hijau
+Berikutnya: PROD-05 (notifikasi in-app untuk tenggat) dari antrean FEATURES.md
