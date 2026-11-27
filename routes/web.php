@@ -15,6 +15,25 @@ use Inertia\Inertia;
 
 Route::get('/', [AdminAuthController::class, 'showLogin'])->name('home');
 
+Route::get('/manifest.webmanifest', function () {
+    return response(file_get_contents(public_path('manifest.webmanifest')), 200, [
+        'Content-Type' => 'application/manifest+json',
+    ]);
+});
+
+Route::get('/sw.js', function () {
+    return response(file_get_contents(public_path('sw.js')), 200, [
+        'Content-Type' => 'application/javascript; charset=utf-8',
+        'Service-Worker-Allowed' => '/',
+    ]);
+});
+
+Route::get('/offline.html', function () {
+    return response(file_get_contents(public_path('offline.html')), 200, [
+        'Content-Type' => 'text/html; charset=utf-8',
+    ]);
+});
+
 Route::post('/masuk', [AdminAuthController::class, 'login'])
     ->middleware('throttle:10,1')
     ->name('admin.login');

@@ -138,7 +138,8 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 - [x] **PROD-04** Pencarian global lintas catatan & pekerjaan
 - [x] **PROD-05** Notifikasi in-app untuk tenggat
 - [ ] **PROD-06** Pengingat email / web push
-- [ ] **PROD-07** PWA + mode offline baca
+- [x] **PROD-07** PWA + mode offline baca
+- [ ] **PROD-07a** Baca catatan offline (cache data terautentikasi, bersihkan saat logout)
 - [x] **PROD-08** Export/import JSON & Markdown
 - [ ] **PROD-09** Halaman pengaturan workspace
 
@@ -201,23 +202,22 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 | Dashboard | 9 | 11 |
 | Catatan | 14 | 17 |
 | Pekerjaan | 19 | 20 |
-| Pengetahuan & Produktivitas | 4 | 13 |
+| Pengetahuan & Produktivitas | 5 | 14 |
 | Berita & AI | 0 | 13 |
 | Multi-Agent | 0 | 10 |
 | Kualitas | 5 | 12 |
 
-**Total: 78 dari 130 item selesai.**
+**Total: 79 dari 131 item selesai.**
 
 ## Antrean berikutnya (urut, lokal dulu)
 
 Fitur yang bisa dikerjakan tanpa layanan eksternal/AI:
 
-1. PROD-07 PWA + mode offline baca
-2. WORK-17 Lampiran file pada pekerjaan
-3. KNOW-02 Statistik pengetahuan: catatan/minggu, tag teratas
-4. QA-06 Test browser end-to-end (Playwright)
-5. QA-10 Query performance review + index tambahan
-6. QA-12 Dokumentasi arsitektur & ADR
+1. WORK-17 Lampiran file pada pekerjaan
+2. KNOW-02 Statistik pengetahuan: catatan/minggu, tag teratas
+3. QA-06 Test browser end-to-end (Playwright)
+4. QA-10 Query performance review + index tambahan
+5. QA-12 Dokumentasi arsitektur & ADR
 
 Ditunda (butuh layanan eksternal/biaya token): NEWS-*, AI-*, AGT-*, PROD-06.
 

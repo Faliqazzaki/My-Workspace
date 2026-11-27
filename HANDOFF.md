@@ -1,11 +1,10 @@
 # HANDOFF
 Terakhir: 27 Nov 2026
-Item: PROD-05 (notifikasi in-app untuk tenggat) — SELESAI
-File utama: app/Http/Controllers/NotificationController.php,
-  resources/js/components/notifications-dropdown.jsx,
-  resources/js/layouts/admin-layout.jsx,
-  routes/web.php, tests/Feature/AdminNotificationTest.php
-Status: Ikon lonceng di topbar layout admin dengan badge notifikasi belum dibaca,
-  dropdown daftar notifikasi per kategori (terlambat, hari ini, besok) zona Asia/Jakarta,
-  maks 20 entri, status dibaca tersimpan di localStorage, check.sh hijau
-Berikutnya: PROD-07 (PWA + mode offline baca) dari antrean FEATURES.md
+Item: PROD-07 (PWA + mode offline baca) — SELESAI
+File utama: public/manifest.webmanifest, public/sw.js, public/offline.html,
+  public/icons/icon-*.png, resources/views/app.blade.php,
+  resources/js/app.jsx, routes/web.php, tests/Feature/PwaTest.php
+Status: Web app manifest, ikon 192/512/maskable, service worker cache-first build
+  assets + offline fallback (tanpa cache auth/HTML/Inertia), registrasi prod di app.jsx;
+  check.sh hijau (167 test lolos)
+Berikutnya: WORK-17 (lampiran file pada pekerjaan) dari antrean FEATURES.md

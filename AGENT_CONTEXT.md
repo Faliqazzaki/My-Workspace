@@ -12,7 +12,7 @@ kebenaran**, lalu perbarui dokumen.
 > (list + detail + Kanban + kalender + proyek + subtask + saved views) + command
 > palette (Ctrl/Cmd + K) dengan pencarian global catatan/pekerjaan + shortcut
 > keyboard untuk aksi utama + toast global + riwayat aktivitas pekerjaan +
-> export/import data + notifikasi in-app tenggat sudah berjalan.
+> export/import data + notifikasi in-app tenggat + PWA & offline fallback sudah berjalan.
 
 ---
 
@@ -89,8 +89,8 @@ kebenaran**, lalu perbarui dokumen.
   + Markdown + pratinjau + autosave draft + tautan ke pekerjaan), Pekerjaan
   (list + detail dialog + Markdown + Kanban + kalender + proyek + subtask +
   saved views + riwayat aktivitas), Proyek/area (CRUD + arsip + progress),
-  Data (export/import JSON + Markdown), Notifikasi in-app (dropdown tenggat terlambat/hari ini/besok).
-- Test: **162 test Pest lolos** (1296 assertions), build Vite berhasil.
+  Data (export/import JSON + Markdown), Notifikasi in-app (dropdown tenggat), PWA (manifest + service worker + offline fallback).
+- Test: **167 test Pest lolos** (1324 assertions), build Vite berhasil.
 - Cara kerja: **satu increment kecil**, backend → frontend → test → quality gate
   → verifikasi PostgreSQL → update checklist.
 
@@ -295,6 +295,11 @@ database/
     2026_11_24_000000_add_deleted_at_to_notes_table.php
     2026_11_25_200000_create_work_item_activities_table.php
   seeders/AdminUserSeeder.php      # akun admin dari config
+public/
+  manifest.webmanifest         # web app manifest PWA
+  sw.js                        # service worker (cache statis + offline fallback)
+  offline.html                 # halaman fallback offline statis
+  icons/                       # ikon PWA 192x192 & 512x512
 resources/
   css/app.css                      # token tema + font
   js/
@@ -1007,6 +1012,21 @@ Gunakan urutan ini agar hasilnya konsisten:
    dengan kunci `${id}:${dueDate}`. Tersedia tombol "Tandai dibaca" dan klik item
    langsung membuka daftar pekerjaan terfilter.
 
+### 14.8 PWA & mode offline dasar (PROD-07)
+
+1. Web app manifest di `/manifest.webmanifest` mendefinisikan nama "My Workspace",
+   `start_url` `/admin`, mode `standalone`, warna tema `#4f46e5`, serta ikon 192x192
+   dan 512x512 (termasuk maskable).
+2. Service worker di `/sw.js` didaftarkan otomatis hanya pada mode production
+   (`import.meta.env.PROD`).
+3. Strategi caching:
+   - Aset build Vite (`/build/assets/*`): cache-first.
+   - Navigasi halaman HTML: network-first, tidak menyimpan HTML terautentikasi ke cache;
+     jika jaringan putus, fallback menyajikan `/offline.html`.
+   - Permintaan mutasi (POST/PUT/PATCH/DELETE) serta respons Inertia/JSON terautentikasi
+     sama sekali tidak disimpan ke cache agar tidak merusak token CSRF, login, atau logout.
+   - Cache lama dibersihkan saat versi `CACHE_NAME` diperbarui pada event `activate`.
+
 ---
 
 ## 15. Rancangan fitur berikutnya (spesifikasi)
@@ -1014,7 +1034,7 @@ Gunakan urutan ini agar hasilnya konsisten:
 > Detail checklist dan ID ada di `FEATURES.md`. Bagian ini menjelaskan
 > **bagaimana** membangunnya.
 
-> Spesifikasi fitur selesai (NOTE-08..11, WORK-11..15, PROD-05, PROD-08) ada di `docs/specs-done.md`.
+> Spesifikasi fitur selesai (NOTE-08..11, WORK-11..15, PROD-05, PROD-07, PROD-08) ada di `docs/specs-done.md`.
 
 ### 15.6 KNOW-01/02 — Kebiasaan & statistik (KNOW-01 selesai)
 

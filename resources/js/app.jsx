@@ -33,3 +33,15 @@ createInertiaApp({
 
 // This will set light / dark mode on load...
 initializeTheme();
+
+if (
+    import.meta.env.PROD &&
+    typeof window !== 'undefined' &&
+    'serviceWorker' in navigator
+) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {
+            // Abaikan kegagalan registrasi di lingkungan terbatas
+        });
+    });
+}
