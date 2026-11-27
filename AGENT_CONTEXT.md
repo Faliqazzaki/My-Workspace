@@ -113,6 +113,7 @@ mengikuti kebutuhan nyata.
 
 **Batasan yang disengaja:**
 
+- Pemakaian lokal pribadi; tidak ada deployment produksi.
 - Bukan aplikasi multi-user. Tidak ada registrasi publik.
 - Tidak ada kolaborasi real-time.
 - Agent AI tidak dijalankan di dalam proses Laravel (lihat §17).
@@ -187,12 +188,14 @@ timpa `HANDOFF.md`. Hapus data uji yang dibuat di PostgreSQL.
 | Kebiasaan mencatat | Selesai (streak harian, zona waktu Asia/Jakarta) |
 | Proyek / area | Selesai (CRUD, arsip, filter, progress `done/total`) |
 | Data | Selesai (export JSON + Markdown ZIP, import dengan pratinjau & skip duplikat) |
+| Notifikasi in-app | Selesai (dropdown tenggat terlambat/hari ini/besok, filter status baca) |
+| PWA | Selesai (web app manifest, service worker cache statis, fallback offline) |
 | Subtask | Selesai (checklist di form, progress `x/y` di kartu) |
 | Kalender | Selesai (tampilan bulan, navigasi, klik untuk edit) |
 | Berita AI | Belum |
 | Multi-agent | Belum |
 
-Angka test terakhir: **133 passed, 1016 assertions**.
+Angka test terakhir: **167 passed, 1324 assertions**.
 
 ---
 
@@ -1350,6 +1353,7 @@ berikutnya, test/build hijau.
 | Fortify | Terpasang, tidak terhubung | Hapus/integrasikan nanti |
 | `/dashboard` | Tidak dipakai | Entry admin adalah `/` |
 | Tests | SQLite in-memory | Verifikasi terpisah di PostgreSQL |
+| Deployment | Pemakaian lokal pribadi | Tidak dideploy ke server publik; FND-09, NOTE-16, PROD-06, PROD-07a dibatalkan |
 | Bahasa | UI Indonesia, kode Inggris | Konsisten |
 
 Known issues:

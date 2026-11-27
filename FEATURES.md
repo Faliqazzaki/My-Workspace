@@ -3,7 +3,7 @@
 Checklist fitur dan rencana pengembangan. Dokumen ini adalah sumber kebenaran
 untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 
-> Terakhir diperbarui: 23 November 2026
+> Terakhir diperbarui: 27 November 2026
 
 ## Cara pakai dokumen ini
 
@@ -35,7 +35,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 - [x] **FND-06** Pint, ESLint, Prettier, dan `npm run build` sebagai quality gate
 - [x] **FND-07** Struktur test Pest + `RefreshDatabase`
 - [x] **FND-08** CI GitHub Actions: Pint, ESLint, Prettier check, Pest, build
-- [ ] **FND-09** Script deploy / dokumentasi deployment
+- [ ] ~~**FND-09** Script deploy / dokumentasi deployment~~ (pemakaian lokal saja, tidak dideploy)
 - [ ] **FND-10** Backup database terjadwal + dokumentasi restore
 
 ## 2. Autentikasi & Keamanan
@@ -99,7 +99,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 - [x] **NOTE-13** Auto-save draft ke localStorage
 - [ ] **NOTE-14** Template catatan (harian, belajar, snippet)
 - [ ] **NOTE-15** Full-text search PostgreSQL (tsvector) + fallback SQLite
-- [ ] **NOTE-16** Catatan publik / share link (opsional, read-only)
+- [ ] ~~**NOTE-16** Catatan publik / share link (opsional, read-only)~~ (pemakaian lokal saja, tidak dideploy)
 - [x] **NOTE-17** Dialog detail catatan (pratinjau Markdown) dari daftar
 
 ## 6. Pekerjaan (Work Items)
@@ -137,9 +137,9 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 - [ ] **PROD-03** Snippet / developer notes
 - [x] **PROD-04** Pencarian global lintas catatan & pekerjaan
 - [x] **PROD-05** Notifikasi in-app untuk tenggat
-- [ ] **PROD-06** Pengingat email / web push
+- [ ] ~~**PROD-06** Pengingat email / web push~~ (pemakaian lokal saja, tidak dideploy)
 - [x] **PROD-07** PWA + mode offline baca
-- [ ] **PROD-07a** Baca catatan offline (cache data terautentikasi, bersihkan saat logout)
+- [ ] ~~**PROD-07a** Baca catatan offline (cache data terautentikasi, bersihkan saat logout)~~ (pemakaian lokal saja, tidak dideploy)
 - [x] **PROD-08** Export/import JSON & Markdown
 - [ ] **PROD-09** Halaman pengaturan workspace
 
@@ -196,33 +196,35 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 
 | Area | Selesai | Total |
 | --- | ---: | ---: |
-| Fondasi | 8 | 10 |
+| Fondasi | 8 | 9 |
 | Autentikasi | 9 | 12 |
 | UI | 10 | 12 |
 | Dashboard | 9 | 11 |
-| Catatan | 14 | 17 |
+| Catatan | 14 | 16 |
 | Pekerjaan | 19 | 20 |
-| Pengetahuan & Produktivitas | 5 | 14 |
+| Pengetahuan & Produktivitas | 5 | 12 |
 | Berita & AI | 0 | 13 |
 | Multi-Agent | 0 | 10 |
 | Kualitas | 5 | 12 |
 
-**Total: 79 dari 131 item selesai.**
+**Total: 79 dari 127 item selesai.**
 
 ## Antrean berikutnya (urut, lokal dulu)
 
 Fitur yang bisa dikerjakan tanpa layanan eksternal/AI:
 
-1. WORK-17 Lampiran file pada pekerjaan
+1. FND-10 Backup database terjadwal + dokumentasi restore
 2. KNOW-02 Statistik pengetahuan: catatan/minggu, tag teratas
-3. QA-06 Test browser end-to-end (Playwright)
-4. QA-10 Query performance review + index tambahan
-5. QA-12 Dokumentasi arsitektur & ADR
+3. QA-10 Query performance review + index tambahan
+4. QA-12 Dokumentasi arsitektur & ADR
+5. WORK-17 Lampiran file pada pekerjaan
+6. QA-06 Test browser end-to-end (Playwright)
 
-Ditunda (butuh layanan eksternal/biaya token): NEWS-*, AI-*, AGT-*, PROD-06.
+Ditunda (butuh layanan eksternal/biaya token): NEWS-*, AI-*, AGT-*.
 
 ## Non-goals saat ini
 
+- Deployment ke server produksi dan akses publik.
 - Aplikasi multi-user, registrasi publik, atau role/permission kompleks.
 - Kolaborasi real-time antar pengguna.
 - Mobile native app.
