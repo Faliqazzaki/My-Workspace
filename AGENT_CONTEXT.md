@@ -12,7 +12,7 @@ kebenaran**, lalu perbarui dokumen.
 > (list + detail + Kanban + kalender + proyek + subtask + saved views) + command
 > palette (Ctrl/Cmd + K) dengan pencarian global catatan/pekerjaan + shortcut
 > keyboard untuk aksi utama + toast global + riwayat aktivitas pekerjaan +
-> export/import data sudah berjalan.
+> export/import data + notifikasi in-app tenggat sudah berjalan.
 
 ---
 
@@ -89,8 +89,8 @@ kebenaran**, lalu perbarui dokumen.
   + Markdown + pratinjau + autosave draft + tautan ke pekerjaan), Pekerjaan
   (list + detail dialog + Markdown + Kanban + kalender + proyek + subtask +
   saved views + riwayat aktivitas), Proyek/area (CRUD + arsip + progress),
-  Data (export/import JSON + Markdown).
-- Test: **156 test Pest lolos** (1264 assertions), build Vite berhasil.
+  Data (export/import JSON + Markdown), Notifikasi in-app (dropdown tenggat terlambat/hari ini/besok).
+- Test: **162 test Pest lolos** (1296 assertions), build Vite berhasil.
 - Cara kerja: **satu increment kecil**, backend → frontend → test → quality gate
   → verifikasi PostgreSQL → update checklist.
 
@@ -266,6 +266,7 @@ app/
       AdminDataController.php      # export/import JSON + Markdown
       AdminPasswordController.php  # ubah password admin
       NoteController.php           # CRUD catatan + pin
+      NotificationController.php   # endpoint JSON notifikasi in-app tenggat
       SearchController.php         # pencarian global catatan + pekerjaan
       SavedViewController.php      # simpan/hapus tampilan filter pekerjaan
       WorkItemController.php       # CRUD pekerjaan + status + riwayat aktivitas
@@ -316,6 +317,7 @@ resources/
       command-palette.jsx          # palette Ctrl/Cmd+K (navigasi + quick create + pencarian global)
       keyboard-shortcuts.jsx       # shortcut global + dialog bantuan (?)
       markdown-content.jsx         # render Markdown aman (GFM + sanitize)
+      notifications-dropdown.jsx   # dropdown notifikasi tenggat di header
       toast.jsx                    # toast global + jembatan flash Laravel
       notes/note-editor-dialog.jsx # dialog tambah/edit + pratinjau + auto-save draft
       notes/note-detail-dialog.jsx # pratinjau detail dari daftar
@@ -574,6 +576,7 @@ Prefix `/admin`, name prefix `admin.`, middleware `admin.auth`.
 | POST | `/keluar` | `admin.logout` | logout |
 | GET | `/admin` | `admin.index` | dashboard |
 | GET | `/admin/search` | `admin.search` | pencarian global catatan + pekerjaan (JSON) |
+| GET | `/admin/notifications` | `admin.notifications.index` | daftar notifikasi tenggat (JSON) |
 | GET | `/admin/password` | `admin.password.edit` | halaman keamanan |
 | PUT | `/admin/password` | `admin.password.update` | ubah password |
 | GET | `/admin/data` | `admin.data.index` | halaman export/import |
@@ -710,6 +713,12 @@ Saat menambah route baru: ikuti pola di atas, tambahkan test tamu → redirect.
   Kolom adalah droppable (`status`), kartu draggable. Perubahan status
   di-optimistic-update di state lokal lalu `PATCH`; rollback lewat `onError`.
   Urutan manual belum didukung (belum ada `position`/endpoint reorder).
+- Notifikasi in-app tenggat memakai `@/components/notifications-dropdown` di
+  topbar `AdminLayout`. Data diambil dari `GET /admin/notifications` saat mount
+  dan saat dropdown dibuka. Status dibaca disimpan di `localStorage`
+  (`my_workspace_read_notifications`) berbasis kunci `id:dueDate`, dibungkus
+  `try/catch`. Tersedia tombol "Tandai dibaca" dan klik item mengarahkan ke
+  pekerjaan terfilter.
 
 ### Pola UI yang sudah ada
 
@@ -984,6 +993,20 @@ Gunakan urutan ini agar hasilnya konsisten:
    dulu agar `project_key` pekerjaan tetap terpetakan. Semua penulisan import
    berjalan dalam satu transaksi.
 
+### 14.7 Notifikasi in-app tenggat (PROD-05)
+
+1. Ikon lonceng di topbar layout admin (`NotificationsDropdown`) menampilkan badge
+   jumlah tenggat yang belum dibaca.
+2. Endpoint `GET /admin/notifications` (maks 20 entri) menyaring pekerjaan belum
+   selesai (`status != 'done'`) yang jatuh tempo kemarin atau sebelumnya (terlambat),
+   hari ini, atau besok, dihitung dalam zona waktu `Asia/Jakarta`.
+3. Notifikasi dikelompokkan ke kategori: Terlambat, Jatuh Tempo Hari Ini, dan Jatuh
+   Tempo Besok, diurutkan paling mendesak (kategori urgensi, tanggal terawal, prioritas
+   urgent->high->medium->low).
+4. Status "sudah dibaca" disimpan di `localStorage` (`my_workspace_read_notifications`)
+   dengan kunci `${id}:${dueDate}`. Tersedia tombol "Tandai dibaca" dan klik item
+   langsung membuka daftar pekerjaan terfilter.
+
 ---
 
 ## 15. Rancangan fitur berikutnya (spesifikasi)
@@ -991,7 +1014,7 @@ Gunakan urutan ini agar hasilnya konsisten:
 > Detail checklist dan ID ada di `FEATURES.md`. Bagian ini menjelaskan
 > **bagaimana** membangunnya.
 
-> Spesifikasi fitur selesai (NOTE-08..11, WORK-11..15) ada di `docs/specs-done.md`.
+> Spesifikasi fitur selesai (NOTE-08..11, WORK-11..15, PROD-05, PROD-08) ada di `docs/specs-done.md`.
 
 ### 15.6 KNOW-01/02 — Kebiasaan & statistik (KNOW-01 selesai)
 

@@ -5,6 +5,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminDataController;
 use App\Http\Controllers\AdminPasswordController;
 use App\Http\Controllers\NoteController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\SavedViewController;
 use App\Http\Controllers\SearchController;
@@ -25,6 +26,7 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
     Route::get('/', [AdminController::class, 'index'])->name('index');
 
     Route::get('/search', [SearchController::class, 'index'])->name('search');
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
 
     Route::get('/password', [AdminPasswordController::class, 'edit'])->name('password.edit');
     Route::put('/password', [AdminPasswordController::class, 'update'])->name('password.update');

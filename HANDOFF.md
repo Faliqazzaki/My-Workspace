@@ -1,12 +1,11 @@
 # HANDOFF
 Terakhir: 27 Nov 2026
-Item: PROD-08 (export/import JSON & Markdown) — SELESAI
-File utama: app/Http/Controllers/AdminDataController.php,
-  resources/js/pages/admin/data.jsx,
-  routes/web.php, resources/views/app.blade.php,
-  tests/Feature/AdminDataTest.php
-Status: Halaman /admin/data (menu Data) untuk export JSON (opsional catatan
-  terarsip), export Markdown ZIP, dan import JSON dua tahap (pratinjau +
-  konfirmasi) dengan validasi skema/ukuran dan skip duplikat; tanpa data user;
-  check.sh hijau
-Berikutnya: PROD-05 (notifikasi in-app untuk tenggat) dari antrean FEATURES.md
+Item: PROD-05 (notifikasi in-app untuk tenggat) — SELESAI
+File utama: app/Http/Controllers/NotificationController.php,
+  resources/js/components/notifications-dropdown.jsx,
+  resources/js/layouts/admin-layout.jsx,
+  routes/web.php, tests/Feature/AdminNotificationTest.php
+Status: Ikon lonceng di topbar layout admin dengan badge notifikasi belum dibaca,
+  dropdown daftar notifikasi per kategori (terlambat, hari ini, besok) zona Asia/Jakarta,
+  maks 20 entri, status dibaca tersimpan di localStorage, check.sh hijau
+Berikutnya: PROD-07 (PWA + mode offline baca) dari antrean FEATURES.md

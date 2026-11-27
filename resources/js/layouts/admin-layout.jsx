@@ -16,6 +16,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import CommandPalette from '@/components/command-palette';
 import KeyboardShortcuts from '@/components/keyboard-shortcuts';
+import NotificationsDropdown from '@/components/notifications-dropdown';
 import ThemeToggle from '@/components/theme-toggle';
 import { FlashToasts } from '@/components/toast';
 import { Button } from '@/components/ui/button';
@@ -234,6 +235,7 @@ export default function AdminLayout({ title = 'Beranda', children }) {
                             >
                                 <Keyboard className="size-4" />
                             </Button>
+                            <NotificationsDropdown />
                             <ThemeToggle />
                             <Button
                                 type="button"
