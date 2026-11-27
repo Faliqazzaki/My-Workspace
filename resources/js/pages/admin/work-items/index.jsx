@@ -1716,6 +1716,7 @@ export default function WorkItemsIndex({
 
             <WorkItemDetailDialog
                 workItem={detail}
+                projects={projects}
                 onClose={() => setDetail(null)}
                 onEdit={editFromDetail}
             />

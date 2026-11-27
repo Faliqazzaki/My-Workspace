@@ -6,6 +6,8 @@ use App\Models\Note;
 use App\Models\Project;
 use App\Models\SavedView;
 use App\Models\WorkItem;
+use App\Models\WorkItemActivity;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -132,6 +134,8 @@ class WorkItemController extends Controller
             'completed_at' => $data['status'] === 'done' ? now() : null,
         ]);
 
+        $this->recordActivity($workItem, 'created');
+
         $workItem->notes()->sync($noteIds);
         $this->syncSubtasks($workItem, $subtasks);
 
@@ -148,6 +152,14 @@ class WorkItemController extends Controller
         $subtasks = $data['subtasks'] ?? [];
         unset($data['notes'], $data['subtasks']);
 
+        $trackFields = ['status', 'priority', 'due_date', 'project_id', 'title'];
+        $oldValues = [];
+        foreach ($trackFields as $field) {
+            $oldValues[$field] = $this->activityValue(
+                $workItem->getAttribute($field),
+            );
+        }
+
         $workItem->update($data + [
             'completed_at' => $data['status'] === 'done'
                 ? ($workItem->completed_at ?? now())
@@ -160,6 +172,8 @@ class WorkItemController extends Controller
             $this->syncSubtasks($workItem, $subtasks);
         }
 
+        $this->recordFieldChanges($workItem, $oldValues);
+
         return redirect()
             ->route('admin.work-items.index')
             ->with('success', 'Pekerjaan berhasil diperbarui.');
@@ -171,6 +185,8 @@ class WorkItemController extends Controller
             'status' => ['required', Rule::in(WorkItem::STATUSES)],
         ]);
 
+        $oldStatus = $workItem->status;
+
         $workItem->update([
             'status' => $data['status'],
             'completed_at' => $data['status'] === 'done'
@@ -178,7 +194,29 @@ class WorkItemController extends Controller
                 : null,
         ]);
 
+        if ($oldStatus !== $data['status']) {
+            $this->recordActivity($workItem, 'status_changed', [
+                'old' => $oldStatus,
+                'new' => $data['status'],
+            ]);
+        }
+
         return back()->with('success', 'Status pekerjaan diperbarui.');
+    }
+
+    public function activities(WorkItem $workItem): JsonResponse
+    {
+        $activities = $workItem->activities()
+            ->limit(20)
+            ->get()
+            ->map(fn (WorkItemActivity $activity) => [
+                'id' => $activity->id,
+                'type' => $activity->type,
+                'changes' => $activity->changes,
+                'created_at' => $activity->created_at?->toIso8601String(),
+            ]);
+
+        return response()->json(['activities' => $activities]);
     }
 
     public function destroy(WorkItem $workItem): RedirectResponse
@@ -201,12 +239,21 @@ class WorkItemController extends Controller
             ->get();
 
         foreach ($workItems as $workItem) {
+            $oldStatus = $workItem->status;
+
             $workItem->update([
                 'status' => $data['status'],
                 'completed_at' => $data['status'] === 'done'
                     ? ($workItem->completed_at ?? now())
                     : null,
             ]);
+
+            if ($oldStatus !== $data['status']) {
+                $this->recordActivity($workItem, 'status_changed', [
+                    'old' => $oldStatus,
+                    'new' => $data['status'],
+                ]);
+            }
         }
 
         return back()->with(
@@ -227,6 +274,53 @@ class WorkItemController extends Controller
             ->delete();
 
         return back()->with('success', $deleted.' pekerjaan dihapus.');
+    }
+
+    /**
+     * @param  array{old: mixed, new: mixed}|null  $changes
+     */
+    private function recordActivity(
+        WorkItem $workItem,
+        string $type,
+        ?array $changes = null,
+    ): void {
+        WorkItemActivity::create([
+            'work_item_id' => $workItem->id,
+            'type' => $type,
+            'changes' => $changes,
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $oldValues
+     */
+    private function recordFieldChanges(WorkItem $workItem, array $oldValues): void
+    {
+        $workItem->refresh();
+
+        foreach ($oldValues as $field => $oldValue) {
+            $newValue = $this->activityValue($workItem->getAttribute($field));
+
+            if ((string) $oldValue === (string) $newValue) {
+                continue;
+            }
+
+            $type = $field === 'project_id'
+                ? 'project_changed'
+                : $field.'_changed';
+
+            $this->recordActivity($workItem, $type, [
+                'old' => $oldValue,
+                'new' => $newValue,
+            ]);
+        }
+    }
+
+    private function activityValue(mixed $value): mixed
+    {
+        return $value instanceof \DateTimeInterface
+            ? $value->format('Y-m-d')
+            : $value;
     }
 
     /**

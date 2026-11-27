@@ -1,11 +1,12 @@
 # HANDOFF
-Terakhir: 25 Nov 2026
-Item: AUTH-09 (remember me & masa berlaku session) — SELESAI
-File utama: app/Http/Controllers/AdminAuthController.php,
-  resources/js/pages/auth/admin-login.jsx,
-  tests/Feature/AdminAuthTest.php,
-  config/session.php
-Status: Checkbox "Ingat saya" ditambahkan ke form login admin dan diteruskan ke
-  Auth::attempt; remember_token terisi saat remember me dan dibersihkan saat logout;
-  masa berlaku session 120 menit (SESSION_LIFETIME); check.sh hijau.
-Berikutnya: WORK-18 (riwayat aktivitas pekerjaan) dari antrean FEATURES.md
+Terakhir: 27 Nov 2026
+Item: WORK-18 (riwayat aktivitas pekerjaan) — SELESAI
+File utama: app/Models/WorkItemActivity.php,
+  database/migrations/2026_11_25_200000_create_work_item_activities_table.php,
+  app/Http/Controllers/WorkItemController.php,
+  resources/js/components/work-items/work-item-detail-dialog.jsx,
+  tests/Feature/WorkItemActivityTest.php
+Status: Aktivitas dibuat/status/prioritas/tenggat/proyek/judul dicatat; endpoint
+  JSON maks 20 entri; dialog detail menampilkan Riwayat; cascade saat hapus;
+  migrasi jsonb sudah dijalankan & diverifikasi di PostgreSQL; check.sh hijau
+Berikutnya: PROD-08 (export/import JSON & Markdown) dari antrean FEATURES.md

@@ -11,7 +11,8 @@ kebenaran**, lalu perbarui dokumen.
 > detail, Markdown, tautan pekerjaan, arsip/restore, auto-save draft) + Pekerjaan
 > (list + detail + Kanban + kalender + proyek + subtask + saved views) + command
 > palette (Ctrl/Cmd + K) dengan pencarian global catatan/pekerjaan + shortcut
-> keyboard untuk aksi utama + toast global sudah berjalan.
+> keyboard untuk aksi utama + toast global + riwayat aktivitas pekerjaan sudah
+> berjalan.
 
 ---
 
@@ -87,8 +88,8 @@ kebenaran**, lalu perbarui dokumen.
   keyboard), Dashboard (statistik + kebiasaan mencatat), Catatan (dialog detail
   + Markdown + pratinjau + autosave draft + tautan ke pekerjaan), Pekerjaan
   (list + detail dialog + Markdown + Kanban + kalender + proyek + subtask +
-  saved views), Proyek/area (CRUD + arsip + progress).
-- Test: **133 test Pest lolos** (1016 assertions), build Vite berhasil.
+  saved views + riwayat aktivitas), Proyek/area (CRUD + arsip + progress).
+- Test: **148 test Pest lolos** (1174 assertions), build Vite berhasil.
 - Cara kerja: **satu increment kecil**, backend → frontend → test → quality gate
   → verifikasi PostgreSQL → update checklist.
 
@@ -178,7 +179,7 @@ timpa `HANDOFF.md`. Hapus data uji yang dibuat di PostgreSQL.
 | CI | Selesai (GitHub Actions: Pint, ESLint, Prettier, Pest, build) |
 | Dashboard | Selesai (data nyata + kebiasaan/streak + grafik aktivitas 7/30 hari) |
 | Catatan | Selesai (CRUD, detail, dialog detail, Markdown, auto-save draft, tautan pekerjaan, arsip/restore, search, tag, pin) |
-| Pekerjaan | Selesai (CRUD, filter, status, tenggat, catatan, proyek, subtask, saved views, aksi massal, detail dialog) |
+| Pekerjaan | Selesai (CRUD, filter, status, tenggat, catatan, proyek, subtask, saved views, aksi massal, detail dialog, riwayat aktivitas) |
 | Markdown preview | Selesai (halaman detail + tab pratinjau editor) |
 | Tautan catatan ↔ pekerjaan | Selesai (pivot `note_work_item`, dua arah) |
 | Kanban | Selesai (toggle Daftar/Papan, drag & drop, select status) |
@@ -264,7 +265,7 @@ app/
       NoteController.php           # CRUD catatan + pin
       SearchController.php         # pencarian global catatan + pekerjaan
       SavedViewController.php      # simpan/hapus tampilan filter pekerjaan
-      WorkItemController.php       # CRUD pekerjaan + status + filter
+      WorkItemController.php       # CRUD pekerjaan + status + riwayat aktivitas
       Settings/                    # sisa starter kit (belum dipakai admin)
     Middleware/
       EnsureAdminAuthenticated.php # alias admin.auth
@@ -273,6 +274,7 @@ app/
     Note.php
     SavedView.php                  # preset filter pekerjaan
     WorkItem.php
+    WorkItemActivity.php           # riwayat perubahan pekerjaan
     User.php                       # auth admin (username, is_admin)
 config/
   admin.php                        # env akun admin awal
@@ -287,6 +289,7 @@ database/
     2026_11_23_180000_create_work_item_subtasks_table.php
     2026_11_23_190000_create_saved_views_table.php
     2026_11_24_000000_add_deleted_at_to_notes_table.php
+    2026_11_25_200000_create_work_item_activities_table.php
   seeders/AdminUserSeeder.php      # akun admin dari config
 resources/
   css/app.css                      # token tema + font
@@ -294,7 +297,7 @@ resources/
     app.jsx                        # entry Inertia
     layouts/admin-layout.jsx       # shell admin
     lib/
-      date.js                      # format tanggal, overdue
+      date.js                      # format tanggal/jam, overdue
       work-item-meta.js            # label/badge status & prioritas
       utils.js                     # cn()
     pages/
@@ -314,7 +317,7 @@ resources/
       notes/note-detail-dialog.jsx # pratinjau detail dari daftar
       work-items/kanban-board.jsx  # papan Kanban + drag & drop
       work-items/work-calendar.jsx # kalender tenggat bulanan
-      work-items/work-item-detail-dialog.jsx # detail + Markdown
+      work-items/work-item-detail-dialog.jsx # detail + Markdown + riwayat
       ui/                          # shadcn
 routes/web.php                     # semua route admin
 .github/workflows/ci.yml           # quality gate CI (push/PR main)
@@ -487,7 +490,31 @@ membuat baris baru, menghapus yang tidak dikirim, dan menetapkan `position`
 sesuai urutan array. Jika `subtasks` tidak ada di payload update, subtask lama
 tidak diubah.
 
-### 8.5 `note_work_item` (pivot)
+### 8.5 `work_item_activities`
+
+| Kolom | Tipe | Aturan |
+| --- | --- | --- |
+| `id` | bigint PK | |
+| `work_item_id` | FK `work_items` | cascade delete |
+| `type` | varchar | `created`, `status_changed`, `priority_changed`, `due_date_changed`, `project_changed`, `title_changed` |
+| `changes` | jsonb nullable | `{ old, new }`, null untuk `created` |
+| `created_at` | timestamp nullable | tanpa `updated_at` |
+
+Index: `(work_item_id, created_at)`. Model `WorkItemActivity` memakai
+`const UPDATED_AT = null` dan cast `changes` ke array.
+
+**Pencatatan:** `WorkItemController` mencatat `created` saat store,
+`status_changed` saat update status/aksi massal (hanya jika status berubah),
+serta perubahan `title`, `priority`, `due_date`, dan `project_id` saat update.
+Update tanpa perubahan nilai tidak mencatat apa pun. Hapus pekerjaan
+menghapus seluruh riwayat lewat cascade.
+
+**Endpoint:** `GET /admin/work-items/{workItem}/activities` mengembalikan JSON
+`{ activities: [...] }`, maksimal 20 entri terbaru (`created_at` lalu `id`
+menurun). Riwayat **tidak** dimuat di payload daftar; dialog detail mengambilnya
+saat dibuka dan menampilkan waktu Asia/Jakarta.
+
+### 8.6 `note_work_item` (pivot)
 
 | Kolom | Tipe | Aturan |
 | --- | --- | --- |
@@ -500,7 +527,7 @@ Unique: `(note_id, work_item_id)`. Relasi: `Note::workItems()` dan
 `WorkItem::notes()` (belongsToMany, `withTimestamps`). Sinkronisasi lewat
 `sync()` di controller; jangan menulis pivot langsung.
 
-### 8.6 `users` (auth admin)
+### 8.7 `users` (auth admin)
 
 | Kolom | Tipe | Aturan |
 | --- | --- | --- |
@@ -521,7 +548,7 @@ Middleware admin mensyaratkan `is_admin = true`.
 Tabel bawaan lain: `password_reset_tokens`, `sessions`, `cache`, `jobs`,
 `failed_jobs`, `two_factor_*` (Fortify). Sebagian tidak dipakai alur admin saat ini.
 
-### 8.7 Aturan migrasi
+### 8.8 Aturan migrasi
 
 - Nama file: `YYYY_MM_DD_HHMMSS_description.php`, timestamp setelah migrasi terakhir.
 - Selalu tulis `down()`.
@@ -566,6 +593,7 @@ Prefix `/admin`, name prefix `admin.`, middleware `admin.auth`.
 | DELETE | `/admin/work-items/bulk` | `admin.work-items.bulk-destroy` | hapus banyak item (maks 100) |
 | PUT | `/admin/work-items/{workItem}` | `admin.work-items.update` | ubah pekerjaan |
 | PATCH | `/admin/work-items/{workItem}/status` | `admin.work-items.status` | ubah status |
+| GET | `/admin/work-items/{workItem}/activities` | `admin.work-items.activities` | riwayat aktivitas (JSON, maks 20) |
 | DELETE | `/admin/work-items/{workItem}` | `admin.work-items.destroy` | hapus pekerjaan |
 
 Route tampilan tersimpan menerima `name` (unik, maks 50) dan `filters`
@@ -882,7 +910,10 @@ Gunakan urutan ini agar hasilnya konsisten:
     dan Kalender.
 17. Klik judul kartu (Daftar/Papan), item kalender, atau tombol **Detail**
     membuka dialog detail: status/prioritas, proyek, tenggat, deskripsi
-    Markdown ter-render, checklist, tag, dan catatan terkait. Tombol
+    Markdown ter-render, checklist, tag, catatan terkait, dan **Riwayat**.
+    Riwayat diambil dari endpoint JSON saat dialog dibuka (maks 20 entri
+    terbaru, waktu Asia/Jakarta) dan menampilkan pembuatan, perubahan status,
+    prioritas, tenggat, proyek, serta judul dalam bahasa Indonesia. Tombol
     **Edit pekerjaan** menutup detail dan membuka form edit.
 
 ### 14.4 Dashboard

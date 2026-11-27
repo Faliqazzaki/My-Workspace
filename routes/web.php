@@ -51,6 +51,7 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
     Route::delete('/work-items/bulk', [WorkItemController::class, 'bulkDestroy'])->name('work-items.bulk-destroy');
     Route::put('/work-items/{workItem}', [WorkItemController::class, 'update'])->name('work-items.update');
     Route::patch('/work-items/{workItem}/status', [WorkItemController::class, 'updateStatus'])->name('work-items.status');
+    Route::get('/work-items/{workItem}/activities', [WorkItemController::class, 'activities'])->name('work-items.activities');
     Route::delete('/work-items/{workItem}', [WorkItemController::class, 'destroy'])->name('work-items.destroy');
 });
 

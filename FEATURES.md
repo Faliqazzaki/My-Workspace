@@ -121,7 +121,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 - [x] **WORK-15** Tampilan kalender berdasarkan tenggat
 - [ ] **WORK-16** Pekerjaan berulang (recurring)
 - [ ] **WORK-17** Lampiran file pada pekerjaan
-- [ ] **WORK-18** Riwayat aktivitas pekerjaan
+- [x] **WORK-18** Riwayat aktivitas pekerjaan
 - [x] **WORK-19** Saved views / filter tersimpan
 - [x] **WORK-20** Bulk action (ubah status/hapus beberapa item)
 - [x] **WORK-21** Dialog detail pekerjaan dengan deskripsi Markdown ter-render
@@ -200,27 +200,26 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 | UI | 10 | 12 |
 | Dashboard | 9 | 11 |
 | Catatan | 14 | 17 |
-| Pekerjaan | 18 | 20 |
+| Pekerjaan | 19 | 20 |
 | Pengetahuan & Produktivitas | 2 | 13 |
 | Berita & AI | 0 | 13 |
 | Multi-Agent | 0 | 10 |
 | Kualitas | 5 | 12 |
 
-**Total: 75 dari 130 item selesai.**
+**Total: 76 dari 130 item selesai.**
 
 ## Antrean berikutnya (urut, lokal dulu)
 
 Fitur yang bisa dikerjakan tanpa layanan eksternal/AI:
 
-1. WORK-18 Riwayat aktivitas pekerjaan
-2. PROD-08 Export/import JSON & Markdown
-3. PROD-05 Notifikasi in-app untuk tenggat
-4. PROD-07 PWA + mode offline baca
-5. WORK-17 Lampiran file pada pekerjaan
-8. KNOW-02 Statistik pengetahuan: catatan/minggu, tag teratas
-9. QA-06 Test browser end-to-end (Playwright)
-10. QA-10 Query performance review + index tambahan
-11. QA-12 Dokumentasi arsitektur & ADR
+1. PROD-08 Export/import JSON & Markdown
+2. PROD-05 Notifikasi in-app untuk tenggat
+3. PROD-07 PWA + mode offline baca
+4. WORK-17 Lampiran file pada pekerjaan
+5. KNOW-02 Statistik pengetahuan: catatan/minggu, tag teratas
+6. QA-06 Test browser end-to-end (Playwright)
+7. QA-10 Query performance review + index tambahan
+8. QA-12 Dokumentasi arsitektur & ADR
 
 Ditunda (butuh layanan eksternal/biaya token): NEWS-*, AI-*, AGT-*, PROD-06.
 

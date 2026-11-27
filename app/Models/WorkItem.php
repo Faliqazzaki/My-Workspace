@@ -49,4 +49,11 @@ class WorkItem extends Model
             ->orderBy('position')
             ->orderBy('id');
     }
+
+    public function activities(): HasMany
+    {
+        return $this->hasMany(WorkItemActivity::class)
+            ->latest('created_at')
+            ->latest('id');
+    }
 }

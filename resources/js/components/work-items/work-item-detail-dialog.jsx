@@ -3,10 +3,12 @@ import {
     CalendarDays,
     CheckCircle2,
     Circle,
+    History,
     NotebookPen,
     Pencil,
     Tag,
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 import MarkdownContent from '@/components/markdown-content';
 import { Button } from '@/components/ui/button';
@@ -18,11 +20,48 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { formatDate, isOverdue } from '@/lib/date';
+import { Spinner } from '@/components/ui/spinner';
+import { formatDate, formatDateTime, isOverdue } from '@/lib/date';
 import { cn } from '@/lib/utils';
 import { priorityMeta, statusMeta } from '@/lib/work-item-meta';
 
-export default function WorkItemDetailDialog({ workItem, onClose, onEdit }) {
+const projectLabel = (projects, id) => {
+    if (!id) {
+        return 'Tanpa proyek';
+    }
+
+    const project = projects.find((item) => item.id === id);
+
+    return project?.name ?? `Proyek #${id}`;
+};
+
+const describeActivity = (activity, projects) => {
+    const changes = activity.changes ?? {};
+
+    switch (activity.type) {
+        case 'created':
+            return 'Pekerjaan dibuat';
+        case 'status_changed':
+            return `Status: ${statusMeta[changes.old]?.label ?? changes.old} → ${statusMeta[changes.new]?.label ?? changes.new}`;
+        case 'priority_changed':
+            return `Prioritas: ${priorityMeta[changes.old]?.label ?? changes.old} → ${priorityMeta[changes.new]?.label ?? changes.new}`;
+        case 'due_date_changed':
+            return `Tenggat: ${changes.old ? formatDate(changes.old) : 'Tanpa tenggat'} → ${changes.new ? formatDate(changes.new) : 'Tanpa tenggat'}`;
+        case 'project_changed':
+            return `Proyek: ${projectLabel(projects, changes.old)} → ${projectLabel(projects, changes.new)}`;
+        case 'title_changed':
+            return `Judul: ${changes.old} → ${changes.new}`;
+        default:
+            return 'Pekerjaan diperbarui';
+    }
+};
+
+export default function WorkItemDetailDialog({
+    workItem,
+    projects = [],
+    onClose,
+    onEdit,
+}) {
     const status = workItem ? statusMeta[workItem.status] : null;
     const priority = workItem ? priorityMeta[workItem.priority] : null;
     const subtasks = workItem?.subtasks ?? [];
@@ -30,6 +69,57 @@ export default function WorkItemDetailDialog({ workItem, onClose, onEdit }) {
     const overdue = workItem
         ? isOverdue(workItem.due_date, workItem.status)
         : false;
+    const activeWorkItemId = workItem?.id ?? null;
+    const [activityState, setActivityState] = useState({
+        id: null,
+        items: null,
+        error: false,
+    });
+    const activities =
+        activityState.id === activeWorkItemId ? activityState.items : null;
+    const activitiesError =
+        activityState.id === activeWorkItemId ? activityState.error : false;
+
+    useEffect(() => {
+        if (!activeWorkItemId) {
+            return;
+        }
+
+        let cancelled = false;
+
+        fetch(`/admin/work-items/${activeWorkItemId}/activities`, {
+            headers: { Accept: 'application/json' },
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error('Gagal memuat riwayat.');
+                }
+
+                return response.json();
+            })
+            .then((data) => {
+                if (!cancelled) {
+                    setActivityState({
+                        id: activeWorkItemId,
+                        items: data.activities ?? [],
+                        error: false,
+                    });
+                }
+            })
+            .catch(() => {
+                if (!cancelled) {
+                    setActivityState({
+                        id: activeWorkItemId,
+                        items: [],
+                        error: true,
+                    });
+                }
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [activeWorkItemId]);
 
     return (
         <Dialog
@@ -216,6 +306,58 @@ export default function WorkItemDetailDialog({ workItem, onClose, onEdit }) {
                                 </div>
                             </section>
                         )}
+
+                        <section>
+                            <h3 className="flex items-center gap-1.5 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                                <History className="size-3.5" />
+                                Riwayat
+                            </h3>
+
+                            {activities === null && (
+                                <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+                                    <Spinner className="size-3.5" />
+                                    Memuat riwayat...
+                                </p>
+                            )}
+
+                            {activitiesError && (
+                                <p className="mt-2 text-sm text-red-600 dark:text-red-400">
+                                    Riwayat gagal dimuat.
+                                </p>
+                            )}
+
+                            {activities?.length === 0 && !activitiesError && (
+                                <p className="mt-2 text-sm text-muted-foreground">
+                                    Belum ada riwayat.
+                                </p>
+                            )}
+
+                            {activities?.length > 0 && (
+                                <ol className="mt-2 space-y-2">
+                                    {activities.map((activity) => (
+                                        <li
+                                            key={activity.id}
+                                            className="flex gap-2"
+                                        >
+                                            <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-indigo-500" />
+                                            <div className="min-w-0">
+                                                <p className="text-sm break-words">
+                                                    {describeActivity(
+                                                        activity,
+                                                        projects,
+                                                    )}
+                                                </p>
+                                                <time className="text-[11px] text-muted-foreground">
+                                                    {formatDateTime(
+                                                        activity.created_at,
+                                                    )}
+                                                </time>
+                                            </div>
+                                        </li>
+                                    ))}
+                                </ol>
+                            )}
+                        </section>
 
                         <DialogFooter>
                             <Button

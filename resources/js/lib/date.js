@@ -11,6 +11,16 @@ const longDateFormatter = new Intl.DateTimeFormat('id-ID', {
     year: 'numeric',
 });
 
+const dateTimeFormatter = new Intl.DateTimeFormat('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Asia/Jakarta',
+    timeZoneName: 'short',
+});
+
 export const toDateInput = (value) => (value ? value.slice(0, 10) : '');
 
 export const formatDate = (value) => {
@@ -27,6 +37,14 @@ export const formatLongDate = (value = new Date()) => {
     const date = value instanceof Date ? value : new Date(value);
 
     return longDateFormatter.format(date);
+};
+
+export const formatDateTime = (value) => {
+    if (!value) {
+        return '';
+    }
+
+    return dateTimeFormatter.format(new Date(value));
 };
 
 export const todayIso = () => {
