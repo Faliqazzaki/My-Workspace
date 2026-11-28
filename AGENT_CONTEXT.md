@@ -224,7 +224,13 @@ DB_CONNECTION=pgsql
 DB_DATABASE=my_workspace
 DB_USERNAME=my_workspace
 DB_PASSWORD=workspace_dev
+BACKUP_PATH=storage/app/backups
+BACKUP_RETENTION=14
 ```
+
+`BACKUP_PATH` adalah folder backup `pg_dump` (path relatif dari root project);
+`BACKUP_RETENTION` jumlah backup terbaru yang disimpan (default 14). File backup
+berada di `storage/app/backups` dan diabaikan git.
 
 ### Environment test
 
@@ -255,6 +261,8 @@ Hindari fungsi SQL khusus PostgreSQL di jalur yang dites, atau sediakan fallback
 | `npm run format` | format seluruh `resources/` |
 | `npm run lint` | ESLint fix |
 | `php artisan migrate` | migrasi PostgreSQL |
+| `php artisan db:backup` | backup `pg_dump` + retensi (default 14) |
+| `php artisan schedule:work` | jalankan scheduler harian (`db:backup`) |
 
 ---
 
@@ -1354,6 +1362,7 @@ berikutnya, test/build hijau.
 | `/dashboard` | Tidak dipakai | Entry admin adalah `/` |
 | Tests | SQLite in-memory | Verifikasi terpisah di PostgreSQL |
 | Deployment | Pemakaian lokal pribadi | Tidak dideploy ke server publik; FND-09, NOTE-16, PROD-06, PROD-07a dibatalkan |
+| Backup | `php artisan db:backup` via `pg_dump` | Harian lewat scheduler; panduan restore di `docs/backup-restore.md` |
 | Bahasa | UI Indonesia, kode Inggris | Konsisten |
 
 Known issues:
@@ -1362,14 +1371,15 @@ Known issues:
    masih aktif tetapi tidak memberi akses `/admin` karena cek `is_admin`.
 2. Helper test global bisa bentrok nama. Gunakan `adminUser()` dari
    `tests/Pest.php`; helper baru harus unik.
-3. Belum ada backup otomatis.
-4. Detail pekerjaan memakai dialog, belum ada halaman detail terpisah.
-5. `completed_at` dijaga controller, bukan constraint database.
-6. Urutan kartu Kanban mengikuti tenggat, belum bisa diatur manual.
-7. Streak dihitung di PHP dari seluruh `notes.created_at`; cukup untuk data
+3. Detail pekerjaan memakai dialog, belum ada halaman detail terpisah.
+4. `completed_at` dijaga controller, bukan constraint database.
+5. Urutan kartu Kanban mengikuti tenggat, belum bisa diatur manual.
+6. Streak dihitung di PHP dari seluruh `notes.created_at`; cukup untuk data
    personal, perlu query agregat jika jumlah catatan sangat besar.
-8. Kalender memuat semua item bertenggat tanpa pagination; perlu dibatasi per
+7. Kalender memuat semua item bertenggat tanpa pagination; perlu dibatasi per
    rentang bulan jika jumlah item sudah sangat besar.
+8. Backup harian hanya jalan saat komputer menyala dan scheduler aktif;
+   tidak ada retry otomatis jika jadwal terlewat.
 
 ---
 

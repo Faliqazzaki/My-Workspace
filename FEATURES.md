@@ -36,7 +36,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 - [x] **FND-07** Struktur test Pest + `RefreshDatabase`
 - [x] **FND-08** CI GitHub Actions: Pint, ESLint, Prettier check, Pest, build
 - [ ] ~~**FND-09** Script deploy / dokumentasi deployment~~ (pemakaian lokal saja, tidak dideploy)
-- [ ] **FND-10** Backup database terjadwal + dokumentasi restore
+- [x] **FND-10** Backup database terjadwal + dokumentasi restore
 
 ## 2. Autentikasi & Keamanan
 
@@ -196,7 +196,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 
 | Area | Selesai | Total |
 | --- | ---: | ---: |
-| Fondasi | 8 | 9 |
+| Fondasi | 9 | 9 |
 | Autentikasi | 9 | 12 |
 | UI | 10 | 12 |
 | Dashboard | 9 | 11 |
@@ -207,18 +207,17 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 | Multi-Agent | 0 | 10 |
 | Kualitas | 5 | 12 |
 
-**Total: 79 dari 127 item selesai.**
+**Total: 80 dari 127 item selesai.**
 
 ## Antrean berikutnya (urut, lokal dulu)
 
 Fitur yang bisa dikerjakan tanpa layanan eksternal/AI:
 
-1. FND-10 Backup database terjadwal + dokumentasi restore
-2. KNOW-02 Statistik pengetahuan: catatan/minggu, tag teratas
-3. QA-10 Query performance review + index tambahan
-4. QA-12 Dokumentasi arsitektur & ADR
-5. WORK-17 Lampiran file pada pekerjaan
-6. QA-06 Test browser end-to-end (Playwright)
+1. KNOW-02 Statistik pengetahuan: catatan/minggu, tag teratas
+2. QA-10 Query performance review + index tambahan
+3. QA-12 Dokumentasi arsitektur & ADR
+4. WORK-17 Lampiran file pada pekerjaan
+5. QA-06 Test browser end-to-end (Playwright)
 
 Ditunda (butuh layanan eksternal/biaya token): NEWS-*, AI-*, AGT-*.
 
