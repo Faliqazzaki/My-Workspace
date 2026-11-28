@@ -153,7 +153,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 - [ ] **NEWS-06** Widget berita di dashboard + halaman arsip
 - [ ] **NEWS-07** Fallback saat AI/API gagal
 - [ ] **NEWS-08** Log biaya/token AI
-- [ ] **AI-01** Abstraksi provider AI (OpenAI/Anthropic/lokal)
+- [x] **AI-01** Abstraksi provider AI (OpenAI/Anthropic/lokal)
 - [ ] **AI-02** Asisten tanya-jawab atas catatan
 - [ ] **AI-03** Embedding catatan + semantic search (pgvector)
 - [ ] **AI-04** Ringkasan otomatis catatan panjang
@@ -203,11 +203,11 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 | Catatan | 14 | 16 |
 | Pekerjaan | 19 | 20 |
 | Pengetahuan & Produktivitas | 6 | 12 |
-| Berita & AI | 0 | 13 |
+| Berita & AI | 1 | 13 |
 | Multi-Agent | 0 | 10 |
 | Kualitas | 8 | 12 |
 
-**Total: 84 dari 127 item selesai.**
+**Total: 85 dari 127 item selesai.**
 
 ## Antrean berikutnya (urut, lokal dulu)
 

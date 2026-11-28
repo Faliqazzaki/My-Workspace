@@ -228,11 +228,24 @@ DB_USERNAME=my_workspace
 DB_PASSWORD=workspace_dev
 BACKUP_PATH=storage/app/backups
 BACKUP_RETENTION=14
+AI_PROVIDER=
+AI_BASE_URL=
+AI_API_KEY=
+AI_MODEL=
+AI_TIMEOUT=30
+AI_MAX_TOKENS=1024
+AI_TEMPERATURE=0.2
+AI_RETRY_MAX=2
+AI_RETRY_DELAY_MS=250
 ```
 
 `BACKUP_PATH` adalah folder backup `pg_dump` (path relatif dari root project);
 `BACKUP_RETENTION` jumlah backup terbaru yang disimpan (default 14). File backup
 berada di `storage/app/backups` dan diabaikan git.
+
+Entri AI kosong berarti tidak ada provider aktif dan tidak ada data yang keluar.
+Nilai `AI_PROVIDER` yang didukung: kosong atau `openai_compatible`. Panduan,
+batas pengeluaran, dan peringatan privasi: `docs/ai-setup.md`.
 
 ### Environment test
 
@@ -265,6 +278,7 @@ Hindari fungsi SQL khusus PostgreSQL di jalur yang dites, atau sediakan fallback
 | `npm run lint` | ESLint fix |
 | `php artisan migrate` | migrasi PostgreSQL |
 | `php artisan db:backup` | backup `pg_dump` + retensi (default 14) |
+| `php artisan ai:ping` | uji provider AI dengan prompt singkat (minta konfirmasi; pakai token) |
 | `php artisan schedule:work` | jalankan scheduler harian (`db:backup`) |
 
 ---
@@ -288,6 +302,16 @@ app/
     Middleware/
       EnsureAdminAuthenticated.php # alias admin.auth
       HandleInertiaRequests.php    # share admin, flash, auth, sidebar
+  Console/Commands/
+    DatabaseBackupCommand.php      # db:backup via pg_dump
+    AiPingCommand.php              # ai:ping (prompt singkat, minta konfirmasi)
+  Services/Ai/
+    AiProvider.php                 # interface summarize/chat/isAvailable
+    AiUnavailableException.php     # satu exception untuk semua kegagalan AI
+    NullAiProvider.php             # default, selalu tidak tersedia
+    OpenAiCompatibleProvider.php   # HTTP chat/completions + retry terbatas
+  Providers/
+    AiServiceProvider.php          # binding AiProvider dari config('ai.provider')
   Models/
     Note.php
     SavedView.php                  # preset filter pekerjaan
@@ -296,6 +320,7 @@ app/
     User.php                       # auth admin (username, is_admin)
 config/
   admin.php                        # env akun admin awal
+  ai.php                           # provider AI (default null), timeout, retry
 database/
   factories/UserFactory.php        # state admin()
   migrations/
@@ -359,6 +384,7 @@ docs/
   adr/                             # keputusan arsitektur (0001, 0002, ...)
   backup-restore.md                # panduan backup/restore pg_dump
   query-review.md                  # bukti EXPLAIN + keputusan index
+  ai-setup.md                      # konfigurasi provider AI + batas biaya
   specs-done.md                    # spesifikasi fitur yang selesai
 FEATURES.md                        # checklist fitur
 AGENT_CONTEXT.md                   # dokumen ini
@@ -1211,6 +1237,15 @@ sumber yang bisa diklik.
 tanpa konfigurasi, test memakai fake provider, fitur tidak mematahkan suite SQLite.
 
 **Out of scope:** agent yang menulis ke database, tool calling.
+
+**AI-01 selesai (abstraksi provider):** `config/ai.php` default `provider = null`;
+`App\Services\Ai\AiProvider` dengan `summarize()`, `chat()`, `isAvailable()`;
+`NullAiProvider` dan `OpenAiCompatibleProvider` (Http client, Bearer token,
+timeout, retry 429/5xx); semua kegagalan jadi `AiUnavailableException` agar
+pemanggil bisa fallback. Binding di `AiServiceProvider`, uji manual via
+`php artisan ai:ping` (konfirmasi + token). Log hanya status/durasi; kunci API
+tidak pernah di exception/log. Panduan: `docs/ai-setup.md`; ADR 0010. Belum
+termasuk `ai_usages` (NEWS-08), embedding (AI-03), atau fitur yang memanggil AI.
 
 ### 15.9 AGT-01…10 — Multi-agent (control plane)
 

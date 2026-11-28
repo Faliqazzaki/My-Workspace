@@ -1,7 +1,8 @@
 # HANDOFF
 Terakhir: 28 Nov 2026
-Item: QA-12 Dokumentasi arsitektur & ADR — SELESAI
-File utama: docs/architecture.md, docs/adr/ (README + 0001–0009), AGENT_CONTEXT.md §5, FEATURES.md
-Status: dokumentasi saja, tanpa perubahan kode. architecture.md (151 baris) memuat stack, alur Inertia, auth admin, peta modul, diagram Mermaid 8 tabel, strategi Pest+SQLite dan Playwright terisolasi, konteks lokal; tautan ke backup-restore.md dan query-review.md. 9 ADR singkat (≤21 baris) dengan format Konteks/Keputusan/Konsekuensi/Status.
-Verifikasi: setiap klaim dicek lewat graphify query dan kode (routes/web.php, model, middleware, phpunit.xml, §19 AGENT_CONTEXT). graphify update . dijalankan. check.sh tidak dijalankan karena tidak ada perubahan kode; tidak ada test baru.
+Item: AI-01 Abstraksi provider AI — SELESAI
+File utama: config/ai.php, app/Services/Ai/*, app/Providers/AiServiceProvider.php, app/Console/Commands/AiPingCommand.php, tests/Feature/AiProviderTest.php, docs/ai-setup.md, docs/adr/0010, .env.example, AGENT_CONTEXT.md §4/§5/§15.8, FEATURES.md
+Status: default provider null (tanpa pengiriman data). OpenAiCompatibleProvider memakai Http client: Bearer, model/messages/max_tokens/temperature, timeout, retry 429/5xx terbatas; semua kegagalan jadi AiUnavailableException. Log hanya status + durasi; kunci API tidak di exception/log. ai:ping meminta konfirmasi karena memakai token.
+Verifikasi: 12 test Pest dengan Http::fake + Http::preventStrayRequests lolos; check.sh hijau (pint/eslint/format/test/build). Tidak ada panggilan HTTP sungguhan ke penyedia mana pun. graphify update . dijalankan.
+Bukan lingkup: tabel ai_usages (NEWS-08), embedding (AI-03), fitur pemanggil AI.
 Berikutnya: WORK-17 Lampiran file pada pekerjaan dari antrean FEATURES.md.
