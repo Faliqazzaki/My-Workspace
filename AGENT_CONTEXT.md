@@ -481,9 +481,9 @@ php artisan db:seed --class=AdminUserSeeder
 
 ### Berikutnya
 
-- `AUTH-10` — audit log login.
-- `AUTH-11` — hapus/integrasikan route Fortify dan settings yang tidak dipakai.
-- `AUTH-12` — 2FA untuk admin.
+- `AUTH-11` — hapus/nonaktifkan route Fortify yang tidak terpakai (antrean
+  `FEATURES.md`; lihat spesifikasi di §15.11).
+- `AUTH-10` — audit log login (kandidat lokal lain, belum diurutkan).
 
 ### Aturan
 
@@ -1302,6 +1302,26 @@ AI gagal, tidak ada panggilan AI di test tanpa fake, biaya tercatat.
 
 **Out of scope:** personalisasi pembaca, newsletter, komentar.
 
+**NEWS-05 (spesifikasi):** command `news:select` dijadwalkan setelah `news:fetch`.
+Kandidat: artikel `new`/`summarized` dari sumber aktif, terbit dalam 3 hari
+terakhir, bukan `archived`. Skor = kebaruan + relevansi kata kunci pada
+judul/excerpt; daftar kata kunci di `config/news.php` (dapat diubah). Maksimal
+2 artikel per sumber. Pilih 3 teratas → `status = selected`,
+`selected_date = today` (Asia/Jakarta). Idempoten: bila sudah ada 3 terpilih
+hari ini tidak berubah kecuali `--force`; pemilihan hari lalu tidak diubah.
+Test memakai `Carbon::setTestNow`.
+
+**NEWS-06 + NEWS-07 (spesifikasi):** widget "Berita teknologi" di dashboard
+menampilkan 3 artikel terpilih hari ini: judul sebagai tautan keluar
+(`rel="noopener noreferrer"`, hanya http/https), nama sumber, waktu terbit,
+teks = `summary ?? excerpt ?? judul`. Halaman arsip `/admin/news` dengan
+paginasi dan filter sumber. Tombol refresh manual (POST, throttle) mengantre
+`news:fetch` lalu `news:select`. Fallback: tanpa artikel terpilih hari ini
+tampilkan artikel terbaru; tanpa artikel sama sekali tampilkan empty state
+yang menunjuk ke halaman Sumber berita. Kegagalan apa pun tidak boleh memecahkan
+dashboard; tidak ada data palsu. NEWS-07 dicentang bersama bila acceptance
+fallback terpenuhi.
+
 ### 15.8 AI-01…05 — Asisten & pencarian semantik
 
 **Tujuan:** bertanya ke catatan sendiri dan menemukan catatan secara semantik.
@@ -1411,6 +1431,38 @@ hasil per model. Command palette men-debounce 250ms, menampilkan grup
 **Catatan** dan **Pekerjaan**, serta empty state yang menyebut kata kunci.
 Test: tamu redirect, query kosong, pencarian lintas model + isi/deskripsi,
 arsip dikecualikan, dan batas hasil (`tests/Feature/SearchTest.php`).
+
+### 15.11 AUTH-11 — Bersihkan route Fortify tak terpakai
+
+Inventarisasi dulu dengan `php artisan route:list` dan konfigurasi Fortify.
+Nonaktifkan/hapus hanya yang jelas tidak dipakai UI admin: registrasi, reset
+password, verifikasi email, halaman settings starter kit, dan `/dashboard`.
+Jangan merusak login admin di `/`, logout, serta halaman Keamanan. Test: rute
+lama tidak lagi dapat diakses dan login/logout admin tetap berjalan. Hapus
+known issue terkait di §19 setelah selesai.
+
+### 15.12 UI-12 — Halaman error ramah
+
+Halaman 403/404/500/503 berbahasa Indonesia dengan tautan kembali, aktif saat
+`APP_DEBUG=false`; mode debug tetap memakai halaman bawaan Laravel. Test untuk
+404 sebagai tamu dan admin, lalu tambahkan ke suite e2e.
+
+### 15.13 UI-10 — Audit aksesibilitas
+
+Audit halaman utama dengan `@axe-core/playwright` sebagai dev dependency
+(diperlukan untuk menemukan pelanggaran aksesibilitas otomatis di browser yang
+tidak terlihat di test Pest). Perbaiki pelanggaran serius/kritis: label, nama
+tombol, kontras, dan fokus; dokumentasikan sisa temuan. QA-07 dicentang bila
+tes axe otomatis ikut ditambahkan ke suite e2e.
+
+### 15.14 WORK-17 — Lampiran file pekerjaan
+
+Simpan di disk privat (bukan `public`), unduh lewat route terautentikasi.
+Validasi MIME/ekstensi/ukuran (mis. maks 10 MB) dan jumlah file per pekerjaan;
+nama file acak di disk. File dihapus saat pekerjaan atau lampiran dihapus.
+`db:backup` diperluas mencakup folder lampiran. Export/import JSON tidak
+menyertakan file — catat ini di dokumentasi. Butuh migrasi dan verifikasi
+PostgreSQL.
 
 ---
 

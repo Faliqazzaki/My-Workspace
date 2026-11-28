@@ -3,7 +3,7 @@
 Checklist fitur dan rencana pengembangan. Dokumen ini adalah sumber kebenaran
 untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 
-> Terakhir diperbarui: 27 November 2026
+> Terakhir diperbarui: 28 November 2026
 
 ## Cara pakai dokumen ini
 
@@ -213,11 +213,16 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 
 Fitur yang bisa dikerjakan tanpa layanan eksternal/AI:
 
-1. WORK-17 Lampiran file pada pekerjaan
-2. NEWS-05 Pilih 3 berita terbaik per hari
-3. NEWS-07 Fallback saat AI/API gagal
+1. NEWS-05 Pilih 3 berita terbaik per hari
+2. NEWS-06 Widget berita di dashboard + halaman arsip (sertakan NEWS-07 fallback; NEWS-07 dicentang bersama bila acceptance terpenuhi)
+3. AUTH-11 Hapus/nonaktifkan route Fortify yang tidak terpakai
+4. UI-12 Halaman 404/500 yang ramah
+5. UI-10 Audit aksesibilitas (axe via Playwright; QA-07 bisa ikut bila tes otomatis ditambahkan)
+6. WORK-17 Lampiran file (tunggu model yang kuat; wajib memperluas backup)
 
-Ditunda (butuh layanan eksternal/biaya token): NEWS-*, AI-*, AGT-*.
+Ditunda (butuh API key/biaya token): NEWS-04, NEWS-08, AI-02..05. Butuh service eksternal: AGT-05..10.
+
+Kandidat lokal lain (belum diurutkan): AUTH-10, NOTE-14, NOTE-15, DASH-11, PROD-01, PROD-02, PROD-03, PROD-09, KNOW-03, KNOW-04, QA-07, QA-08, QA-09, QA-11, WORK-16, AGT-01..04.
 
 ## Non-goals saat ini
 
