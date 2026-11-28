@@ -212,7 +212,9 @@ Angka test terakhir: **167 passed, 1324 assertions**.
 | Drag & drop | `@dnd-kit/core` (Kanban) |
 | Database runtime | PostgreSQL, database `my_workspace` |
 | Database test | SQLite `:memory:` |
+| Database e2e | SQLite `database/e2e.sqlite` (di-gitignore) |
 | Test | Pest 3 + `RefreshDatabase` |
+| Test browser | Playwright + Chromium (`@playwright/test`) |
 | Format | Pint (PHP), Prettier (JS), ESLint |
 
 ### Environment runtime
@@ -255,6 +257,7 @@ Hindari fungsi SQL khusus PostgreSQL di jalur yang dites, atau sediakan fallback
 | `composer dev` | serve + queue + pail + vite sekaligus |
 | `npm run dev` | Vite dev server |
 | `npm run build` | production build |
+| `npm run e2e` | test browser Playwright (SQLite e2e terisolasi, server port 8001) |
 | `php artisan test` | seluruh test |
 | `php artisan test --filter=WorkItemTest` | test tertentu |
 | `vendor/bin/pint` | format PHP |
@@ -345,6 +348,12 @@ routes/web.php                     # semua route admin
 .github/workflows/ci.yml           # quality gate CI (push/PR main)
 tests/Feature/                     # test Pest
 tests/Pest.php                     # helper adminUser()
+e2e/
+  env.js                           # env khusus e2e + kredensial dummy + path SQLite
+  check-db.php                     # verifikasi koneksi DB yang dipakai aplikasi
+  global-setup.js                  # penjaga DB, migrate:fresh, seed admin dummy
+  tests/admin.spec.js              # 6 test browser (login, halaman, CRUD, palette, tema)
+playwright.config.js               # webServer port 8001, build production, service worker diblokir
 FEATURES.md                        # checklist fitur
 AGENT_CONTEXT.md                   # dokumen ini
 ```
@@ -824,6 +833,35 @@ Jalankan `bash scripts/check.sh` (Pint check, ESLint, Prettier check, seluruh te
 Format dulu dengan `vendor/bin/pint --dirty` dan `npx prettier --write <file>`.
 
 Jangan mencentang item di `FEATURES.md` sebelum semua langkah menampilkan ✓.
+
+### Test browser end-to-end (Playwright)
+
+Test Pest tidak menjalankan React, sehingga error JavaScript yang membuat halaman
+blank bisa lolos dari `scripts/check.sh`. `npm run e2e` menjalankan 6 skenario
+browser Chromium untuk menutup celah itu (login, semua halaman utama, buat
+pekerjaan + detail + ubah status, buat catatan + detail Markdown, command palette
++ notifikasi, toggle dark mode). Tiap test gagal bila ada `pageerror` atau
+`console.error`; selector memakai role/teks dan auto-wait tanpa sleep acak.
+
+**Isolasi data (wajib):** test TIDAK BOLEH menyentuh PostgreSQL `my_workspace`.
+`e2e/env.js` memaksa `DB_CONNECTION=sqlite` dan `DB_DATABASE=database/e2e.sqlite`
+(environment proses menimpa `.env` karena Dotenv Laravel bersifat immutable),
+kredensial admin dummy dibuat oleh `AdminUserSeeder` saat setup, dan `.env` asli
+tidak dibaca/dicetak. `e2e/global-setup.js` berhenti lebih awal dengan pesan jelas
+jika env/path bukan database e2e, lalu `e2e/check-db.php` memverifikasi koneksi
+yang benar-benar dipakai aplikasi sebelum `migrate:fresh` + seed.
+
+Playwright menyalakan webServer sendiri di **port 8001** (port dev server 8000
+tidak dipakai) dengan `npm run build` production dan env e2e, service worker
+diblokir lewat `use.serviceWorkers: 'block'`, dan server dimatikan otomatis
+setelah test. `reuseExistingServer: false` mencegah test memakai server lain.
+Jangan jalankan dev server manual untuk e2e.
+
+`npm run e2e` **tidak** dimasukkan ke `scripts/check.sh` maupun CI; dijalankan
+manual saat perlu. Instalasi: `npm install` lalu `npx playwright install chromium`
+(pasang `npx playwright install-deps chromium` hanya bila dependensi sistem
+kurang; jangan pakai sudo). Artefak `playwright-report/`, `test-results/`, dan
+`database/e2e.sqlite*` diabaikan git.
 
 
 ---

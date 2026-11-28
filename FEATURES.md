@@ -182,7 +182,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 - [x] **QA-03** Format PHP dengan Pint
 - [x] **QA-04** Lint JS dengan ESLint + format Prettier
 - [x] **QA-05** Production build Vite berhasil
-- [ ] **QA-06** Test browser end-to-end (Playwright)
+- [x] **QA-06** Test browser end-to-end (Playwright)
 - [ ] **QA-07** Test aksesibilitas otomatis
 - [ ] **QA-08** Logging terstruktur + error tracking
 - [ ] **QA-09** Health check & monitoring uptime
@@ -205,9 +205,9 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 | Pengetahuan & Produktivitas | 6 | 12 |
 | Berita & AI | 0 | 13 |
 | Multi-Agent | 0 | 10 |
-| Kualitas | 5 | 12 |
+| Kualitas | 6 | 12 |
 
-**Total: 81 dari 127 item selesai.**
+**Total: 82 dari 127 item selesai.**
 
 ## Antrean berikutnya (urut, lokal dulu)
 
@@ -216,7 +216,6 @@ Fitur yang bisa dikerjakan tanpa layanan eksternal/AI:
 1. QA-10 Query performance review + index tambahan
 2. QA-12 Dokumentasi arsitektur & ADR
 3. WORK-17 Lampiran file pada pekerjaan
-4. QA-06 Test browser end-to-end (Playwright)
 
 Ditunda (butuh layanan eksternal/biaya token): NEWS-*, AI-*, AGT-*.
 
