@@ -7,6 +7,7 @@ import {
     Keyboard,
     LogOut,
     Menu,
+    Newspaper,
     NotebookPen,
     Search,
     ShieldCheck,
@@ -28,6 +29,11 @@ const navigation = [
     { label: 'Catatan', href: '/admin/notes', icon: NotebookPen },
     { label: 'Pekerjaan', href: '/admin/work-items', icon: ClipboardList },
     { label: 'Proyek', href: '/admin/projects', icon: FolderKanban },
+    {
+        label: 'Sumber berita',
+        href: '/admin/news/sources',
+        icon: Newspaper,
+    },
     { label: 'Data', href: '/admin/data', icon: Database },
     { label: 'Keamanan', href: '/admin/password', icon: ShieldCheck },
 ];

@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminDataController;
 use App\Http\Controllers\AdminPasswordController;
+use App\Http\Controllers\NewsSourceController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProjectController;
@@ -64,6 +65,12 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
     Route::patch('/notes/{note}/restore', [NoteController::class, 'restore'])->withTrashed()->name('notes.restore');
     Route::delete('/notes/{note}/work-items/{workItem}', [NoteController::class, 'detachWorkItem'])->name('notes.work-items.detach');
     Route::delete('/notes/{note}', [NoteController::class, 'destroy'])->name('notes.destroy');
+
+    Route::get('/news/sources', [NewsSourceController::class, 'index'])->name('news.sources.index');
+    Route::post('/news/sources', [NewsSourceController::class, 'store'])->name('news.sources.store');
+    Route::put('/news/sources/{newsSource}', [NewsSourceController::class, 'update'])->name('news.sources.update');
+    Route::patch('/news/sources/{newsSource}/toggle', [NewsSourceController::class, 'toggle'])->name('news.sources.toggle');
+    Route::delete('/news/sources/{newsSource}', [NewsSourceController::class, 'destroy'])->name('news.sources.destroy');
 
     Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
     Route::post('/projects', [ProjectController::class, 'store'])->name('projects.store');

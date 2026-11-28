@@ -145,7 +145,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 
 ## 8. Berita Teknologi & AI
 
-- [ ] **NEWS-01** Tabel sumber berita + konfigurasi RSS/API
+- [x] **NEWS-01** Tabel sumber berita + konfigurasi RSS/API
 - [ ] **NEWS-02** Command terjadwal `news:fetch` + queue job
 - [ ] **NEWS-03** Deduplikasi artikel berdasarkan URL/hash
 - [ ] **NEWS-04** Ringkasan artikel dengan AI (bahasa Indonesia)
@@ -203,11 +203,11 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 | Catatan | 14 | 16 |
 | Pekerjaan | 19 | 20 |
 | Pengetahuan & Produktivitas | 6 | 12 |
-| Berita & AI | 1 | 13 |
+| Berita & AI | 2 | 13 |
 | Multi-Agent | 0 | 10 |
 | Kualitas | 8 | 12 |
 
-**Total: 85 dari 127 item selesai.**
+**Total: 86 dari 127 item selesai.**
 
 ## Antrean berikutnya (urut, lokal dulu)
 

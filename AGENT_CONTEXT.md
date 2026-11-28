@@ -294,11 +294,14 @@ app/
       AdminDataController.php      # export/import JSON + Markdown
       AdminPasswordController.php  # ubah password admin
       NoteController.php           # CRUD catatan + pin
+      NewsSourceController.php     # CRUD sumber berita + toggle aktif
       NotificationController.php   # endpoint JSON notifikasi in-app tenggat
       SearchController.php         # pencarian global catatan + pekerjaan
       SavedViewController.php      # simpan/hapus tampilan filter pekerjaan
       WorkItemController.php       # CRUD pekerjaan + status + riwayat aktivitas
       Settings/                    # sisa starter kit (belum dipakai admin)
+    Rules/
+      SafeNewsUrl.php              # tolak skema non-http & host lokal/privat
     Middleware/
       EnsureAdminAuthenticated.php # alias admin.auth
       HandleInertiaRequests.php    # share admin, flash, auth, sidebar
@@ -314,6 +317,8 @@ app/
     AiServiceProvider.php          # binding AiProvider dari config('ai.provider')
   Models/
     Note.php
+    NewsArticle.php                # artikel + url_hash + status
+    NewsSource.php                 # feed RSS + relasi articles
     SavedView.php                  # preset filter pekerjaan
     WorkItem.php
     WorkItemActivity.php           # riwayat perubahan pekerjaan
@@ -323,6 +328,8 @@ config/
   ai.php                           # provider AI (default null), timeout, retry
 database/
   factories/UserFactory.php        # state admin()
+  factories/NewsSourceFactory.php
+  factories/NewsArticleFactory.php
   migrations/
     2026_11_21_120000_create_notes_table.php
     2026_11_21_130000_create_work_items_table.php
@@ -333,6 +340,7 @@ database/
     2026_11_23_190000_create_saved_views_table.php
     2026_11_24_000000_add_deleted_at_to_notes_table.php
     2026_11_25_200000_create_work_item_activities_table.php
+     2026_11_28_010000_create_news_tables.php
   seeders/AdminUserSeeder.php      # akun admin dari config
 public/
   manifest.webmanifest         # web app manifest PWA
@@ -356,6 +364,7 @@ resources/
       admin/notes/show.jsx         # detail catatan + Markdown
       admin/work-items/index.jsx   # pekerjaan + filter + saved views
       admin/projects/index.jsx     # proyek + progress
+      admin/news-sources.jsx       # daftar/CRUD sumber berita
       auth/admin-login.jsx         # login
     components/
       command-palette.jsx          # palette Ctrl/Cmd+K (navigasi + quick create + pencarian global)
@@ -625,6 +634,41 @@ Tabel bawaan lain: `password_reset_tokens`, `sessions`, `cache`, `jobs`,
   secara sadar.
 - Jangan mengedit migrasi yang sudah dijalankan di PostgreSQL; buat migrasi baru.
 
+### 8.9 `news_sources` (NEWS-01)
+
+| Kolom | Tipe | Aturan |
+| --- | --- | --- |
+| `id` | bigint PK | |
+| `name` | varchar(100) | wajib |
+| `url` | text, unik | http/https, maks 2048, host bukan lokal/privat |
+| `type` | varchar | default `rss`; satu-satunya nilai `rss` |
+| `enabled` | boolean | default true |
+| `last_fetched_at` | timestamp nullable | diisi NEWS-02 |
+| `created_at`, `updated_at` | timestamp | |
+
+Maksimal 20 baris (dijaga controller). `App\Rules\SafeNewsUrl` menolak localhost,
+IP loopback/privat (`127.x`, `10.x`, `172.16–31.x`, `192.168.x`, `169.254.x`,
+`::1`) tanpa resolusi DNS; pengecekan DNS menyusul di NEWS-02.
+
+### 8.10 `news_articles` (NEWS-01)
+
+| Kolom | Tipe | Aturan |
+| --- | --- | --- |
+| `id` | bigint PK | |
+| `news_source_id` | FK `news_sources` | `cascadeOnDelete` |
+| `title` | varchar(255) | |
+| `url` | text | |
+| `url_hash` | char(64), unik | `hash('sha256', $url)` |
+| `excerpt`, `content`, `summary` | text nullable | |
+| `published_at`, `summary_generated_at` | timestamp nullable | |
+| `status` | varchar | default `new`; `new`, `summarized`, `selected`, `archived` |
+| `selected_date` | date nullable | |
+| `metadata` | jsonb nullable | cast `array` |
+| `created_at`, `updated_at` | timestamp | |
+
+Index: `(status, selected_date)` dan `published_at`. Model `NewsArticle` punya
+konstanta `STATUSES` dan relasi `newsSource()`; `NewsSource` punya `articles()`.
+
 ---
 
 ## 9. Routes
@@ -662,6 +706,11 @@ Prefix `/admin`, name prefix `admin.`, middleware `admin.auth`.
 | PUT | `/admin/projects/{project}` | `admin.projects.update` | ubah proyek |
 | PATCH | `/admin/projects/{project}/archive` | `admin.projects.archive` | arsip / kembalikan |
 | DELETE | `/admin/projects/{project}` | `admin.projects.destroy` | hapus proyek (pekerjaan tetap) |
+| GET | `/admin/news/sources` | `admin.news.sources.index` | daftar sumber berita |
+| POST | `/admin/news/sources` | `admin.news.sources.store` | tambah sumber |
+| PUT | `/admin/news/sources/{newsSource}` | `admin.news.sources.update` | ubah sumber |
+| PATCH | `/admin/news/sources/{newsSource}/toggle` | `admin.news.sources.toggle` | aktif / nonaktif |
+| DELETE | `/admin/news/sources/{newsSource}` | `admin.news.sources.destroy` | hapus sumber + artikelnya |
 | POST | `/admin/work-items` | `admin.work-items.store` | simpan pekerjaan |
 | PATCH | `/admin/work-items/bulk-status` | `admin.work-items.bulk-status` | ubah status banyak item (maks 100) |
 | DELETE | `/admin/work-items/bulk` | `admin.work-items.bulk-destroy` | hapus banyak item (maks 100) |
@@ -1123,6 +1172,19 @@ Gunakan urutan ini agar hasilnya konsisten:
    - Permintaan mutasi (POST/PUT/PATCH/DELETE) serta respons Inertia/JSON terautentikasi
      sama sekali tidak disimpan ke cache agar tidak merusak token CSRF, login, atau logout.
    - Cache lama dibersihkan saat versi `CACHE_NAME` diperbarui pada event `activate`.
+
+---
+
+### 14.9 Sumber berita (NEWS-01)
+
+1. Sidebar **Sumber berita** → `/admin/news/sources`. Kartu menampilkan nama,
+   URL feed, status aktif, jumlah artikel, dan aksi edit/hapus/nonaktifkan.
+2. **Sumber baru** membuka dialog nama + URL feed RSS; jenis terkunci `rss`.
+   Empty state menjelaskan cara menambah sumber (tanpa data palsu).
+3. Validasi: nama maks 100, URL http/https maks 2048 dan unik, host bukan
+   lokal/privat, maksimal 20 sumber. Simpan → redirect + flash sukses.
+4. Toggle aktif memakai `router.patch`; hapus meminta konfirmasi dialog dan
+   menghapus artikel terkait bersama sumbernya (FK cascade + hapus eksplisit).
 
 ---
 

@@ -1,8 +1,7 @@
 # HANDOFF
 Terakhir: 28 Nov 2026
-Item: AI-01 Abstraksi provider AI — SELESAI
-File utama: config/ai.php, app/Services/Ai/*, app/Providers/AiServiceProvider.php, app/Console/Commands/AiPingCommand.php, tests/Feature/AiProviderTest.php, docs/ai-setup.md, docs/adr/0010, .env.example, AGENT_CONTEXT.md §4/§5/§15.8, FEATURES.md
-Status: default provider null (tanpa pengiriman data). OpenAiCompatibleProvider memakai Http client: Bearer, model/messages/max_tokens/temperature, timeout, retry 429/5xx terbatas; semua kegagalan jadi AiUnavailableException. Log hanya status + durasi; kunci API tidak di exception/log. ai:ping meminta konfirmasi karena memakai token.
-Verifikasi: 12 test Pest dengan Http::fake + Http::preventStrayRequests lolos; check.sh hijau (pint/eslint/format/test/build). Tidak ada panggilan HTTP sungguhan ke penyedia mana pun. graphify update . dijalankan.
-Bukan lingkup: tabel ai_usages (NEWS-08), embedding (AI-03), fitur pemanggil AI.
-Berikutnya: WORK-17 Lampiran file pada pekerjaan dari antrean FEATURES.md.
+Item: NEWS-01 Tabel sumber berita + konfigurasi RSS — SELESAI
+File utama: database/migrations/2026_11_28_010000_create_news_tables.php, app/Models/News{Source,Article}.php, database/factories/News{Source,Article}Factory.php, app/Rules/SafeNewsUrl.php, app/Http/Controllers/NewsSourceController.php, routes/web.php, resources/js/pages/admin/news-sources.jsx, resources/js/layouts/admin-layout.jsx, tests/Feature/NewsSourceTest.php, e2e/tests/admin.spec.js, AGENT_CONTEXT.md, FEATURES.md
+Status: halaman /admin/news/sources (sidebar) dengan daftar, tambah/edit, toggle aktif, hapus + konfirmasi; empty state tanpa data palsu. Validasi http/https, host lokal/privat ditolak, unik, maks 20. FK cascade + hapus artikel eksplisit.
+Verifikasi: 20 test Pest lolos; npm run e2e 6/6 hijau termasuk halaman baru; check.sh hijau (pint/eslint/format/test/build). Migrasi PostgreSQL up→rollback→up sukses; baris pribadi tidak berubah (users=1 notes=1 work_items=2 projects=1 subtasks=5 activities=0 saved_views=0 note_work_item=0), tabel news kosong. Tidak ada panggilan jaringan/AI. graphify update . dijalankan.
+Berikutnya: NEWS-02 Pengambilan RSS sumber berita (network, perlu izin/jadwal).

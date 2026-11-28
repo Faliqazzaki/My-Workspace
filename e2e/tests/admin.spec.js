@@ -78,6 +78,14 @@ test('semua halaman utama terbuka tanpa error', async ({ page }) => {
         page.getByRole('heading', { level: 1, name: /^Proyek/ }),
     ).toBeVisible();
 
+    await page
+        .getByRole('link', { name: 'Sumber berita', exact: true })
+        .click();
+    await expect(page).toHaveURL(/\/admin\/news\/sources$/);
+    await expect(
+        page.getByRole('heading', { level: 1, name: /^Sumber berita/ }),
+    ).toBeVisible();
+
     await page.getByRole('link', { name: 'Data', exact: true }).click();
     await expect(page).toHaveURL(/\/admin\/data$/);
     await expect(
