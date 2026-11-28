@@ -425,3 +425,90 @@ it('menghitung batas minggu dari Senin sampai Minggu', function () {
             ->where('agenda.this_week.1.title', 'Tugas Minggu akhir minggu')
         );
 });
+
+it('menghitung tag teratas dari catatan aktif dan mengabaikan arsip', function () {
+    Note::create(['title' => 'Catatan A', 'content' => 'Isi.', 'tags' => ['laravel', 'php']]);
+    Note::create(['title' => 'Catatan B', 'content' => 'Isi.', 'tags' => ['laravel']]);
+    Note::create(['title' => 'Catatan C', 'content' => 'Isi.', 'tags' => ['php', 'sqlite']]);
+    Note::create(['title' => 'Catatan arsip', 'content' => 'Isi.', 'tags' => ['laravel', 'arsip']])->delete();
+
+    $this->actingAs(adminUser())
+        ->get('/admin')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('knowledgeStats.total_notes', 3)
+            ->has('knowledgeStats.top_tags', 3)
+            ->where('knowledgeStats.top_tags.0.tag', 'laravel')
+            ->where('knowledgeStats.top_tags.0.count', 2)
+            ->where('knowledgeStats.top_tags.1.tag', 'php')
+            ->where('knowledgeStats.top_tags.1.count', 2)
+            ->where('knowledgeStats.top_tags.2.tag', 'sqlite')
+            ->where('knowledgeStats.top_tags.2.count', 1)
+        );
+});
+
+it('membatasi tag teratas maksimal delapan', function () {
+    Note::create([
+        'title' => 'Banyak tag',
+        'content' => 'Isi.',
+        'tags' => ['t1', 't2', 't3', 't4', 't5', 't6', 't7', 't8', 't9'],
+    ]);
+
+    $this->actingAs(adminUser())
+        ->get('/admin')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('knowledgeStats.top_tags', 8)
+            ->where('knowledgeStats.top_tags.0.tag', 't1')
+            ->where('knowledgeStats.top_tags.7.tag', 't8')
+        );
+});
+
+it('menghitung catatan per minggu dengan batas Senin sampai Minggu dan minggu kosong nol', function () {
+    Date::setTestNow(Date::parse('2026-01-08 12:00:00', 'Asia/Jakarta')); // Kamis
+
+    // Jendela 8 minggu: 17 Nov 2025 (Senin) sampai 11 Jan 2026 (Minggu).
+    noteCreatedAtInJakarta('2025-11-16 23:59:00', 'Sebelum jendela');
+    noteCreatedAtInJakarta('2025-11-17 00:00:00', 'Senin minggu pertama');
+    noteCreatedAtInJakarta('2025-11-23 23:59:00', 'Minggu minggu pertama');
+    noteCreatedAtInJakarta('2025-11-24 00:00:00', 'Senin minggu kedua');
+    noteCreatedAtInJakarta('2025-12-31 23:59:00', 'Malam tahun baru');
+    noteCreatedAtInJakarta('2026-01-01 00:00:00', 'Awal tahun');
+    noteCreatedAtInJakarta('2026-01-05 00:00:00', 'Senin minggu berjalan');
+    noteCreatedAtInJakarta('2026-01-11 23:59:00', 'Minggu minggu berjalan');
+    noteCreatedAtInJakarta('2026-01-12 00:00:00', 'Senin minggu depan');
+
+    $this->actingAs(adminUser())
+        ->get('/admin')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('knowledgeStats.weeks', 8)
+            ->where('knowledgeStats.timezone', 'Asia/Jakarta')
+            ->where('knowledgeStats.weeks.0.start', '2025-11-17')
+            ->where('knowledgeStats.weeks.0.end', '2025-11-23')
+            ->where('knowledgeStats.weeks.0.notes', 2)
+            ->where('knowledgeStats.weeks.1.start', '2025-11-24')
+            ->where('knowledgeStats.weeks.1.notes', 1)
+            ->where('knowledgeStats.weeks.2.notes', 0)
+            ->where('knowledgeStats.weeks.6.start', '2025-12-29')
+            ->where('knowledgeStats.weeks.6.notes', 2)
+            ->where('knowledgeStats.weeks.7.start', '2026-01-05')
+            ->where('knowledgeStats.weeks.7.end', '2026-01-11')
+            ->where('knowledgeStats.weeks.7.notes', 2)
+            ->where('knowledgeStats.total_notes', 9)
+            ->where('knowledgeStats.average_per_week', fn ($value) => round((float) $value, 1) === 0.9)
+        );
+});
+
+it('mengirim statistik pengetahuan kosong tanpa catatan', function () {
+    $this->actingAs(adminUser())
+        ->get('/admin')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('knowledgeStats.total_notes', 0)
+            ->where('knowledgeStats.average_per_week', fn ($value) => (float) $value === 0.0)
+            ->has('knowledgeStats.top_tags', 0)
+            ->has('knowledgeStats.weeks', 8)
+            ->where('knowledgeStats.weeks', fn ($weeks) => collect($weeks)->every(fn ($week) => $week['notes'] === 0))
+        );
+});

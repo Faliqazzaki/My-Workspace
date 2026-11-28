@@ -129,7 +129,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 ## 7. Pengetahuan & Produktivitas
 
 - [x] **KNOW-01** Kebiasaan "1 Hari 1 Pengetahuan" + streak harian
-- [ ] **KNOW-02** Statistik pengetahuan: catatan/minggu, tag teratas
+- [x] **KNOW-02** Statistik pengetahuan: catatan/minggu, tag teratas
 - [ ] **KNOW-03** Review harian/mingguan (catatan + pekerjaan)
 - [ ] **KNOW-04** Target harian/mingguan yang bisa diatur
 - [ ] **PROD-01** Quick capture global
@@ -202,22 +202,21 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 | Dashboard | 9 | 11 |
 | Catatan | 14 | 16 |
 | Pekerjaan | 19 | 20 |
-| Pengetahuan & Produktivitas | 5 | 12 |
+| Pengetahuan & Produktivitas | 6 | 12 |
 | Berita & AI | 0 | 13 |
 | Multi-Agent | 0 | 10 |
 | Kualitas | 5 | 12 |
 
-**Total: 80 dari 127 item selesai.**
+**Total: 81 dari 127 item selesai.**
 
 ## Antrean berikutnya (urut, lokal dulu)
 
 Fitur yang bisa dikerjakan tanpa layanan eksternal/AI:
 
-1. KNOW-02 Statistik pengetahuan: catatan/minggu, tag teratas
-2. QA-10 Query performance review + index tambahan
-3. QA-12 Dokumentasi arsitektur & ADR
-4. WORK-17 Lampiran file pada pekerjaan
-5. QA-06 Test browser end-to-end (Playwright)
+1. QA-10 Query performance review + index tambahan
+2. QA-12 Dokumentasi arsitektur & ADR
+3. WORK-17 Lampiran file pada pekerjaan
+4. QA-06 Test browser end-to-end (Playwright)
 
 Ditunda (butuh layanan eksternal/biaya token): NEWS-*, AI-*, AGT-*.
 

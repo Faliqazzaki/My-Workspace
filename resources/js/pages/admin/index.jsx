@@ -70,6 +70,7 @@ export default function Admin({
     activeWorkItems = [],
     recentNotes = [],
     knowledge = {},
+    knowledgeStats = {},
     activity = {},
     agenda = {},
 }) {
@@ -99,6 +100,25 @@ export default function Admin({
     const rangeCompleted = visibleActivity.reduce(
         (total, day) => total + day.completed,
         0,
+    );
+
+    const knowledgeWeeks = knowledgeStats.weeks ?? [];
+    const topTags = knowledgeStats.top_tags ?? [];
+    const totalKnowledgeNotes = Number(knowledgeStats.total_notes ?? 0);
+    const averageKnowledgePerWeek = Number(
+        knowledgeStats.average_per_week ?? 0,
+    );
+    const knowledgeWeekMax = Math.max(
+        1,
+        ...knowledgeWeeks.map((week) => Number(week.notes ?? 0)),
+    );
+    const knowledgeWeekTotal = knowledgeWeeks.reduce(
+        (total, week) => total + Number(week.notes ?? 0),
+        0,
+    );
+    const topTagMax = Math.max(
+        1,
+        ...topTags.map((item) => Number(item.count ?? 0)),
     );
 
     return (
@@ -337,6 +357,136 @@ export default function Admin({
                                 );
                             })}
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            <section className="mt-4 rounded-xl border bg-card shadow-sm">
+                <div className="flex flex-col gap-3 border-b px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                    <div>
+                        <h2 className="flex items-center gap-1.5 text-sm font-semibold">
+                            <Tag className="size-4 text-indigo-500" />
+                            Statistik pengetahuan
+                        </h2>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                            {totalKnowledgeNotes} catatan aktif · rata-rata{' '}
+                            {averageKnowledgePerWeek} catatan/minggu pada 8
+                            minggu terakhir
+                        </p>
+                    </div>
+
+                    <Link
+                        href="/admin/notes"
+                        className="flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                    >
+                        Lihat catatan
+                        <ArrowRight className="size-3.5" />
+                    </Link>
+                </div>
+
+                <div className="grid gap-6 p-4 sm:p-5 lg:grid-cols-2">
+                    <div>
+                        <h3 className="text-xs font-medium text-muted-foreground">
+                            Catatan per minggu (Senin–Minggu)
+                        </h3>
+
+                        {knowledgeWeekTotal === 0 ? (
+                            <div className="mt-3 rounded-lg border border-dashed p-4 text-center text-xs text-muted-foreground">
+                                Belum ada catatan pada 8 minggu terakhir.{' '}
+                                <Link
+                                    href="/admin/notes"
+                                    className="font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                                >
+                                    Tulis catatan
+                                </Link>
+                                .
+                            </div>
+                        ) : (
+                            <div
+                                className="mt-3 flex h-36 items-end gap-1.5 sm:gap-2"
+                                role="group"
+                                aria-label="Grafik catatan per minggu"
+                            >
+                                {knowledgeWeeks.map((week) => {
+                                    const notes = Number(week.notes ?? 0);
+                                    const label = `Minggu ${formatDate(week.start)}–${formatDate(week.end)}: ${notes} catatan`;
+
+                                    return (
+                                        <div
+                                            key={week.start}
+                                            className="flex min-w-0 flex-1 flex-col items-center gap-1"
+                                            role="img"
+                                            aria-label={label}
+                                            title={label}
+                                        >
+                                            <span className="text-[9px] font-medium text-muted-foreground tabular-nums">
+                                                {notes}
+                                            </span>
+                                            <div className="flex h-24 w-full items-end justify-center">
+                                                <span
+                                                    aria-hidden="true"
+                                                    className="w-full max-w-6 rounded-t-sm bg-indigo-500/80 transition-colors hover:bg-indigo-500"
+                                                    style={{
+                                                        height: `${notes === 0 ? 0 : Math.max((notes / knowledgeWeekMax) * 100, 6)}%`,
+                                                    }}
+                                                />
+                                            </div>
+                                            <span className="text-center text-[9px] leading-4 text-muted-foreground">
+                                                {shortDate(week.start)}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+
+                    <div>
+                        <h3 className="text-xs font-medium text-muted-foreground">
+                            Tag teratas
+                        </h3>
+
+                        {topTags.length === 0 ? (
+                            <div className="mt-3 rounded-lg border border-dashed p-4 text-center text-xs text-muted-foreground">
+                                Belum ada tag pada catatan aktif.
+                            </div>
+                        ) : (
+                            <ul className="mt-3 space-y-2">
+                                {topTags.map((item) => {
+                                    const count = Number(item.count ?? 0);
+                                    const label = `Tag ${item.tag}: ${count} catatan`;
+
+                                    return (
+                                        <li key={item.tag}>
+                                            <div className="flex items-center justify-between gap-3 text-xs">
+                                                <span className="flex min-w-0 items-center gap-1.5 font-medium">
+                                                    <Tag className="size-3 shrink-0 text-fuchsia-500" />
+                                                    <span className="truncate">
+                                                        {item.tag}
+                                                    </span>
+                                                </span>
+                                                <span className="shrink-0 text-muted-foreground tabular-nums">
+                                                    {count}
+                                                </span>
+                                            </div>
+                                            <div
+                                                className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted"
+                                                role="img"
+                                                aria-label={label}
+                                            >
+                                                <span
+                                                    aria-hidden="true"
+                                                    className="block h-full rounded-full bg-fuchsia-500/80"
+                                                    style={{
+                                                        width: `${Math.max((count / topTagMax) * 100, 6)}%`,
+                                                    }}
+                                                />
+                                            </div>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        )}
                     </div>
                 </div>
             </section>

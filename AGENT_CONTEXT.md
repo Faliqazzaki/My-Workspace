@@ -974,6 +974,13 @@ Gunakan urutan ini agar hasilnya konsisten:
     menampilkan judul (tautan ke daftar pekerjaan), badge prioritas, badge status,
     dan tanggal tenggat (disertai indikator jika terlambat). Kedua kolom memiliki
     empty state informatif jika tidak ada tenggat pada periode tersebut.
+11. Kartu **Statistik pengetahuan** menampilkan catatan aktif per minggu untuk
+    8 minggu terakhir (Senin–Minggu, zona Asia/Jakarta) sebagai grafik batang
+    CSS, tag teratas (maks 8) beserta jumlah catatan aktif, total catatan aktif,
+    dan rata-rata catatan per minggu pada rentang 8 minggu tersebut. Tag
+    diagregasi di PHP dari kolom `tags`; catatan terarsip tidak dihitung.
+    Setiap batang memiliki label teks dan `aria-label`; empty state muncul jika
+    belum ada catatan pada rentang atau belum ada tag.
 
 ### 14.5 Proyek
 
@@ -1047,7 +1054,7 @@ Gunakan urutan ini agar hasilnya konsisten:
 
 > Spesifikasi fitur selesai (NOTE-08..11, WORK-11..15, PROD-05, PROD-07, PROD-08) ada di `docs/specs-done.md`.
 
-### 15.6 KNOW-01/02 — Kebiasaan & statistik (KNOW-01 selesai)
+### 15.6 KNOW-01/02 — Kebiasaan & statistik (KNOW-01 & KNOW-02 selesai)
 
 **Kebiasaan "1 Hari 1 Pengetahuan":** selesai (KNOW-01).
 
@@ -1060,15 +1067,21 @@ Gunakan urutan ini agar hasilnya konsisten:
 - Logika ada di `AdminController::knowledgeHabit()`; prop `knowledge` berisi
   `has_note_today`, `notes_today`, `streak`, `timezone`.
 
-**Statistik:**
+**Statistik:** selesai (KNOW-02).
 
-- Catatan per minggu (7/30 hari).
-- Tag teratas.
-- Pekerjaan selesai per minggu.
-- Grafik sederhana (bar) tanpa library berat; CSS/SVG cukup.
+- Kartu **Statistik pengetahuan** di dashboard: catatan aktif per minggu untuk
+  8 minggu terakhir (Senin–Minggu, zona Asia/Jakarta), tag teratas maks 8,
+  total catatan aktif, dan rata-rata catatan per minggu pada rentang yang sama.
+- Agregasi tag dilakukan di PHP dari kolom `tags` tanpa memuat konten catatan,
+  sehingga kompatibel dengan PostgreSQL dan SQLite. Catatan terarsip tidak ikut.
+- Grafik batang CSS/SVG tanpa library baru; setiap batang punya label teks dan
+  `aria-label`; empty state jelas saat belum ada catatan atau tag.
+- Logika ada di `AdminController::knowledgeStats()`; prop `knowledgeStats`.
+- Pekerjaan selesai per minggu belum ditambahkan karena sudah tercakup grafik
+  aktivitas DASH-08.
 
-**Acceptance:** test dengan `Carbon::setTestNow` untuk streak lintas bulan/tahun;
-zona waktu eksplisit; tidak ada data palsu.
+**Acceptance:** test dengan `Carbon::setTestNow` untuk streak/batas minggu lintas
+bulan/tahun; zona waktu eksplisit; tidak ada data palsu.
 
 ### 15.7 NEWS-01…08 — Berita teknologi + AI
 

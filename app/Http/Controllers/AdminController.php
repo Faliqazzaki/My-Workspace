@@ -53,6 +53,7 @@ class AdminController extends Controller
             'activeWorkItems' => $activeWorkItems,
             'recentNotes' => $recentNotes,
             'knowledge' => $this->knowledgeHabit(),
+            'knowledgeStats' => $this->knowledgeStats(),
             'activity' => $this->activitySeries(),
             'agenda' => $this->agendaSummary(),
         ]);
@@ -200,6 +201,83 @@ class AdminController extends Controller
         return [
             'timezone' => self::KNOWLEDGE_TIMEZONE,
             'days' => array_values($days),
+        ];
+    }
+
+    /**
+     * Statistik pengetahuan: jumlah catatan aktif per minggu (8 minggu
+     * terakhir, Senin–Minggu, zona Asia/Jakarta), tag teratas, total catatan
+     * aktif, dan rata-rata catatan per minggu pada rentang yang sama.
+     * Tag diagregasi di PHP dari kolom `tags` agar kompatibel PostgreSQL
+     * dan SQLite tanpa memuat konten catatan.
+     *
+     * @return array{
+     *     timezone: string,
+     *     weeks: array<int, array{start: string, end: string, notes: int}>,
+     *     top_tags: array<int, array{tag: string, count: int}>,
+     *     total_notes: int,
+     *     average_per_week: float,
+     * }
+     */
+    private function knowledgeStats(): array
+    {
+        $timezone = self::KNOWLEDGE_TIMEZONE;
+        $currentWeekStart = Date::now($timezone)->startOfDay()->startOfWeek();
+        $firstWeekStart = $currentWeekStart->copy()->subWeeks(7);
+
+        $weeks = [];
+
+        for ($offset = 0; $offset < 8; $offset++) {
+            $start = $firstWeekStart->copy()->addWeeks($offset);
+            $weeks[$start->toDateString()] = [
+                'start' => $start->toDateString(),
+                'end' => $start->copy()->addWeek()->subDay()->toDateString(),
+                'notes' => 0,
+            ];
+        }
+
+        Note::query()
+            ->where('created_at', '>=', $firstWeekStart->copy()->utc()->toDateTimeString())
+            ->pluck('created_at')
+            ->each(function ($createdAt) use (&$weeks, $timezone): void {
+                $weekStart = $createdAt
+                    ->copy()
+                    ->timezone($timezone)
+                    ->startOfWeek()
+                    ->toDateString();
+
+                if (isset($weeks[$weekStart])) {
+                    $weeks[$weekStart]['notes']++;
+                }
+            });
+
+        $tagCounts = [];
+
+        Note::query()->pluck('tags')->each(function ($tags) use (&$tagCounts): void {
+            foreach ((array) $tags as $tag) {
+                $tag = trim((string) $tag);
+
+                if ($tag !== '') {
+                    $tagCounts[$tag] = ($tagCounts[$tag] ?? 0) + 1;
+                }
+            }
+        });
+
+        $topTags = collect($tagCounts)
+            ->map(fn (int $count, string $tag) => ['tag' => $tag, 'count' => $count])
+            ->sort(fn (array $a, array $b) => $b['count'] <=> $a['count'] ?: strcmp($a['tag'], $b['tag']))
+            ->take(8)
+            ->values()
+            ->all();
+
+        $weekTotal = array_sum(array_column($weeks, 'notes'));
+
+        return [
+            'timezone' => $timezone,
+            'weeks' => array_values($weeks),
+            'top_tags' => $topTags,
+            'total_notes' => Note::count(),
+            'average_per_week' => round($weekTotal / count($weeks), 1),
         ];
     }
 }
