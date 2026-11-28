@@ -457,7 +457,8 @@ php artisan db:seed --class=AdminUserSeeder
 | `deleted_at` | timestamp nullable | soft delete (arsip) |
 | `created_at`, `updated_at` | timestamp | |
 
-Index: `(is_pinned, updated_at)`.
+Index: `(is_pinned, updated_at)` dan `created_at` (grafik aktivitas 30 hari,
+QA-10).
 
 **Invarian:** tag di-trim, dibuang yang kosong, di-`unique`, di-`values`.
 Urutan tag dipertahankan.
@@ -487,6 +488,10 @@ Prioritas valid: `low`, `medium`, `high`, `urgent` (`WorkItem::PRIORITIES`).
 
 **Invarian:** `completed_at` diisi saat status menjadi `done` dan dikosongkan
 saat keluar dari `done`. Ini dijaga controller, **bukan** constraint database.
+
+Index tambahan (QA-10): `completed_at` (grafik aktivitas) dan indeks parsial
+PostgreSQL `(due_date) WHERE status <> 'done'` (notifikasi, agenda, terlambat).
+Rincian bukti `EXPLAIN (ANALYZE, BUFFERS)` ada di `docs/query-review.md`.
 
 ### 8.3 `projects`
 
@@ -675,6 +680,10 @@ Saat menambah route baru: ikuti pola di atas, tambahkan test tamu → redirect.
 - Urutan pekerjaan: belum selesai dulu, lalu `due_date` (null terakhir), lalu
   `created_at` terbaru.
 - Dashboard: agregasi langsung, batasi daftar (5 pekerjaan aktif, 4 catatan).
+- Index baru hanya jika ada bukti `EXPLAIN (ANALYZE, BUFFERS)`; ukur pada data
+  sintetik di schema sementara (`qa10_tmp`), jangan menebak. Index yang hanya
+  dipakai PostgreSQL dibungkus pengecekan driver agar SQLite tetap lolos.
+  Hasil review: `docs/query-review.md`.
 
 ### Model
 

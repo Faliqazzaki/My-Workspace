@@ -186,7 +186,7 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 - [ ] **QA-07** Test aksesibilitas otomatis
 - [ ] **QA-08** Logging terstruktur + error tracking
 - [ ] **QA-09** Health check & monitoring uptime
-- [ ] **QA-10** Query performance review + index tambahan
+- [x] **QA-10** Query performance review + index tambahan
 - [ ] **QA-11** Rate limit untuk aksi tulis
 - [ ] **QA-12** Dokumentasi arsitektur & ADR
 
@@ -205,17 +205,16 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 | Pengetahuan & Produktivitas | 6 | 12 |
 | Berita & AI | 0 | 13 |
 | Multi-Agent | 0 | 10 |
-| Kualitas | 6 | 12 |
+| Kualitas | 7 | 12 |
 
-**Total: 82 dari 127 item selesai.**
+**Total: 83 dari 127 item selesai.**
 
 ## Antrean berikutnya (urut, lokal dulu)
 
 Fitur yang bisa dikerjakan tanpa layanan eksternal/AI:
 
-1. QA-10 Query performance review + index tambahan
-2. QA-12 Dokumentasi arsitektur & ADR
-3. WORK-17 Lampiran file pada pekerjaan
+1. QA-12 Dokumentasi arsitektur & ADR
+2. WORK-17 Lampiran file pada pekerjaan
 
 Ditunda (butuh layanan eksternal/biaya token): NEWS-*, AI-*, AGT-*.
 
