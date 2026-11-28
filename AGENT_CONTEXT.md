@@ -354,6 +354,12 @@ e2e/
   global-setup.js                  # penjaga DB, migrate:fresh, seed admin dummy
   tests/admin.spec.js              # 6 test browser (login, halaman, CRUD, palette, tema)
 playwright.config.js               # webServer port 8001, build production, service worker diblokir
+docs/
+  architecture.md                  # ringkasan sistem + relasi data + testing
+  adr/                             # keputusan arsitektur (0001, 0002, ...)
+  backup-restore.md                # panduan backup/restore pg_dump
+  query-review.md                  # bukti EXPLAIN + keputusan index
+  specs-done.md                    # spesifikasi fitur yang selesai
 FEATURES.md                        # checklist fitur
 AGENT_CONTEXT.md                   # dokumen ini
 ```
