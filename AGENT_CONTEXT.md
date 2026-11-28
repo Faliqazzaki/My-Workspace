@@ -279,6 +279,8 @@ Hindari fungsi SQL khusus PostgreSQL di jalur yang dites, atau sediakan fallback
 | `php artisan migrate` | migrasi PostgreSQL |
 | `php artisan db:backup` | backup `pg_dump` + retensi (default 14) |
 | `php artisan ai:ping` | uji provider AI dengan prompt singkat (minta konfirmasi; pakai token) |
+| `php artisan news:fetch` | antre pengambilan RSS sumber aktif (`--source=ID` untuk satu sumber) |
+| `php artisan queue:work --stop-when-empty` | proses antrean sekali sampai habis |
 | `php artisan schedule:work` | jalankan scheduler harian (`db:backup`) |
 
 ---
@@ -307,6 +309,18 @@ app/
       HandleInertiaRequests.php    # share admin, flash, auth, sidebar
   Console/Commands/
     DatabaseBackupCommand.php      # db:backup via pg_dump
+    FetchNewsCommand.php           # news:fetch -> job per sumber aktif
+  Jobs/
+    FetchNewsSource.php            # ambil RSS satu sumber + dedupe url_hash
+  Services/News/
+    HostResolver.php               # antarmuka resolusi DNS (bisa difake)
+    DnsHostResolver.php            # implementasi DNS sungguhan
+    NetworkTarget.php              # penolakan IP loopback/privat/link-local
+    FeedFetcher.php                # request aman + redirect + batas ukuran
+    FeedParser.php                 # RSS 2.0 / Atom dengan SimpleXML NONET
+    FeedFetchException.php         # kegagalan aman tanpa isi respons
+    NewsUrl.php                    # normalisasi + sha256 untuk dedupe
+    FetchSummary.php               # ringkasan baru/dilewati/gagal
     AiPingCommand.php              # ai:ping (prompt singkat, minta konfirmasi)
   Services/Ai/
     AiProvider.php                 # interface summarize/chat/isAvailable
@@ -1188,6 +1202,23 @@ Gunakan urutan ini agar hasilnya konsisten:
 
 ---
 
+### 14.10 Pengambilan RSS & dedupe (NEWS-02/03)
+
+1. `php artisan news:fetch` mengantre `FetchNewsSource` untuk setiap sumber
+   aktif; `--source=ID` membatasi ke satu sumber. Job gagal tidak menghentikan
+   sumber lain.
+2. `FeedFetcher` memakai `HostResolver`, menolak host/IP privat, `localhost`,
+   metadata, dan redirect ke alamat tersebut (maksimal 3 redirect). Timeout
+   koneksi 5 dtk, total 10 dtk, respons maksimal 2 MB, User-Agent tetap.
+3. `FeedParser` membaca RSS 2.0/Atom dengan `LIBXML_NONET` (tanpa `LIBXML_NOENT`),
+   membersihkan HTML pada judul/excerpt, membatasi 50 item, dan hanya menyimpan
+   item dengan link http/https serta judul.
+4. `NewsUrl::hash()` menormalkan URL (scheme/host lowercase, buang fragment dan
+   pelacak seperti `utm_*`/`fbclid`) lalu `insertOrIgnore` pada `url_hash` unik.
+   `last_fetched_at` hanya diperbarui saat pengambilan berhasil.
+
+---
+
 ## 15. Rancangan fitur berikutnya (spesifikasi)
 
 > Detail checklist dan ID ada di `FEATURES.md`. Bagian ini menjelaskan
@@ -1405,6 +1436,14 @@ Aturan:
 - Jangan menampilkan berita dummy.
 - Widget tidak boleh membuat halaman gagal jika layanan AI down.
 - Simpan biaya dan jumlah token.
+- Jadwal hanya berjalan bila scheduler aktif: `php artisan schedule:work`.
+  Antrean hanya diproses bila queue worker berjalan; `composer dev` sudah
+  menyertakan `queue:listen`. Untuk menjalankan sekali tanpa worker permanen:
+  `php artisan queue:work --stop-when-empty`.
+- NEWS-02/03 selesai: `news:fetch` mengantre job per sumber aktif; dedupe
+  `url_hash` mencegah artikel ganda. Ringkasan di command akurat bila antrean
+  `sync`; dengan worker async lihat log job. ADR 0011 mendokumentasikan batasan
+  SSRF yang tersisa (DNS rebinding).
 
 ---
 

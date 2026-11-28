@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Services\News\DnsHostResolver;
+use App\Services\News\FetchSummary;
+use App\Services\News\HostResolver;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +18,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(FetchSummary::class);
+        $this->app->bind(HostResolver::class, DnsHostResolver::class);
     }
 
     /**

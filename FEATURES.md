@@ -146,8 +146,8 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 ## 8. Berita Teknologi & AI
 
 - [x] **NEWS-01** Tabel sumber berita + konfigurasi RSS/API
-- [ ] **NEWS-02** Command terjadwal `news:fetch` + queue job
-- [ ] **NEWS-03** Deduplikasi artikel berdasarkan URL/hash
+- [x] **NEWS-02** Command terjadwal `news:fetch` + queue job
+- [x] **NEWS-03** Deduplikasi artikel berdasarkan URL/hash
 - [ ] **NEWS-04** Ringkasan artikel dengan AI (bahasa Indonesia)
 - [ ] **NEWS-05** Pilih 3 berita terbaik per hari
 - [ ] **NEWS-06** Widget berita di dashboard + halaman arsip
@@ -203,17 +203,19 @@ untuk **apa yang sudah selesai** dan **apa yang akan dibangun**.
 | Catatan | 14 | 16 |
 | Pekerjaan | 19 | 20 |
 | Pengetahuan & Produktivitas | 6 | 12 |
-| Berita & AI | 2 | 13 |
+| Berita & AI | 4 | 13 |
 | Multi-Agent | 0 | 10 |
 | Kualitas | 8 | 12 |
 
-**Total: 86 dari 127 item selesai.**
+**Total: 88 dari 127 item selesai.**
 
 ## Antrean berikutnya (urut, lokal dulu)
 
 Fitur yang bisa dikerjakan tanpa layanan eksternal/AI:
 
 1. WORK-17 Lampiran file pada pekerjaan
+2. NEWS-05 Pilih 3 berita terbaik per hari
+3. NEWS-07 Fallback saat AI/API gagal
 
 Ditunda (butuh layanan eksternal/biaya token): NEWS-*, AI-*, AGT-*.
 

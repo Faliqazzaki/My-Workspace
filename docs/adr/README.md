@@ -15,6 +15,7 @@ berurutan dan tidak diubah setelah diterima.
 | [0008](0008-isolated-e2e-sqlite.md) | Isolasi e2e dengan SQLite | Diterima |
 | [0009](0009-evidence-based-indexes.md) | Index berbasis bukti EXPLAIN | Diterima |
 | [0010](0010-ai-provider-default-null.md) | Provider AI OpenAI-compatible, default null | Diterima |
+| [0011](0011-safe-rss-fetch.md) | Pengambilan RSS dengan validasi target | Diterima |
 
 Rujukan keputusan lain: §19 `AGENT_CONTEXT.md`. Gambaran sistem:
 [`docs/architecture.md`](../architecture.md).
